@@ -1,0 +1,37 @@
+ # rosi simulation parameters
+ rosi_simulation: 
+
+  # Simulation Rendering Flag
+  # disable it for faster simulation (but no visualization)
+  # possible values: true, false.
+  simulation_rendering: true
+
+  # Velodyne processing flag
+  # disable it for faster simulation (but no Velodyne data)
+  # possible values: true, false.
+  velodyne_processing: true
+
+  # Kinect processing flag
+  # disable it for faster simulation (but no kinect data)
+  # possible values: true, false.
+  kinect_processing: true
+
+  # Hokuyo processing flag
+  # disable it for faster simulation (but no hokuyo data)
+  # possible values: true, false.
+  hokuyo_processing: true
+
+  # Hokuyo drawing lines 
+  # enable it for seeing hokuyo lines
+  # ATTENTION: This feature is strictly visual and do not affect velodyne processing
+  # possible values: true, false.
+  hokuyo_lines: false
+
+  # Camera on UR5 tool processing flag
+  # enable it for processing/publishing the ur5 tool cam
+  # possible values: true, false
+  ur5toolCam_processing: true
+
+  # Fire enabling
+  # allows to enable/disable the fire
+  fire_rendering: true
