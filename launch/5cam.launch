@@ -1,8 +1,8 @@
 <launch>
 
 	<!-- Reading the camera (trying) -->
-	<node name="Camera" pkg="rosi_defy" type="5cam.py" output="screen"/>
+	<node name="Camera" pkg="pra_vale" type="5cam.py" output="screen"/>
 
-	<rosparam command="load" file="$(find rosi_defy)/config/simulation_parameters.yaml" />
+	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
 
 </launch>

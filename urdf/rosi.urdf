@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rosi">
 
 	<!-- Misc parameters -->
-	<xacro:property name="mesh_folder" value="package://rosi_defy/urdf/meshes" />
+	<xacro:property name="mesh_folder" value="package://pra_vale/urdf/meshes" />
 	<xacro:property name="ur5_link_mesh" value="${mesh_folder}/ur5_link_" />
 
 	<!-- UR5 parameters -->

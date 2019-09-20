@@ -4,8 +4,8 @@
 	<node name="joy_node" pkg="joy" type="joy_node" respawn="true" />
 
 	<!-- running the rosi joystick example node -->
-	<node name="rosi_joy" pkg="rosi_defy" type="rosi_joy.py" respawn="true"/>
+	<node name="rosi_joy" pkg="pra_vale" type="rosi_joy.py" respawn="true"/>
 
-	<rosparam command="load" file="$(find rosi_defy)/config/simulation_parameters.yaml" />
+	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
 
 </launch>

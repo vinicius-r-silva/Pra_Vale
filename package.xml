@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>rosi_defy</name>
+  <name>pra_vale</name>
   <version>0.0.0</version>
-  <description>The rosi_defy package</description>
+  <description>The pra_vale package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
