@@ -9,7 +9,7 @@
   # Velodyne processing flag
   # disable it for faster simulation (but no Velodyne data)
   # possible values: true, false.
-  velodyne_processing: false
+  velodyne_processing: true
 
   # Kinect processing flag
   # disable it for faster simulation (but no kinect data)
