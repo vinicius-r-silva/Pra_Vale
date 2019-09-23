@@ -18,6 +18,8 @@ params.filterByConvexity = False
 params.filterByColor = False
 params.blobColor = 255
 
+bridge=CvBridge()
+
 start_time = time.time() - 1
 end_time  = time.time()
 fps = 0
@@ -33,21 +35,21 @@ def callback(data):
 #	print(data.encoding)
 #	print("\n#\n")
 
-    bridge=CvBridge()
-    frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
-    detector = cv2.SimpleBlobDetector_create(params)	
+    
+    frame = bridge.imgmsg_to_cv2(data)
+    # detector = cv2.SimpleBlobDetector_create(params)	
 
-    mask=cv2.inRange(frame,(0,175,210),(64,255,255))
+    # mask=cv2.inRange(frame,(0,175,210),(64,255,255))
 	#result=cv2.bitwise_and(frame,frame,mask=mask)
 
-    keypoints = detector.detect(mask)
+    # keypoints = detector.detect(mask)
 
-    for blob in keypoints:
-        print("\nFIRE:")
-        print(blob.pt)
-        print(blob.size)
+    # for blob in keypoints:
+    #     print("\nFIRE:")
+    #     print(blob.pt)
+    #     print(blob.size)
 
-    frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    # frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
 
 	#cv2.imshow("Threshold",result)

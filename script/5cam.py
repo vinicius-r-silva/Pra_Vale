@@ -3,10 +3,16 @@ from cv_bridge import CvBridge
 import numpy as np
 import rospy
 import cv2
+import time
 
 from sensor_msgs.msg import Image
 
+start_time = time.time() - 1
+end_time  = time.time()
+fps = 0
+
 def callback(data):
+	global start_time
 	#rospy.loginfo(rospy.get_caller_id())
 	print("\n\n")
 #	print(data.width)
@@ -54,7 +60,12 @@ def callback(data):
 	cv2.moveWindow('Threshold',0,535)
 	#cv2.imwrite("Camera.jpg",cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
 
-	cv2.waitKey(50)
+	end_time = time.time()
+	fps = 1 / (end_time - start_time)
+	print(fps)
+
+	cv2.waitKey(1)
+	start_time = time.time()
 	#rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
 def listener():
