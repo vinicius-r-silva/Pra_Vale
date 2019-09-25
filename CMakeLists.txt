@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+find_package(OpenCV REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -148,6 +150,10 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(velodyne src/velodyne.cpp)
+target_link_libraries(velodyne ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(velodyne pra_vale_generate_messages_cpp)
 
 #############
 ## Install ##
