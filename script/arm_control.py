@@ -10,7 +10,7 @@ def callback(data):
     print(data)
     pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
     
-    pub.publish(joint_variable = [PI/2, 0, 0, 0, PI/2, 0])
+    pub.publish(joint_variable = [1.90891567046, 0.888681284086, 0.285968146792, -1.17464943088, -1.57079632679, 0])
 
 
 def listener():
