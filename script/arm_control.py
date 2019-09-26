@@ -14,7 +14,7 @@ probe_lenght = 150 #279
 d0 = 275 #367
 l1 = 425 #425.1
 l2 = 392 #392.1
-l3 = 126  #40.9
+l3 = 111  #126
 
 probe_lenght_pow = probe_lenght*probe_lenght
 l1_pow = l1*l1
@@ -35,10 +35,10 @@ def cinematicaInversa(x, y, z):
 
     t0 = atan2(y_const, x) + acos(probe_lenght/base_dist)
     t4 = -t0
-    if (t4 > pi):
-        t4 -= pi
-    elif(t4 < -pi):
-        t4 += pi
+    # if (t4 > pi):
+    #     t4 -= pi
+    # elif(t4 < -pi):
+    #     t4 += pi
 
     d_const = d
     z_const = z - l3
@@ -69,7 +69,7 @@ def callback(data):
     #pos = [2.04466973108, 0.636854893566, 1.10748279154, -1.74433768511, -1.5, 0]
     #pos = [2.04466973108, 0.636854893566, 1.10748279154, -1.74433768511, -2.04466973108, 0]
     #pub.publish(joint_variable = pos)
-    pub.publish(joint_variable = [pi/2,0,0,0,-pi/2,0])
+    pub.publish(joint_variable = [pi/2,0,0,0,pi/2,0])
 
 def listener():
 	rospy.init_node('listener', anonymous=True)

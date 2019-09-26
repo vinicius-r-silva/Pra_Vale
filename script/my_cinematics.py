@@ -7,16 +7,16 @@ from math import atan2
 from math import acos
 #import cmath
 
-x = 275
+x = 285
 y = 200
 z = 900
 
 #-------------------CONST----------------#
-probe_lenght = 150 #279
-d0 = 275 #367
+probe_lenght = 71 #150 #279
+d0 = 285 #367
 l1 = 425 #425.1
 l2 = 392 #392.1
-l3 = 126  #40.9
+l3 = 111  #126
 
 probe_lenght_pow = probe_lenght*probe_lenght
 l1_pow = l1*l1
@@ -31,21 +31,26 @@ x_pow = x*x
 y_pow = y*y
 z_pow = z*z
 
-y_const = y - probe_lenght
+
+x_const = x - d0
+x_const_pow = x_const*x_const
+
+y_const = y
 y_const_pow = y_const*y_const
 
-base_dist = sqrt(x_pow + y_const_pow)
-d = sqrt(x_pow + y_const_pow - probe_lenght_pow)
+base_dist = sqrt(x_const_pow + y_const_pow)
+d = sqrt(x_const_pow + y_const_pow - probe_lenght_pow)
 
-t0 = atan2(y_const, x) + acos(probe_lenght/base_dist)
-t4 = -t0
-if (t4 > pi):
-    t4 -= pi
-elif(t4 < -pi):
-    t4 += pi
+t0 = atan2(y_const, x_const) + acos(probe_lenght/base_dist) - pi/2
+if(t0 > pi):
+    t0 -= pi
+elif(t0 < -pi):
+    t0 += pi
+
+t4 = -t0 - pi
 
 print("t0: " + str(t0) + "   t4: " + str(t4) + "   t0-t4: " + str(t0-t4 - pi))
-print("atan2: " + str(atan2(y_const, x)) + "  acos: " + str(acos(probe_lenght/base_dist)))
+print("atan2: " + str(atan2(y_const, x_const)) + "  acos: " + str(acos(probe_lenght/base_dist)))
   #-  atan2(y_const, x)#- acos(probe_lenght/base_dist)
 
 d_const = d

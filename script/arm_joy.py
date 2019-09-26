@@ -13,11 +13,11 @@ from math import atan2
 from math import acos
 
 #-------------------CONST----------------#
-probe_lenght = 150 #279
-d0 = 285 #367
+probe_lenght = 71 #279
+d0 = 275 #367
 l1 = 425 #425.1
 l2 = 392 #392.1
-l3 = 126  #40.9
+l3 = 111  #126
 
 probe_lenght_pow = probe_lenght*probe_lenght
 l1_pow = l1*l1
@@ -25,9 +25,9 @@ l2_pow = l2*l2
 
 t5 = 0
 
-x = 275
-y = 200
-z = 900
+x = 400
+y = 400
+z = 700
 
 last_x = x
 last_y = y
@@ -59,8 +59,18 @@ def cinematicaInversa():
         base_dist = sqrt(x_const_pow + y_const_pow)
         d = sqrt(x_const_pow + y_const_pow - probe_lenght_pow)
 
-        t0 = atan2(y_const, x_const) + acos(probe_lenght/base_dist)
-        t4 = -t0
+        t0 = 3*pi/2 - acos(probe_lenght/base_dist) + atan2(y_const, x_const)
+        if(t0 > 2*pi):
+            t0 -= 2*pi
+        elif(t0 < -2*pi):
+            t0 += 2*pi
+
+        t4 = -t0 - pi
+        # if(t4 > 2*pi):
+        #     t4 -= 2*pi
+        # elif(t4 < -2*pi):
+        #     t4 += 2*pi
+
 
         d_const = d
         z_const = z - l3
@@ -80,9 +90,14 @@ def cinematicaInversa():
         t2 = pi - t2_const
         t3 = -(t3_const + s1)
 
+        t1 = -t1
+        t2 = -t2
+        t3 = -t3
+
         last_x = x
         last_y = y
         last_z = z
+        print(str(t0) + ", " + str(t1) + ", " + str(t2) + ", " + str(t3) + ", " + str(t4) + ", " + str(t5))
         return [t0, t1, t2, t3, t4, t5]
     
     except:
