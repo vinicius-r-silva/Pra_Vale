@@ -3,6 +3,7 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
+#include "pra_vale/RosiMovementArray.h"
 
 //opencv:
 #include <opencv2/opencv.hpp>
@@ -10,24 +11,18 @@
 
 //c++:
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 
 
 //defines----------------------------
 
-//tela:
-//#define HEIGHT 600 //altura da tela
-//#define LENGHT 600 //compriemnto
-
 //Analise do veloyne:
-#define _QUANT_POINTS 70000 //quantidade de pontos processados pelo velodyne
+#define _QUANT_POINTS 200000 //quantidade de pontos processados pelo velodyne
 #define _MIN_HIGHT -1 //altura minima para capturar dados do velodyne
 #define _SCALE  40 //aumenta a resolucao dos dados do velodyne
 #define _ADD_GRAY_SCALE 10 //deixa mais definido quais tem mais pontos em z
-#define _MAX_DIST 5 //distancia maxima negativa que sera tolerada
-#define _MAX_DIST_NEG -2
-#define _MIN_GRAY_S 100
+#define _MAX_DIST 5 //distancia maxima que sera processada
+#define _MAX_DIST_NEG -2 //distancia maxima negativa que sera processada
+#define _MIN_GRAY_S 100 //minimo de luminosiade para ser processado
 
 
 //namespaces-------------------------
@@ -46,8 +41,9 @@ typedef struct{
 //variaveis globais------------------
 
 //dimensoes da tela
-int HEIGHT = 2 *_MAX_DIST*_SCALE;
+int HEIGHT = 2*_MAX_DIST*_SCALE;
 int LENGHT = 2*_MAX_DIST*_SCALE;
+
 
 //imagens
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
@@ -57,6 +53,9 @@ Mat imgProcessed(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem depois do process
 //vetor x, y
 points_t *pointData;
 
+
+//velocidade do robo
+pra_vale::RosiMovementArray tractionCommandList;
 
 
 //controlo o robo a partir do mapa
@@ -135,10 +134,12 @@ bool isImportant(geometry_msgs::Point32 pointInput){
 bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
 
   int quant = 0;
+  geometry_msgs::Point32 pointInput;  
+  pra_vale::RosiMovement tractionCommand;
 
 
   for(int i = 0 ; i < out_pointcloud.points.size(); ++i){
-    geometry_msgs::Point32 pointInput;  
+    
     pointInput = out_pointcloud.points[i];
 
 
@@ -156,9 +157,16 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
 
   processMap(map);
 
-  cout << "tamanho: " << out_pointcloud.points.size() << endl;
+  tractionCommand.joint_var = 50;
+  tractionCommand.nodeID = 1;
+  tractionCommandList.movement_array.push_back(tractionCommand);
+  tractionCommand.nodeID = 2;
+  tractionCommandList.movement_array.push_back(tractionCommand);
+  tractionCommand.nodeID = 3;
+  tractionCommandList.movement_array.push_back(tractionCommand);
+  tractionCommand.nodeID = 4;
+  tractionCommandList.movement_array.push_back(tractionCommand);
 }
-
 
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
@@ -185,10 +193,19 @@ int main(int argc, char **argv){
 
   //le o publisher do vrep
   ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
+  ros::Publisher speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",3);
+
+  ros::Rate loop_rate(10);
+ 
+ 
+  while (ros::ok()){
+    speedPub.publish(tractionCommandList);
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+
+  //ros::spin();
 
   
-  ros::spin();
-
-  //destroyWindow("create_image");
   return 0;
 }
