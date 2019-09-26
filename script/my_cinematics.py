@@ -7,9 +7,9 @@ from math import atan2
 from math import acos
 #import cmath
 
-x = 500
-y = 700
-z = 400
+x = 275
+y = 200
+z = 900
 
 #-------------------CONST----------------#
 probe_lenght = 150 #279
@@ -31,11 +31,24 @@ x_pow = x*x
 y_pow = y*y
 z_pow = z*z
 
-base_dist = sqrt(x_pow + y_pow)
-d = sqrt(x_pow + y_pow - probe_lenght_pow)
-t0 = atan2(y, x) + acos(probe_lenght/base_dist)
+y_const = y - probe_lenght
+y_const_pow = y_const*y_const
 
-d_const = d - d0
+base_dist = sqrt(x_pow + y_const_pow)
+d = sqrt(x_pow + y_const_pow - probe_lenght_pow)
+
+t0 = atan2(y_const, x) + acos(probe_lenght/base_dist)
+t4 = -t0
+if (t4 > pi):
+    t4 -= pi
+elif(t4 < -pi):
+    t4 += pi
+
+print("t0: " + str(t0) + "   t4: " + str(t4) + "   t0-t4: " + str(t0-t4 - pi))
+print("atan2: " + str(atan2(y_const, x)) + "  acos: " + str(acos(probe_lenght/base_dist)))
+  #-  atan2(y_const, x)#- acos(probe_lenght/base_dist)
+
+d_const = d
 z_const = z - l3
 
 l_const_pow = d_const*d_const + z_const*z_const

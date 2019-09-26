@@ -25,7 +25,7 @@
   # enable it for seeing hokuyo lines
   # ATTENTION: This feature is strictly visual and do not affect velodyne processing
   # possible values: true, false.
-  hokuyo_lines: true
+  hokuyo_lines: false
 
   # Camera on UR5 tool processing flag
   # enable it for processing/publishing the ur5 tool cam

@@ -20,7 +20,6 @@ probe_lenght_pow = probe_lenght*probe_lenght
 l1_pow = l1*l1
 l2_pow = l2*l2
 
-t4 = -pi/2
 t5 = 0
 
 def cinematicaInversa(x, y, z):
@@ -28,11 +27,20 @@ def cinematicaInversa(x, y, z):
     y_pow = y*y
     #z_pow = z*z
 
-    base_dist = sqrt(x_pow + y_pow)
-    d = sqrt(x_pow + y_pow - probe_lenght_pow)
-    t0 = atan2(y, x) + acos(probe_lenght/base_dist)
+    y_const = y - d0
+    y_const_pow = y_const*y_const
 
-    d_const = d - d0
+    base_dist = sqrt(x_pow + y_const_pow)
+    d = sqrt(x_pow + y_const_pow - probe_lenght_pow)
+
+    t0 = atan2(y_const, x) + acos(probe_lenght/base_dist)
+    t4 = -t0
+    if (t4 > pi):
+        t4 -= pi
+    elif(t4 < -pi):
+        t4 += pi
+
+    d_const = d
     z_const = z - l3
 
     l_const_pow = d_const*d_const + z_const*z_const
@@ -57,9 +65,11 @@ def cinematicaInversa(x, y, z):
 def callback(data):
     print(data)
     pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
-    pos = cinematicaInversa(275, 152, 942)
-    pub.publish(joint_variable = pos)
-    #pub.publish(joint_variable = [pi/2,0,0,0,-pi/2,0])
+    pos = cinematicaInversa(400, 400, 400)
+    #pos = [2.04466973108, 0.636854893566, 1.10748279154, -1.74433768511, -1.5, 0]
+    #pos = [2.04466973108, 0.636854893566, 1.10748279154, -1.74433768511, -2.04466973108, 0]
+    #pub.publish(joint_variable = pos)
+    pub.publish(joint_variable = [pi/2,0,0,0,-pi/2,0])
 
 def listener():
 	rospy.init_node('listener', anonymous=True)
