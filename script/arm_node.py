@@ -12,6 +12,7 @@ from math import pow
 from math import sqrt
 from math import atan2
 from math import acos
+from math import asin
 
 #-------------------CONST----------------#    
 pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
@@ -104,8 +105,8 @@ def cinematicaInversa():
         t3 = -t3
 
         t0 += tilt_z
-        t1 += tilt_y
-        t5 = tilt_x
+        t1 += tilt_x
+        t5 = tilt_y
 
         last_x = x
         last_y = y
@@ -140,10 +141,23 @@ def arm_tilt(data):
     global tilt_y
     global tilt_z
 
-    # tilt_x = data.data[0]
-    # tilt_y = data.data[1]
-    # tilt_z = data.data[2]
-    print(data)
+    qx = data.orientation.x
+    qy = data.orientation.y
+    qz = data.orientation.z
+    qw = data.orientation.w
+    
+    t0 = +2.0 * (qw * qx + qy * qz)
+    t1 = +1.0 - 2.0 * (qx * qx + qy * qy)
+    tilt_x = atan2(t0, t1)
+
+    t2 = +2.0 * (qw * qy - qz * qx)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    tilt_y = asin(t2)
+
+    t3 = +2.0 * (qw * qz + qx * qy)
+    t4 = +1.0 - 2.0 * (qy * qy + qz * qz)
+    tilt_z = atan2(t4, t3) + pi/2
 
     pos = cinematicaInversa()
     pub.publish(joint_variable = pos)
