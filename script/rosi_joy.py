@@ -136,13 +136,13 @@ class RosiNodeClass():
 
 		# -- computes arms command
 		# front arms
-		if button_R == 1:
+		if button_R == 0:
 			self.arm_front_rotSpeed = self.max_arms_rotational_speed * trigger_right
 		else:
 			self.arm_front_rotSpeed = -1 * self.max_arms_rotational_speed * trigger_right
 
 		# rear arms
-		if button_L == 1:
+		if button_L == 0:
 			self.arm_rear_rotSpeed = -1 * self.max_arms_rotational_speed * trigger_left
 		else:
 			self.arm_rear_rotSpeed = self.max_arms_rotational_speed * trigger_left

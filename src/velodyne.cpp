@@ -7,28 +7,30 @@
 //opencv:
 #include <opencv2/opencv.hpp>
 
+
 //c++:
 #include <iostream>
-
+#include <stdio.h>
+#include <stdlib.h>
 
 
 //defines----------------------------
 
 //tela:
-#define HEIGHT 600 //altura da tela
-#define LENGHT 600 //compriemnto
+//#define HEIGHT 600 //altura da tela
+//#define LENGHT 600 //compriemnto
 
 //Analise do veloyne:
-#define _MIN_HIGHT 0 //altura minima para capturar dados do velodyne
+#define _QUANT_POINTS 70000 //quantidade de pontos processados pelo velodyne
+#define _MIN_HIGHT -1 //altura minima para capturar dados do velodyne
 #define _SCALE  40 //aumenta a resolucao dos dados do velodyne
-#define _ADD_GRAY_SCALE 15 //deixa mais definido quais tem mais pontos em z
-#define _MAX_DIST 6.5 //distancia maxima negativa que sera tolerada
+#define _ADD_GRAY_SCALE 10 //deixa mais definido quais tem mais pontos em z
+#define _MAX_DIST 5 //distancia maxima negativa que sera tolerada
+#define _MAX_DIST_NEG -2
 #define _MIN_GRAY_S 100
 
 
-
 //namespaces-------------------------
-
 using namespace cv;
 using namespace std;
 
@@ -38,20 +40,43 @@ using namespace std;
 typedef struct{
   float x;
   float y;
-  float z;
 }points_t;
 
 
+//variaveis globais------------------
 
+//dimensoes da tela
+int HEIGHT = 2 *_MAX_DIST*_SCALE;
+int LENGHT = 2*_MAX_DIST*_SCALE;
+
+//imagens
+Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
+Mat imgProcessed(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem depois do processamento do opencv
+
+
+//vetor x, y
+points_t *pointData;
+
+
+
+//controlo o robo a partir do mapa
+void processMap(Mat map){
+
+
+  return;
+}
 
 //desenha o mapa com as informacoes
-void drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
+Mat drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
 
   int MAX = 255-_ADD_GRAY_SCALE;
   int i=0;
   
-  Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
-  Mat imgProcessed(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem depois do processamento do opencv
+
+  //preenche as imagens de preto
+  img = Mat::zeros(img.size(), img.type());
+  imgProcessed = Mat::zeros(imgProcessed.size(), imgProcessed.type());
+
   
   String windowOriginal = "original"; 
   String windowProcessed = "Threshold";
@@ -60,39 +85,40 @@ void drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
 
   for(i = 0 ; i < quant;  i++){
 
+    //x é vertical
     pointData[i].x += _MAX_DIST;
     pointData[i].x *= _SCALE;
     if(pointData[i].x > HEIGHT)
       pointData[i].x = HEIGHT;
     
-    
+    //y é a horizontal
     pointData[i].y +=  _MAX_DIST;
     pointData[i].y *= _SCALE;
     if(pointData[i].y > LENGHT)
       pointData[i].y = LENGHT;
     
     //reinforca os pixels com "mais z's" sobre ele
-    if(img.at<uchar>((int) pointData[i].x, (int) pointData[i].y) < MAX)
-      img.at<uchar>((int) pointData[i].x, (int) pointData[i].y) += _ADD_GRAY_SCALE;
+    if(img.at<uchar>((int) pointData[i].x +_MAX_DIST_NEG, (int) pointData[i].y) < MAX)
+      img.at<uchar>((int) pointData[i].x +_MAX_DIST_NEG, (int) pointData[i].y) += _ADD_GRAY_SCALE;
 
   }
 
+
   //remove os pixels mais fracos
-  //inRange(img,_MIN_GRAY_S,Scalar(255),imgProcessed);
+  inRange(img,_MIN_GRAY_S,Scalar(255),imgProcessed);
 
-  erode(img, imgProcessed, getStructuringElement(MORPH_ELLIPSE, Size(1, 3)));
-
-
+  erode(imgProcessed, imgProcessed, getStructuringElement(MORPH_ELLIPSE, Size(1, 3)));  
+  
+  
   Rect robotRect(_MAX_DIST*_SCALE-5, _MAX_DIST*_SCALE-5, 10, 15);
-  Rect robotRectFront(_MAX_DIST*_SCALE-5, _MAX_DIST*_SCALE+15, 10, 5);
   rectangle(imgProcessed,robotRect,100,7);
-  rectangle(imgProcessed,robotRectFront,255,7);
-
 
 
   imshow(windowOriginal, img); //mostra a imagem original
   imshow(windowProcessed, imgProcessed); //mostra a imagem depois de ser processada
   waitKey(1);
+
+  return imgProcessed;
 
 }
 
@@ -100,7 +126,7 @@ void drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
 //remove os pontos nao necessarios
 bool isImportant(geometry_msgs::Point32 pointInput){
 
-  return pointInput.z > _MIN_HIGHT && pointInput.x < _MAX_DIST && pointInput.x > -_MAX_DIST 
+  return pointInput.z > _MIN_HIGHT && pointInput.x < _MAX_DIST && pointInput.x > _MAX_DIST_NEG 
         && pointInput.y < _MAX_DIST && pointInput.y > -_MAX_DIST;
 }
 
@@ -109,11 +135,6 @@ bool isImportant(geometry_msgs::Point32 pointInput){
 bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
 
   int quant = 0;
-  //float minX = 0;
-  //float minY = 0;
-  points_t *pointData;
-
-  pointData = (points_t*) malloc(sizeof(points_t)*out_pointcloud.points.size());
 
 
   for(int i = 0 ; i < out_pointcloud.points.size(); ++i){
@@ -123,20 +144,19 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
 
     //remove os dados que nao sao importantes
     if(isImportant(pointInput)){
-      
       pointData[quant].x = (float) pointInput.x;
       pointData[quant].y = (float) pointInput.y;
-      pointData[quant].z = (float) pointInput.z;
-
       quant++;
     }
   }
 
+
   //desenha o mapa
-  drawMap(pointData, quant-1);
+  Mat map = drawMap(pointData, quant-1);
 
-  free(pointData);
+  processMap(map);
 
+  cout << "tamanho: " << out_pointcloud.points.size() << endl;
 }
 
 
@@ -156,6 +176,8 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
 int main(int argc, char **argv){
   //inicia o node
+
+  pointData = (points_t*) malloc(sizeof(points_t)*_QUANT_POINTS);
   ros::init(argc, argv, "velodyme");
 
   
