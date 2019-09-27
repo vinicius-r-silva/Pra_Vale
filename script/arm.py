@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 #sudo pip3 install rospkg catkin_pkg
 
 import rospy
-import readchar
 from rosi_defy.msg import ManipulatorJoints
 from std_msgs.msg import Int32MultiArray
 from sensor_msgs.msg import Imu
@@ -69,7 +68,7 @@ def cinematicaInversa():
         base_dist = sqrt(x_const_pow + y_const_pow)
         d = sqrt(x_const_pow + y_const_pow - probe_lenght_pow)
 
-        t0 = 3*pi/2 - acos(probe_lenght/base_dist) + atan2(y_const, x_const)
+        t0 = -pi/2 - acos(probe_lenght/base_dist) + atan2(y_const, x_const)
         if(t0 > 2*pi):
             t0 -= 2*pi
         elif(t0 < -2*pi):
@@ -129,9 +128,24 @@ def arm_pos(data):
 
     print(data)
 
-    # x = data.data[0]
-    # y = data.data[1]
-    # z = data.data[2]
+    x = data.data[0]
+    y = data.data[1]
+    z = data.data[2]
+    
+    pos = cinematicaInversa()
+    pub.publish(joint_variable = pos)
+
+def arm_move(data):
+    global x
+    global y
+    global z
+    global pub
+
+    print(data)
+
+    x += data.data[0]
+    y += data.data[1]
+    z += data.data[2]
     
     pos = cinematicaInversa()
     pub.publish(joint_variable = pos)
@@ -167,6 +181,7 @@ def listener():
     rospy.init_node('listener', anonymous=True)
     
     rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
+    rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
     #rospy.Subscriber('/pra_vale/arm_tilt',Int32MultiArray , arm_tilt)
     rospy.Subscriber("/sensor/imu", Imu, arm_tilt)
 

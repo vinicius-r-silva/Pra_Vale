@@ -34,7 +34,7 @@ def callback(data):
 	params.filterByInertia = False
 	params.filterByConvexity = False
 	params.filterByColor = False
-	params.blobColor = 255
+	params.blobColor = z
 
 
 
