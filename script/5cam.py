@@ -26,38 +26,36 @@ def callback(data):
 	frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
 
-
-	params = cv2.SimpleBlobDetector_Params()
-	params.filterByArea=True
-	params.minArea=2700
-	params.filterByCircularity = False
-	params.filterByInertia = False
-	params.filterByConvexity = False
-	params.filterByColor = False
-	params.blobColor = 255
-
-
-
-	detector = cv2.SimpleBlobDetector_create(params)	
-
 	mask=cv2.inRange(frame,(0,175,210),(64,255,255))
-	result=cv2.bitwise_and(frame,frame,mask=mask)
+	#result=cv2.bitwise_and(frame,frame,mask=mask)
 
-	keypoints = detector.detect(mask)
+	# Find contours:
+	im, contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-	for blob in keypoints:
-		print("\nFIRE:")
-		print(blob.pt)
-		print(blob.size)
+	fire=max(contours,key=cv2.contourArea)
+	
+	if(cv2.contourArea(fire)>100):
+		# Draw contours:
+		cv2.drawContours(frame, [fire], 0, (0, 0, 255), 3)
 
-	frame = cv2.drawKeypoints(frame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+		# Calculate image moments of the detected contour
+		M = cv2.moments(fire)
+
+		# Print center (debugging):
+		
+		print("Area : '{}'".format(cv2.contourArea(fire)))
+		print("center X : '{}'".format(round(M['m10'] / M['m00'])))
+		print("center Y : '{}'".format(round(M['m01'] / M['m00'])))
 
 
-	cv2.imshow("Threshold",result)
+
+	
+
+	cv2.imshow("Threshold",mask)
 	cv2.imshow("Camera",frame)
 
-	cv2.moveWindow('Camera',0,0)
-	cv2.moveWindow('Threshold',0,535)
+	cv2.moveWindow('Camera',1080,0)
+	cv2.moveWindow('Threshold',1080,535)
 	#cv2.imwrite("Camera.jpg",cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
 
 	end_time = time.time()
