@@ -30,7 +30,7 @@ def callback(data):
 	#result=cv2.bitwise_and(frame,frame,mask=mask)
 
 	# Find contours:
-	im, contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 	fire=max(contours,key=cv2.contourArea)
 	
