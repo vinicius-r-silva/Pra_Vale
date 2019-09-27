@@ -17,7 +17,7 @@
 //defines----------------------------
 
 //Analise do veloyne:
-#define _QUANT_POINTS 100000 //quantidade de pontos processados pelo velodyne
+#define _QUANT_POINTS 150000 //quantidade de pontos processados pelo velodyne
 #define _MIN_HIGHT -1 //altura minima para capturar dados do velodyne
 #define _SCALE  40 //aumenta a resolucao dos dados do velodyne
 #define _ADD_GRAY_SCALE 10 //deixa mais definido quais tem mais pontos em z
@@ -27,13 +27,25 @@
 
 
 //controle do robo
-#define _NO_OBSTACLE 0
-#define _FRONT_OBSTACLE 1
-#define _RIGHT_OBSTACLE 2
-#define _LEFT_OBSTACLE 3
-#define _V0 4
+#define _V0 3
 #define _KP 4
 #define _MIN_DIST_FRONT 2.5
+#define _MAX_DIST_SEGUE_PAREDE 2.5
+#define _DIST_SEGUE_PAREDE 2
+
+
+//maquina de estado
+#define _NO_OBSTACLE 0
+#define _DESVIA_FRENTE 1
+#define _SEGUE_ESQUERDA 2
+#define _RECUPERA_ESQUERDA 3
+#define _SEQUE_DIREITA 4
+#define _RECUPERA_DIREITA 5
+#define _HORARIO true 
+#define _ANTI_HORARIO false
+
+
+
 
 //informacoes da struct
 #define _FRONT 0
@@ -41,7 +53,7 @@
 #define _RIGHT 2
 
 //processamento da imagem
-#define _MIN_AREA 20
+#define _MIN_AREA 30
 
 
 //namespaces-------------------------
@@ -66,40 +78,47 @@ typedef struct{
 
 //variaveis globais------------------
 
+
 //dimensoes da tela
-int HEIGHT = 2*_MAX_DIST*_SCALE;
-int LENGHT = 2*_MAX_DIST*_SCALE;
+const int HEIGHT = 2*_MAX_DIST*_SCALE;
+const int LENGHT = 2*_MAX_DIST*_SCALE;
+
 
 //dimensoes do robo
-int ROBOT_X = _MAX_DIST*_SCALE-5;
-int ROBOT_Y = _MAX_DIST*_SCALE-5;
-int ROBOT_SIZE_X = 10;
-int ROBOT_SIZE_Y = 10;
+const int ROBOT_X = _MAX_DIST*_SCALE-5;
+const int ROBOT_Y = _MAX_DIST*_SCALE-5;
+const int ROBOT_SIZE_X = 10;
+const int ROBOT_SIZE_Y = 10;
+
 
 //retangulo da frente
-int FRONT_SIZE_X = 2.5*_SCALE;
-int FRONT_SIZE_Y = 1.5*_SCALE;
-int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
-int FRONT_Y = (_MAX_DIST+0.75)*_SCALE;
+const int FRONT_SIZE_X = 2.2*_SCALE;
+const int FRONT_SIZE_Y = 1.5*_SCALE;
+const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
+const int FRONT_Y = (_MAX_DIST+0.85)*_SCALE;
+
 
 //retangulo da lateral esquerda
-int LEFT_SIZE_X = 1.0*_SCALE;
-int LEFT_SIZE_Y = 2*_SCALE;
-int LEFT_X = _MAX_DIST*_SCALE+65-LEFT_SIZE_X;
-int LEFT_Y = _MAX_DIST*_SCALE-25;
+const int LEFT_SIZE_X = 2.7*_SCALE;
+const int LEFT_SIZE_Y = 2.2*_SCALE;
+const int LEFT_X = (_MAX_DIST+0.6)*_SCALE;
+const int LEFT_Y = _MAX_DIST*_SCALE - LEFT_SIZE_Y/3;
 
 
 //retangulo da lateral direita
-int RIGHT_SIZE_X = 1.0*_SCALE;
-int RIGHT_SIZE_Y = 2*_SCALE;
-int RIGHT_X = _MAX_DIST*_SCALE-65;
-int RIGHT_Y = _MAX_DIST*_SCALE-25;
+const int RIGHT_SIZE_X = 2.7*_SCALE;
+const int RIGHT_SIZE_Y = 2.2*_SCALE;
+const int RIGHT_X = (_MAX_DIST-0.6)*_SCALE - RIGHT_SIZE_X;
+const int RIGHT_Y = _MAX_DIST*_SCALE - RIGHT_SIZE_Y/3;
 
+
+//salva o estado
+int estado = _NO_OBSTACLE;
+bool sentido = _HORARIO;
 
 //imagens
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
 Mat imgProcessed(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem depois do processamento do opencv
-
 
 //vetor x, y
 points_t *pointData;
@@ -109,7 +128,6 @@ Sides_Info_t *sidesInfo;
 
 //velocidade do robo
 pra_vale::RosiMovementArray tractionCommandList;
-
 
 
 
@@ -140,7 +158,7 @@ void getInfo(int SIDE, int frontX, int frontY, int frontSizeX, int frontSizeY){
 
   sidesInfo[SIDE].medX = (sidesInfo[SIDE].area == 0)? 10 :(float) sumX/(sidesInfo[SIDE].area*_SCALE);
   sidesInfo[SIDE].medY = (sidesInfo[SIDE].area == 0)? 10 :(float) sumY/(sidesInfo[SIDE].area*_SCALE);
-  sidesInfo[SIDE].distance = (sidesInfo[SIDE].medX == 10 || sidesInfo[SIDE].medY == 10)? 0.0 : 
+  sidesInfo[SIDE].distance = (sidesInfo[SIDE].medX == 10 || sidesInfo[SIDE].medY == 10)? 10 : 
   (float) sqrt(pow(sidesInfo[SIDE].medX -_MAX_DIST, 2) + pow(sidesInfo[SIDE].medY -_MAX_DIST, 2));
 
 }
@@ -149,11 +167,10 @@ void getInfo(int SIDE, int frontX, int frontY, int frontSizeX, int frontSizeY){
 
 //controle do robo a partir do mapa
 void processMap(){
+
   //imgProcessed e sidesInfo são variaveis globais
-  
   uchar *map = imgProcessed.data;
-  int obstacleDirection = _NO_OBSTACLE;
-  
+
   pra_vale::RosiMovement tractionCommandDir;
   pra_vale::RosiMovement tractionCommandEsq;
   
@@ -163,31 +180,89 @@ void processMap(){
   getInfo(_LEFT, LEFT_X, LEFT_Y, LEFT_SIZE_X, LEFT_SIZE_Y);
   getInfo(_RIGHT, RIGHT_X, RIGHT_Y, RIGHT_SIZE_X, RIGHT_SIZE_Y);
   
-  if(sidesInfo[_FRONT].distance < _MIN_DIST_FRONT && sidesInfo[_FRONT].area >= _MIN_AREA){
+
+
+  //Implementacao da maquina de estado
+  if(sidesInfo[_FRONT].area > _MIN_AREA && sidesInfo[_FRONT].distance < _MIN_DIST_FRONT){
+
+    if(sentido ==_HORARIO){
+      tractionCommandDir.joint_var = _V0 +_KP*(1/(sidesInfo[_FRONT].distance));
+      tractionCommandEsq.joint_var = _V0 -_KP*(1/(sidesInfo[_FRONT].distance));
+    }else{
+      tractionCommandDir.joint_var = _V0 -_KP*(1/(sidesInfo[_FRONT].distance));
+      tractionCommandEsq.joint_var = _V0 +_KP*(1/(sidesInfo[_FRONT].distance));
+    }
+
+    estado = _DESVIA_FRENTE;
+
+    cout << "E: DesviaFr";
+    cout << " | AF: " << sidesInfo[_FRONT].area;
+    cout << " | DF: " << sidesInfo[_FRONT].distance;
+    cout << " | DFY: " << sidesInfo[_FRONT].medY;
+
+  
+
+  }else if(sidesInfo[_RIGHT].medY < _MAX_DIST - 0.2 && sidesInfo[_RIGHT].area > _MIN_AREA/2){
     
-    tractionCommandDir.joint_var = _V0 +_KP*(1/(sidesInfo[_FRONT].distance));
-    tractionCommandEsq.joint_var = _V0 -_KP*(1/(sidesInfo[_FRONT].distance));
-    
-    cout << "AF: " << sidesInfo[_RIGHT].area;
-    cout << " | DF: " << sidesInfo[_RIGHT].distance;
-    cout << " | DFY: " << sidesInfo[_RIGHT].medY;
-    cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+    tractionCommandDir.joint_var = _V0 - _KP*(1/(sidesInfo[_RIGHT].distance));
+    tractionCommandEsq.joint_var = _V0 + _KP*(1/(sidesInfo[_RIGHT].distance));
+    estado = _RECUPERA_DIREITA;
 
-
-  }else if(sidesInfo[_RIGHT].medY < _MAX_DIST && sidesInfo[_RIGHT].area > _MIN_AREA/2){
-    tractionCommandDir.joint_var = -_V0;// -_KP*(1/(_MAX_DIST-sidesInfo[_RIGHT].medY));
-    tractionCommandEsq.joint_var = _V0; //+_KP*(1/(_MAX_DIST-sidesInfo[_RIGHT].medY));
-
-    cout << "AD: " << sidesInfo[_RIGHT].area;
+    cout << "E: RercuDir";
+    cout << " | AD: " << sidesInfo[_RIGHT].area;
     cout << " | DD: " << sidesInfo[_RIGHT].distance;
     cout << " | DDY: " << sidesInfo[_RIGHT].medY;
-    cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+
+
+
+  }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
+
+    tractionCommandDir.joint_var = _V0 +_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/1.5;
+    tractionCommandEsq.joint_var = _V0 -_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/1.5;
+    estado = _SEQUE_DIREITA;
+
+    cout << "E: SegueDir";
+    cout << " | AD: " << sidesInfo[_RIGHT].area;
+    cout << " | DD: " << sidesInfo[_RIGHT].distance;
+    cout << " | DDY: " << sidesInfo[_RIGHT].medY;
+
+
+
+  }else if(sidesInfo[_LEFT].medY < _MAX_DIST - 0.2 && sidesInfo[_LEFT].area > _MIN_AREA/2){
+    
+    tractionCommandDir.joint_var = _V0 + _KP*(1/(sidesInfo[_LEFT].distance));
+    tractionCommandEsq.joint_var = _V0 - _KP*(1/(sidesInfo[_LEFT].distance));
+    estado = _RECUPERA_ESQUERDA;
+
+    cout << "E: RercuEsq";
+    cout << " | AE: " << sidesInfo[_LEFT].area;
+    cout << " | DE: " << sidesInfo[_LEFT].distance;
+    cout << " | DEY: " << sidesInfo[_LEFT].medY;
+
+
+
+  }else if(sidesInfo[_LEFT].area > _MIN_AREA){
+
+    tractionCommandDir.joint_var = _V0 - _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/1.5;
+    tractionCommandEsq.joint_var = _V0 + _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/1.5;
+    estado = _SEGUE_ESQUERDA;
+
+    cout << "E: SegueEsq";
+    cout << " | AE: " << sidesInfo[_LEFT].area;
+    cout << " | DE: " << sidesInfo[_LEFT].distance;
+    cout << " | DEY: " << sidesInfo[_LEFT].medY;
+
 
   }else{
+    
     tractionCommandDir.joint_var = _V0;
     tractionCommandEsq.joint_var = _V0;
-  }
+    estado = _NO_OBSTACLE;
 
+    cout << "E: NormalEt";
+  
+  }
+  cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
 
 
 
@@ -205,7 +280,7 @@ void processMap(){
 }
 
 //desenha o mapa com as informacoes
-void drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
+void drawMap(points_t *pointData, int quant){
 
   int MAX = 255-_ADD_GRAY_SCALE;
   int i=0;
@@ -260,10 +335,6 @@ void drawMap(points_t *pointData, int quant/*, float minX, float minY*/){
 
   Rect rightRect(RIGHT_X, RIGHT_Y, RIGHT_SIZE_X, RIGHT_SIZE_Y);
   rectangle(imgProcessed, rightRect, 100, 1);
-
-  //mostra a imagem original
-  //imshow(windowProcessed, imgProcessed); //mostra a imagem depois de ser processada
-  //waitKey(1);
 
   return;
 
