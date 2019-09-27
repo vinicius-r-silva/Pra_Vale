@@ -7,6 +7,7 @@ from sensor_msgs.msg import Imu
 from math import asin
 from math import acos
 from math import atan2
+from math import pi
 
 def callback(data):
     #print(data)
@@ -26,7 +27,7 @@ def callback(data):
 
     t3 = +2.0 * (qw * qz + qx * qy)
     t4 = +1.0 - 2.0 * (qy * qy + qz * qz)
-    z = atan2(t4, t3)
+    z = atan2(t4, t3) + pi/2
 
     print("x: " + str(x) + ",   y: " + str(y) + ",   z: " + str(z))
 
