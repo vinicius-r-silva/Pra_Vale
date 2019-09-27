@@ -15,8 +15,8 @@ pub = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 
 def callback(data):
     global pub
-    arm_move = [1,0,0]
-    pub.publish(arm_move)
+    arm_move = [10,0,0]
+    pub.publish(data = arm_move)
 
 def listener():
     rospy.init_node('listener', anonymous=True)
