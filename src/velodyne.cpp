@@ -84,16 +84,16 @@ int FRONT_Y = (_MAX_DIST+0.75)*_SCALE;
 
 //retangulo da lateral esquerda
 int LEFT_SIZE_X = 1.0*_SCALE;
-int LEFT_SIZE_Y = 1.5*_SCALE;
+int LEFT_SIZE_Y = 2*_SCALE;
 int LEFT_X = _MAX_DIST*_SCALE+65-LEFT_SIZE_X;
-int LEFT_Y = _MAX_DIST*_SCALE-10;
+int LEFT_Y = _MAX_DIST*_SCALE-25;
 
 
 //retangulo da lateral direita
 int RIGHT_SIZE_X = 1.0*_SCALE;
-int RIGHT_SIZE_Y = 1.5*_SCALE;
+int RIGHT_SIZE_Y = 2*_SCALE;
 int RIGHT_X = _MAX_DIST*_SCALE-65;
-int RIGHT_Y = _MAX_DIST*_SCALE-10;
+int RIGHT_Y = _MAX_DIST*_SCALE-25;
 
 
 //imagens
@@ -111,6 +111,8 @@ Sides_Info_t *sidesInfo;
 pra_vale::RosiMovementArray tractionCommandList;
 
 
+
+
 void getInfo(int SIDE, int frontX, int frontY, int frontSizeX, int frontSizeY){
 
 
@@ -125,8 +127,8 @@ void getInfo(int SIDE, int frontX, int frontY, int frontSizeX, int frontSizeY){
   sidesInfo[SIDE].area = 0;
 
 
-  for(line = FRONT_Y; line < FRONT_Y+FRONT_SIZE_Y; line++){
-    for (column = FRONT_X; column < FRONT_X+FRONT_SIZE_X; column++){
+  for(line = frontY; line < frontY+frontSizeY; line++){
+    for (column = frontX; column < frontX+frontSizeX; column++){
       if(map[line*LENGHT + column] == 255){
         sumX += column;
         sumY += line;
@@ -135,14 +137,11 @@ void getInfo(int SIDE, int frontX, int frontY, int frontSizeX, int frontSizeY){
     }
   }
   
-  if(sidesInfo[SIDE].area >= _MIN_AREA){
-    sidesInfo[SIDE].medX = (sidesInfo[SIDE].area == 0)? 0.0 :(float) sumX/(sidesInfo[SIDE].area*_SCALE);
-    sidesInfo[SIDE].medY = (sidesInfo[SIDE].area == 0)? 0.0 :(float) sumY/(sidesInfo[SIDE].area*_SCALE);
-    sidesInfo[SIDE].distance = (sidesInfo[SIDE].medX == 0 || sidesInfo[SIDE].medY == 0)? 0.0 : 
-    (float) sqrt(pow(sidesInfo[SIDE].medX -_MAX_DIST, 2) + pow(sidesInfo[SIDE].medY -_MAX_DIST, 2));
-  }else{
-    sidesInfo[SIDE].area = 0;
-  }
+
+  sidesInfo[SIDE].medX = (sidesInfo[SIDE].area == 0)? 10 :(float) sumX/(sidesInfo[SIDE].area*_SCALE);
+  sidesInfo[SIDE].medY = (sidesInfo[SIDE].area == 0)? 10 :(float) sumY/(sidesInfo[SIDE].area*_SCALE);
+  sidesInfo[SIDE].distance = (sidesInfo[SIDE].medX == 10 || sidesInfo[SIDE].medY == 10)? 0.0 : 
+  (float) sqrt(pow(sidesInfo[SIDE].medX -_MAX_DIST, 2) + pow(sidesInfo[SIDE].medY -_MAX_DIST, 2));
 
 }
 
@@ -164,36 +163,43 @@ void processMap(){
   getInfo(_LEFT, LEFT_X, LEFT_Y, LEFT_SIZE_X, LEFT_SIZE_Y);
   getInfo(_RIGHT, RIGHT_X, RIGHT_Y, RIGHT_SIZE_X, RIGHT_SIZE_Y);
   
-  
-
   if(sidesInfo[_FRONT].distance < _MIN_DIST_FRONT && sidesInfo[_FRONT].area >= _MIN_AREA){
-    tractionCommandDir.nodeID = 1;
+    
     tractionCommandDir.joint_var = _V0 +_KP*(1/(sidesInfo[_FRONT].distance));
-    tractionCommandEsq.nodeID = 3;
     tractionCommandEsq.joint_var = _V0 -_KP*(1/(sidesInfo[_FRONT].distance));
-  }else if( ){
+    
+    cout << "AF: " << sidesInfo[_RIGHT].area;
+    cout << " | DF: " << sidesInfo[_RIGHT].distance;
+    cout << " | DFY: " << sidesInfo[_RIGHT].medY;
+    cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+
+
+  }else if(sidesInfo[_RIGHT].medY < _MAX_DIST && sidesInfo[_RIGHT].area > _MIN_AREA/2){
+    tractionCommandDir.joint_var = -_V0;// -_KP*(1/(_MAX_DIST-sidesInfo[_RIGHT].medY));
+    tractionCommandEsq.joint_var = _V0; //+_KP*(1/(_MAX_DIST-sidesInfo[_RIGHT].medY));
+
+    cout << "AD: " << sidesInfo[_RIGHT].area;
+    cout << " | DD: " << sidesInfo[_RIGHT].distance;
+    cout << " | DDY: " << sidesInfo[_RIGHT].medY;
+    cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
 
   }else{
-    tractionCommandDir.nodeID = 1;
     tractionCommandDir.joint_var = _V0;
-
-    tractionCommandEsq.nodeID = 3;
     tractionCommandEsq.joint_var = _V0;
   }
 
 
 
 
+  tractionCommandDir.nodeID = 1;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
   tractionCommandDir.nodeID = 2;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
+  
+  tractionCommandEsq.nodeID = 3;
   tractionCommandList.movement_array.push_back(tractionCommandEsq);
   tractionCommandEsq.nodeID = 4;
   tractionCommandList.movement_array.push_back(tractionCommandEsq);
-
-  cout << "Area: " << sidesInfo[_FRONT].area;
-  cout << " | Distancia: " << sidesInfo[_FRONT].distance;
-  cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
 
   return;
 }
