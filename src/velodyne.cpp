@@ -27,11 +27,11 @@
 
 
 //controle do robo
-#define _V0 3
-#define _KP 4
+#define _V0 2.5
+#define _KP 3.5
 #define _MIN_DIST_FRONT 2.5
-#define _MAX_DIST_SEGUE_PAREDE 2.5
-#define _DIST_SEGUE_PAREDE 2
+//#define _MAX_DIST_SEGUE_PAREDE 2.5
+#define _DIST_SEGUE_PAREDE 1.8
 
 
 //maquina de estado
@@ -92,7 +92,7 @@ const int ROBOT_SIZE_Y = 10;
 
 
 //retangulo da frente
-const int FRONT_SIZE_X = 2.2*_SCALE;
+const int FRONT_SIZE_X = 2.0*_SCALE;
 const int FRONT_SIZE_Y = 1.5*_SCALE;
 const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
 const int FRONT_Y = (_MAX_DIST+0.85)*_SCALE;
@@ -217,8 +217,8 @@ void processMap(){
 
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
-    tractionCommandDir.joint_var = _V0 +_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/1.5;
-    tractionCommandEsq.joint_var = _V0 -_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/1.5;
+    tractionCommandDir.joint_var = _V0 +_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/3.5;
+    tractionCommandEsq.joint_var = _V0 -_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].distance)/3.5;
     estado = _SEQUE_DIREITA;
 
     cout << "E: SegueDir";
@@ -243,8 +243,8 @@ void processMap(){
 
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
-    tractionCommandDir.joint_var = _V0 - _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/1.5;
-    tractionCommandEsq.joint_var = _V0 + _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/1.5;
+    tractionCommandDir.joint_var = _V0 - _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/3.5;
+    tractionCommandEsq.joint_var = _V0 + _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].distance)/3.5;
     estado = _SEGUE_ESQUERDA;
 
     cout << "E: SegueEsq";
@@ -355,7 +355,7 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
   geometry_msgs::Point32 pointInput;  
 
 
-  for(int i = 0 ; i < out_pointcloud.points.size(); ++i){
+  for(int i = 0 ; i < out_pointcloud.points.size() && i < _QUANT_POINTS; ++i){
     
     pointInput = out_pointcloud.points[i];
 
