@@ -5,17 +5,16 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include "pra_vale/RosiMovementArray.h"
 
+
 //opencv:
 #include <opencv2/opencv.hpp>
 
 
 //c++:
 #include <iostream>
-#include <cstdlib>
-//#include <math.h>
 
 
-//defines----------------------------
+//defines-----------------------------
 
 //Analise do veloyne:
 //#define _QUANT_POINTS 150000 //quantidade de pontos processados pelo velodyne
@@ -57,7 +56,7 @@
 #define _MIN_AREA 25
 
 
-//namespaces-------------------------
+//namespaces---------------------------
 using namespace cv;
 using namespace std;
 
@@ -77,8 +76,9 @@ typedef struct{
   float distance;
 }Sides_Info_t;
 
-//variaveis globais------------------
 
+//variaveis globais------------------
+ros::Publisher speedPub;
 
 //dimensoes da tela
 const int HEIGHT = 2*_MAX_DIST*_SCALE;
@@ -121,8 +121,6 @@ bool sentido = _HORARIO;
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
 Mat imgProcessed(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem depois do processamento do opencv
 
-//vetor x, y
-//points_t *pointData;
 
 //informacao dos lados
 Sides_Info_t *sidesInfo;
@@ -147,15 +145,15 @@ void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
   sidesInfo[SIDE].area = 0;
 
 
-    for (line = Y; line < Y + SizeY; line++){
-        for (column = X; column < X + SizeX; column++){
-            if (map[line * LENGHT + column] == 255){
-                sumX += column;
-                sumY += line;
-                (sidesInfo[SIDE].area)++;
-            }
-        }
-    }
+  for (line = Y; line < Y + SizeY; line++){
+      for (column = X; column < X + SizeX; column++){
+          if (map[line * LENGHT + column] == 255){
+              sumX += column;
+              sumY += line;
+              (sidesInfo[SIDE].area)++;
+          }
+      }
+  }
 
   sidesInfo[SIDE].medX = (sidesInfo[SIDE].area == 0) ? 10 : (sumX/(sidesInfo[SIDE].area*_SCALE)  - _MAX_DIST);
   if(sidesInfo[SIDE].medX < 0) sidesInfo[SIDE].medX = -sidesInfo[SIDE].medX;
@@ -172,6 +170,7 @@ void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
 void processMap(){
 
   //imgProcessed e sidesInfo são variaveis globais
+
   uchar *map = imgProcessed.data;
 
   pra_vale::RosiMovement tractionCommandDir;
@@ -186,6 +185,8 @@ void processMap(){
 
 
   //Implementacao da maquina de estado
+
+  //desvia do obstaculo na frente
   if(sidesInfo[_FRONT].area > _MIN_AREA && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(sentido ==_HORARIO){
@@ -204,7 +205,7 @@ void processMap(){
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
   
-
+  //Recupera o trajeto da direita
   }else if(sidesInfo[_RIGHT].medY < -0.2 && sidesInfo[_RIGHT].area > _MIN_AREA/2){
     
     tractionCommandDir.joint_var = (float) _V0 - _KP*(1/(sidesInfo[_RIGHT].medX));
@@ -217,7 +218,7 @@ void processMap(){
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
-
+  //segue a parede da direita
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
     tractionCommandDir.joint_var = (float) _V0 +_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].medX)/2.5;
@@ -230,7 +231,7 @@ void processMap(){
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
-
+  //Recupera o trajeto da esquerda
   }else if(sidesInfo[_LEFT].medY < -0.2 && sidesInfo[_LEFT].area > _MIN_AREA/2){
     
     tractionCommandDir.joint_var = (float) _V0 + _KP*(1/(sidesInfo[_LEFT].medX));
@@ -243,7 +244,7 @@ void processMap(){
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
-
+  //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
     tractionCommandDir.joint_var = (float) _V0 - _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].medX)/2.5;
@@ -256,6 +257,7 @@ void processMap(){
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
+  //segue reto caso nao tenha nada
   }else{
     
     tractionCommandDir.joint_var = _V0;
@@ -281,6 +283,7 @@ void processMap(){
   cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
 
 
+  //altera o vetor das velocidades das 'joints'
   tractionCommandDir.nodeID = 1;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
   tractionCommandDir.nodeID = 2;
@@ -295,7 +298,6 @@ void processMap(){
 }
 
 
-
 //remove os pontos nao necessarios
 bool isImportant(geometry_msgs::Point32 pointInput){
   return pointInput.z > _MIN_HIGHT && pointInput.x < _MAX_DIST && pointInput.x > _MAX_DIST_NEG 
@@ -304,10 +306,16 @@ bool isImportant(geometry_msgs::Point32 pointInput){
 
 
 
-bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
+void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
+  
   int MAX = 255-_ADD_GRAY_SCALE;
-  int i=0;
+
+  //converte o publisher
+  sensor_msgs::PointCloud2 input_pointcloud;
+  sensor_msgs::PointCloud out_pointcloud;
+  sensor_msgs::convertPointCloud2ToPointCloud(*msg, out_pointcloud);
+
 
   geometry_msgs::Point32 pointInput;
 
@@ -317,20 +325,21 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
   imgProcessed = Mat::zeros(imgProcessed.size(), imgProcessed.type());
 
   
+  //inicializa as janelas
   String windowOriginal = "Original"; 
   String windowProcessed = "Threshold";
-  namedWindow(windowOriginal); //cria a janela
-  namedWindow(windowProcessed); 
+  namedWindow(windowOriginal);
+  namedWindow(windowProcessed);
 
 
-  for(int i = 0 ; i < out_pointcloud.points.size() /*&& i < _QUANT_POINTS*/; ++i){
+  for(register int i = 0 ; i < out_pointcloud.points.size(); ++i){
     
     pointInput = out_pointcloud.points[i];
 
     //remove os dados que nao sao importantes
     if(isImportant(pointInput)){
 
-        //x é vertical
+      //x é vertical
       pointInput.x += _MAX_DIST;
       pointInput.x *= _SCALE;
       if(pointInput.x > HEIGHT)
@@ -349,15 +358,19 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
     }
   }
 
-
+  //remove os que estao com uma intensidade menor
   inRange(img,_MIN_GRAY_S,Scalar(255),imgProcessed);
 
+  //remove as linhas
   erode(imgProcessed, imgProcessed, getStructuringElement(MORPH_ELLIPSE, Size(1, 3)));  
   
   
+  //desenha o retangulo que representa o robo
   Rect robotRect(ROBOT_X, ROBOT_Y, ROBOT_SIZE_X, ROBOT_SIZE_Y);
   rectangle(imgProcessed,robotRect,100,7);
 
+
+  //desenha os retangulos das areas anlisadas pelo codigo
   Rect frontRect(FRONT_X, FRONT_Y, FRONT_SIZE_X, FRONT_SIZE_Y);
   rectangle(imgProcessed, frontRect, 100, 1);
   
@@ -368,56 +381,44 @@ bool dataProcessing(const sensor_msgs::PointCloud out_pointcloud){
   rectangle(imgProcessed, rightRect, 100, 1);
 
 
-  //desenha o mapa
-  //drawMap(pointData, quant-1);
-
+  //faz o processamento para controlar as velocidades do motor
   processMap();
   
 
   imshow("Threshold", imgProcessed);
   imshow("Original", img);
   waitKey(1);
-}
 
 
-void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-
-  //converte o publisher
-  sensor_msgs::PointCloud2 input_pointcloud;
-  sensor_msgs::PointCloud out_pointcloud;
-  sensor_msgs::convertPointCloud2ToPointCloud(*msg, out_pointcloud);
-
-
-  dataProcessing(out_pointcloud);
+  speedPub.publish(tractionCommandList);
+  
+  //limpa o vetor
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();  
 
 }
 
 
 
 int main(int argc, char **argv){
-  //inicia o node
-
-  //pointData = (points_t*) malloc(sizeof(points_t)*_QUANT_POINTS);
-  sidesInfo = (Sides_Info_t*) malloc(sizeof(Sides_Info_t)*3);
   
+  sidesInfo = (Sides_Info_t*) malloc(sizeof(Sides_Info_t)*3);
+
+  //inicia o Ros  
   ros::init(argc, argv, "velodyme");
 
   ros::NodeHandle n;
 
   //le o publisher do vrep
   ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
-  ros::Publisher speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
+  speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
 
   ros::Rate loop_rate(1);
  
-
-  while (ros::ok()){
-    speedPub.publish(tractionCommandList);
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
-
-  //ros::spin();
+  ros::spin();
+  
 
   
   return 0;
