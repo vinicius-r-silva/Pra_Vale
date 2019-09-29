@@ -7,8 +7,7 @@ from math import sqrt
 from math import atan2
 from math import acos
 from math import asin
-from std_msgs.msg import Bool
-from std_msgs.msg import Int8
+#from std_msgs.msg import Int8
 from std_msgs.msg import Int32
 from sensor_msgs.msg import Imu
 #from std_msgs.msg import Int32MultiArray
@@ -21,7 +20,7 @@ arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints
 
 #enable hokuyo
 #hokuyo_publisher = rospy.Publisher('/pra_vale/enable_hokuyo', Int8, queue_size=10)
-hokuyo_enabled = 0
+#hokuyo_enabled = 0
 
 #arm sizes
 probe_lenght = 71 #279
@@ -116,11 +115,15 @@ def cinematicaInversa():
         last_x = x
         last_y = y
         last_z = z
+
+        #print the joint angles 
         print(str(t0) + ", " + str(t1) + ", " + str(t2) + ", " + str(t3) + ", " + str(t4) + ", " + str(t5))
         return [t0, t1, t2, t3, t4, t5]
     
     except:
         print("erro: posicao fora do alcance do braco robotico")
+
+        #change to the last valid position
         x = last_x
         y = last_y
         z = last_z

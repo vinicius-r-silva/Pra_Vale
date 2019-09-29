@@ -1,29 +1,31 @@
 #!/usr/bin/env python
-from cv_bridge import CvBridge
-import numpy as np
-import rospy
+
 import cv2
 import time
+import rospy
+import numpy as np
+from cv_bridge import CvBridge
 
-from std_msgs.msg import Bool
 from std_msgs.msg import Int32
 from sensor_msgs.msg import Image
-from std_msgs.msg import Int32MultiArray
+#from std_msgs.msg import Int32MultiArray
 
 
-enabled = True
+#-------------------GLOBAL VARIABLES----------------# 
+#enabled = True
+
+#publish joint values to arm.py
 pub = rospy.Publisher('/pra_vale/cam_found_fire', Int32, queue_size=10)
 
-
-def callback(data):
-    global enabled
-    if(not enabled):
-        return
-
+#ur5Cam Callback
+#find fire in the given image and calculates the x,y coordinates of the fire
+def ur5_callback(data):
     global pub
-    #arm_move = [10,0,0]
-    #pub.publish(data = arm_move)
-     
+    # global enabled
+    # if(not enabled):
+    #     return
+
+    #get the image
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
     mask=cv2.inRange(frame,(0,175,210),(64,255,255))
@@ -60,21 +62,21 @@ def callback(data):
         elif(x > 3):
             x = x/2
             
-        #arm_move = [x,0,0]
+        #publishes to the arm node
         pub.publish(data = x)
 
 
-def findFire_enabled(data):
-    global enabled
-    enabled = data.data
-    print("5cam is: " + str(enabled))
+# def findFire_enabled(data):
+#     global enabled
+#     enabled = data.data
+#     print("5cam is: " + str(enabled))
 
 
 def listener():
     rospy.init_node('findFire', anonymous=True)
 
-    rospy.Subscriber("/sensor/ur5toolCam", Image, callback)
-    rospy.Subscriber("/pra_vale/findFire_enabled", Bool, findFire_enabled)
+    rospy.Subscriber("/sensor/ur5toolCam", Image, ur5_callback)
+    #rospy.Subscriber("/pra_vale/findFire_enabled", Bool, findFire_enabled)
 
     rospy.spin()
 
