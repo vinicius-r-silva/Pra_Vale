@@ -211,5 +211,7 @@ Add one more window and run the following command:
 roslaunch pra_vale rosi.launch
 ```
 
+In the VREP, start the simulation and it is done.
+
 
 
