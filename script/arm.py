@@ -184,22 +184,8 @@ def arm_tilt(data):
 
 def cam_found_fire(data):
     x_data = data.data
-    global hokuyo_enabled
-    #print("\n\ncam_found_fire\n\n")
-
-    if(hokuyo_enabled or abs(x_data) < 1):
-        
-        if(hokuyo_enabled == 0):
-            hokuyo_enabled = 1
-        if(hokuyo_enabled < 3): 
-            hokuyo_publisher.publish(data = hokuyo_enabled)
-            hokuyo_enabled += 1
-
-       
-
-    else:
-        global x
-        x += x_data
+    global x
+    x += x_data
 
 
 def listener():
