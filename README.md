@@ -193,61 +193,23 @@ catkin build
 
 With that, the repository setting is completed. 
 
+# 7. Running the program
+To run the program, it is necessary to do as listed below:
 
-``` 
-``` 
+Open a terminal window and execute the roscore:
+```
+roscore
+```
 
+Add a new window in the terminal and open the vrep in the challenge scenario:
+```
+vrep $ROS_CATKIN_WS/src/pra_vale/vrep_content/challenge_scenario.ttt
+```
 
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
+Add one more window and run the following command:
+```
+roslaunch pra_vale rosi.launch
+```
 
 
 
