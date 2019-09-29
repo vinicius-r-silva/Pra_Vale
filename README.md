@@ -32,33 +32,21 @@ http://wiki.ros.org/melodic/Installation/Ubuntu
 Caso queira somente copiar e colar os comandos necessários, sem saber os detalhes, pode seguir os passos abaixo:
 ``` 
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-``` 
-
-```
 sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 ``` 
 
 ``` 
 sudo apt update
-``` 
-
-``` 
 sudo apt install ros-melodic-desktop-full
 ``` 
 
 ``` 
 sudo rosdep init
-``` 
-
-``` 
 rosdep update
 ``` 
 
 ``` 
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
-``` 
-
-``` 
 source ~/.bashrc
 ``` 
 
@@ -77,32 +65,152 @@ sudo apt-get install ros-melodic-catkin python-catkin-tools
 
 ``` 
 cd ~
-``` 
-
-``` 
 mkdir -p ~/catkin_ws/src
-``` 
-
-``` 
 cd ~/catkin_ws/
 ``` 
 
 ``` 
 catkin_make
-``` 
-
-``` 
 source devel/setup.bash
-``` 
-
-
-``` 
 catkin init
 ``` 
 
+# 3. Installing V-REP
+**3.1** Download **V-REP PRO EDU V3.6.2 rev0** from the Coppelia Robotics website: http://www.coppeliarobotics.com/downloads.html
+
+
+**3.2** Unzip it (preferentially) to your **home** folder and rename the folder as `vrep`.
+
+
+**3.3** Add V-REP folder location to your `.bashrc`, an alias to run it, and source the `.bashrc` again: 
+```
+echo "export VREP_ROOT='<path_to_your_vrep_folder>'" >> $HOME/.bashrc
+echo "alias vrep=$VREP_ROOT/vrep.sh" >> ~/.bashrc
+source $HOME/.bashrc
+```
+
+# 4. Installing competition base code
+The detailed explanation about how to install the ROSI challenge base code is in the following link:https://github.com/filRocha/rosiChallenge-sbai2019
+
+In case you only want the terminal commands, they are listed below:
+```
+echo "export ROS_CATKIN_WS='<path_to_your_catkin_ws_folder>'" >> $HOME/.bashrc
+echo "source $ROS_CATKIN_WS/devel/setup.bash" >> $HOME/.bashrc
+source $HOME/.bashrc
+```
+``` 
+cd ~/catkin_ws/src
+``` 
+
+``` 
+git clone https://github.com/filRocha/sbai2019-rosiDefy rosi_defy
+``` 
+
+``` 
+sudo apt install python-catkin-tools xsltproc ros-$ROS_DISTRO-brics-actuator ros-$ROS_DISTRO-tf2-sensor-msgs ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-joint-state-publisher
+``` 
+
+``` 
+cd $ROS_CATKIN_WS
+catkin clean
+catkin build
+source $HOME/.bashrc
+``` 
+
+``` 
+echo -e "rosi_defy/ManipulatorJoints\nrosi_defy/RosiMovement\nrosi_defy/RosiMovementArray\nrosi_defy/HokuyoReading" >> $ROS_CATKIN_WS/src/vrep_ros_interface/meta/messages.txt
+``` 
+
+# 4.1 Set base code dependencies:
+Add "<depend>rosi_defy</depend>" to 'catkin_ws/src/vrep_ros_interface/package.xml'
+
+Add `rosi_defy` package dependence on the `catkin_ws/src/vrep_ros_interface/CMakeLists.txt`:
+```
+set(PKG_DEPS
+  ... (many many other packages)
+  rosi_defy
+)
+```
+
+``` 
+cd ~/catkin_ws
+catkin build
+``` 
+
+``` 
+cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosInterface.so $VREP_ROOT
+cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosVelodyne.so $VREP_ROOT
+``` 
+
+# 5. Cloning Pra Vale submission
+``` 
+
+``` 
+
 
 ``` 
 ``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
+
+``` 
+``` 
+
 
 ``` 
 ``` 
