@@ -25,9 +25,87 @@ Este respositório consiste da mesma estruta de um pacote ROS. A organização d
 # Instalação
 Toda a programção foi feita no SO **Ubuntu 18.2**, junto com o **ROS Melodic** e **VREP 3.6.2 (rev.0)**.
 
-# Instalando ROS Melodic
+# 1. Instalando ROS Melodic
 A explicação detalhada sobre como instalar o ROS Melodic pode ser encontrada no seguinte link:
 http://wiki.ros.org/melodic/Installation/Ubuntu
 
-Caso queira somente copiar e colar os comandos necessários, pode seguir os passos abaixo:
+Caso queira somente copiar e colar os comandos necessários, sem saber os detalhes, pode seguir os passos abaixo:
+``` 
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+``` 
+
+```
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+``` 
+
+``` 
+sudo apt update
+``` 
+
+``` 
+sudo apt install ros-melodic-desktop-full
+``` 
+
+``` 
+sudo rosdep init
+``` 
+
+``` 
+rosdep update
+``` 
+
+``` 
+echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+``` 
+
+``` 
+source ~/.bashrc
+``` 
+
+``` 
+sudo apt install python-rosinstall python-rosinstall-generator python-wstool build-essential
+``` 
+
+# 2. Configurando Catkin Workspace
+Do mesmo modo que o primeiro itêm, a explicação detelhada de como configurar o workspace pode ser encontrado no seguinte link:
+http://wiki.ros.org/catkin/Tutorials/create_a_workspace
+
+Caso queira somente os comandos, eles estão listados abaixo:
+``` 
+sudo apt-get install ros-melodic-catkin python-catkin-tools
+``` 
+
+``` 
+cd ~
+``` 
+
+``` 
+mkdir -p ~/catkin_ws/src
+``` 
+
+``` 
+cd ~/catkin_ws/
+``` 
+
+``` 
+catkin_make
+``` 
+
+``` 
+source devel/setup.bash
+``` 
+
+
+``` 
+catkin init
+``` 
+
+
+``` 
+``` 
+
+``` 
+``` 
+
+
 
