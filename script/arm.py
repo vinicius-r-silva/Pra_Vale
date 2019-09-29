@@ -10,7 +10,7 @@ from math import asin
 #from std_msgs.msg import Int8
 from std_msgs.msg import Int32
 from sensor_msgs.msg import Imu
-#from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32MultiArray
 from rosi_defy.msg import ManipulatorJoints
 
 
@@ -212,7 +212,7 @@ def listener():
     rospy.init_node('arm', anonymous=True)
     
     #rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
-    #rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
+    rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
     rospy.Subscriber('/pra_vale/cam_found_fire', Int32, cam_found_fire)
     rospy.Subscriber("/sensor/imu", Imu, arm_tilt)
 
