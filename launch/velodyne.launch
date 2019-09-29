@@ -1,6 +1,8 @@
 <launch>
 
-	<node name="velodyne" pkg="pra_vale" type="velodyne" respawn="true"/>
+	<node name="Velodyne" pkg="pra_vale" type="velodyne" respawn="true"/>
+	<node name="Camera" pkg="pra_vale" type="my_5cam.py" output="screen"/>
+	<node name="Arm" pkg="pra_vale" type="arm.py" output="screen"/>
 
 	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
 
