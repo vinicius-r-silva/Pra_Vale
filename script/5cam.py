@@ -14,7 +14,7 @@ fps = 0
 def callback(data):
 	global start_time
 	#rospy.loginfo(rospy.get_caller_id())
-	print("\n\n")
+#	print("\n\n")
 #	print(data.width)
 #	print("\n#\n")
 #	print(data.height)
@@ -32,6 +32,9 @@ def callback(data):
 	# Find contours:
 	contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+	if (len(contours) == 0):
+		return
+
 	fire=max(contours,key=cv2.contourArea)
 	
 	if(cv2.contourArea(fire)>100):
@@ -43,9 +46,11 @@ def callback(data):
 
 		# Print center (debugging):
 		
-		print("Area : '{}'".format(cv2.contourArea(fire)))
-		print("center X : '{}'".format(round(M['m10'] / M['m00'])))
-		print("center Y : '{}'".format(round(M['m01'] / M['m00'])))
+		x = M['m10'] / M['m00']
+		print(360 - x)
+		#print("Area : '{}'".format(cv2.contourArea(fire)))
+		#print("center X : '{}'".format(round(M['m10'] / M['m00'])))
+		#print("center Y : '{}'".format(round(M['m01'] / M['m00'])))
 
 
 
@@ -54,8 +59,8 @@ def callback(data):
 	cv2.imshow("Threshold",mask)
 	cv2.imshow("Camera",frame)
 
-	cv2.moveWindow('Camera',1080,0)
-	cv2.moveWindow('Threshold',1080,535)
+	#cv2.moveWindow('Camera',1080,0)
+	#cv2.moveWindow('Threshold',1080,535)
 	#cv2.imwrite("Camera.jpg",cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
 
 	end_time = time.time()

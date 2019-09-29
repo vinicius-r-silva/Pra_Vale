@@ -12,9 +12,15 @@ from math import sqrt
 from math import atan2
 from math import acos
 from math import asin
+from std_msgs.msg import Bool
+from std_msgs.msg import Int8
+from std_msgs.msg import Int32
 
 #-------------------CONST----------------#    
 pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
+hokuyo_publisher = rospy.Publisher('/pra_vale/enable_hokuyo', Int8, queue_size=10)
+
+hokuyo_enabled = 0
 
 probe_lenght = 71 #279
 d0 = 275 #367
@@ -28,8 +34,8 @@ l2_pow = l2*l2
 
 
 x = 400
-y = 400
-z = 700
+y = -150
+z = 600
 
 last_x = x
 last_y = y
@@ -55,8 +61,8 @@ def cinematicaInversa():
     print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     try:
-        x_pow = x*x
-        y_pow = y*y
+        #x_pow = x*x
+        #y_pow = y*y
         #z_pow = z*z
 
         x_const = x - d0
@@ -176,16 +182,44 @@ def arm_tilt(data):
     pos = cinematicaInversa()
     pub.publish(joint_variable = pos)
 
+def cam_found_fire(data):
+    x_data = data.data
+    global hokuyo_enabled
+    #print("\n\ncam_found_fire\n\n")
+
+    if(hokuyo_enabled or abs(x_data) < 1):
+        
+        if(hokuyo_enabled == 0):
+            hokuyo_enabled = 1
+        if(hokuyo_enabled < 3): 
+            hokuyo_publisher.publish(data = hokuyo_enabled)
+            hokuyo_enabled += 1
+
+       
+
+    else:
+        global x
+        x += x_data
+
 
 def listener():
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('arm', anonymous=True)
     
     rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
     rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
+    rospy.Subscriber('/pra_vale/cam_found_fire', Int32, cam_found_fire)
     #rospy.Subscriber('/pra_vale/arm_tilt',Int32MultiArray , arm_tilt)
     rospy.Subscriber("/sensor/imu", Imu, arm_tilt)
 
+    #pub = rospy.Publisher()
+    pubb = rospy.Publisher('/pra_vale/findFire_enabled', Bool, queue_size=10)
+
     rospy.spin()
+    #pubb.publish(data = False)
+    #rospy.sleep(3)
+    #pubb.publish(data = True)
+
+
 
     # node_sleep_rate = rospy.Rate(10)
     # while not rospy.is_shutdown():    
