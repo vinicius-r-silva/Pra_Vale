@@ -15,7 +15,9 @@ This repository consists in the same structure as an ROS package. The folders ar
 
 - `resources` - Contains the competition's rules and banner
 
-- `script` - Team's codes made to processing the data from simulation and robot's control
+- `script` - Team's codes in python made to processing the data from simulation and robot's control
+
+- `src` - Contains the C++ code to data processing of Velodyne  
 
 - `urdf` - Contains the ROSI robot URDF model
 
@@ -29,7 +31,7 @@ The codes were programming in the **Ubuntu 18.2** SO, with the **ROS Melodic** a
 The detailed explanation on how to install ROS Melodic can be found in the follow link:
 http://wiki.ros.org/melodic/Installation/Ubuntu
 
-If you want only copy and pase the required commands, without knowing the details, follow the steps below:
+If you want only copy and paste the required commands, without knowing the details, follow the steps below:
 ``` 
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
@@ -58,7 +60,7 @@ sudo apt install python-rosinstall python-rosinstall-generator python-wstool bui
 In the same way as the first item, the detailed explanation on how to configure the workspace can be found in the follow link:
 http://wiki.ros.org/catkin/Tutorials/create_a_workspace
 
-If you want only copy and pase the required commands, follow the steps below:
+If you want only copy and paste the required commands, follow the steps below:
 ``` 
 sudo apt-get install ros-melodic-catkin python-catkin-tools
 ``` 
@@ -89,8 +91,15 @@ echo "alias vrep=$VREP_ROOT/vrep.sh" >> ~/.bashrc
 source $HOME/.bashrc
 ```
 
+**3.4** Test the V-REP functionality by running directly on your terminal the following command:
+
+```
+vrep
+```
+
 # 4. Installing competition base code
-The detailed explanation about how to install the ROSI challenge base code is in the following link:https://github.com/filRocha/rosiChallenge-sbai2019
+The detailed explanation about how to install the ROSI challenge base code is in the following link:
+https://github.com/filRocha/rosiChallenge-sbai2019
 
 In case you only want the terminal commands, they are listed below:
 ```
@@ -99,13 +108,15 @@ echo "source $ROS_CATKIN_WS/devel/setup.bash" >> $HOME/.bashrc
 source $HOME/.bashrc
 ```
 ``` 
-cd ~/catkin_ws/src
-``` 
-
-``` 
+cd ~/catkin_ws/src/
 git clone https://github.com/filRocha/sbai2019-rosiDefy rosi_defy
 ``` 
 
+```
+cd $ROS_CATKIN_WS/src/
+git clone --recursive https://github.com/CoppeliaRobotics/v_repExtRosInterface.git vrep_ros_interface
+git clone https://github.com/filRocha/vrep_plugin_velodyne.git
+```
 ``` 
 sudo apt install python-catkin-tools xsltproc ros-$ROS_DISTRO-brics-actuator ros-$ROS_DISTRO-tf2-sensor-msgs ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-joint-state-publisher
 ``` 
@@ -142,9 +153,9 @@ cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosInterface.so $VREP_ROOT
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosVelodyne.so $VREP_ROOT
 ``` 
 # 5. Checking dependencies
-Before clone the team's repository from git, it is necessary to check if some dependencies is updated in your system.
+Before cloning the team's repository from git, it is necessary to check if some dependencies are updated in your system.
 
-The follow commands update the OpenCV libraries in your computer to enable python and C++ files
+The following commands update the OpenCV libraries in your computer to enable python and C++ files
 
 ```
 pip install opencv-python
