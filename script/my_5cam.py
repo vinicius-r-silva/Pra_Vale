@@ -28,27 +28,31 @@ def ur5_callback(data):
     #get the image
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
+
+    #Calculates RGB threshold to find fire
     mask=cv2.inRange(frame,(0,175,210),(64,255,255))
     
-	# Find contours:
+    # Find contours:
     contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if (len(contours) == 0):
         return
+    #Get biggest object found
     fire=max(contours,key=cv2.contourArea)
     
+    #Check size of object
     if(cv2.contourArea(fire)>100):
-		# Draw contours:
+		# Draw contour:
         cv2.drawContours(frame, [fire], 0, (0, 0, 255), 3)
 
 		# Calculate image moments of the detected contour
         M = cv2.moments(fire)
 
-		# Print center (debugging):
+		# Print center:
         x = M['m10'] / M['m00']
-        cv2.line(frame, (320,0), (320, 480), (255,0,0), 1)
-        cv2.line(frame, ((int)(x),0), ((int)(x), 480), (0,255,0), 1)
+        cv2.line(frame, (frame.shape[1]/2,0), (frame.shape[1]/2, frame.shape[0]), (255,0,0), 1)
+        cv2.line(frame, ((int)(x),0), ((int)(x), frame.shape[0]), (0,255,0), 1)
 
-        x = 320 - x
+        x = frame.shape[1]/2 - x
         print(x)
         
         #cv2.imshow("Threshold",mask)
