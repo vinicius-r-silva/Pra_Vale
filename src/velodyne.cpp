@@ -17,7 +17,6 @@
 //defines-----------------------------
 
 //Analise do veloyne:
-//#define _QUANT_POINTS 150000 //quantidade de pontos processados pelo velodyne
 #define _MIN_HIGHT -10 //altura minima para capturar dados do velodyne
 #define _SCALE  40 //aumenta a resolucao dos dados do velodyne
 #define _ADD_GRAY_SCALE 10 //deixa mais definido quais tem mais pontos em z
@@ -27,11 +26,11 @@
 
 
 //controle do robo
-#define _V0 2.2
-#define _KP 4.0
-#define _MAX_SPEED 4.2
-#define _MIN_DIST_FRONT 2.5
-#define _DIST_SEGUE_PAREDE 2.3
+#define _V0 2.2 //velocidade do robo
+#define _KP 4.0 //constante para o PID
+#define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
+#define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
+#define _DIST_SEGUE_PAREDE 2.3 //distancia ideal para seguir a parede
 
 
 //maquina de estado
@@ -45,28 +44,21 @@
 #define _ANTI_HORARIO false
 
 
-
-
 //informacoes da struct
 #define _FRONT 0
 #define _LEFT 1
 #define _RIGHT 2
 
+
 //processamento da imagem
 #define _MIN_AREA 25
+#define _MIN_AREA_REC 15
 
 
 //namespaces---------------------------
 using namespace cv;
 using namespace std;
 
-
-
-//struct para os pontos do velodyne
-typedef struct{
-  float x;
-  float y;
-}points_t;
 
 
 typedef struct{
@@ -79,6 +71,7 @@ typedef struct{
 
 //variaveis globais------------------
 ros::Publisher speedPub;
+
 
 //dimensoes da tela
 const int HEIGHT = 2*_MAX_DIST*_SCALE;
@@ -155,13 +148,14 @@ void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
       }
   }
 
-  sidesInfo[SIDE].medX = (sidesInfo[SIDE].area == 0) ? 10 : (sumX/(sidesInfo[SIDE].area*_SCALE)  - _MAX_DIST);
+  
+  sidesInfo[SIDE].medX = (sidesInfo[SIDE].area < _MIN_AREA_REC) ? 10 : (sumX/(sidesInfo[SIDE].area*_SCALE)  - _MAX_DIST);
   if(sidesInfo[SIDE].medX < 0) sidesInfo[SIDE].medX = -sidesInfo[SIDE].medX;
 
-  sidesInfo[SIDE].medY = (sidesInfo[SIDE].area == 0) ? 10 : sumY/(sidesInfo[SIDE].area*_SCALE)  - _MAX_DIST;
+  sidesInfo[SIDE].medY = (sidesInfo[SIDE].area < _MIN_AREA_REC) ? 10 : sumY/(sidesInfo[SIDE].area*_SCALE)  - _MAX_DIST;
   sidesInfo[SIDE].distance = (sidesInfo[SIDE].medX == 10 || sidesInfo[SIDE].medY == 10) ? 10 : 
   (float) sqrt(pow(sidesInfo[SIDE].medX, 2) + pow(sidesInfo[SIDE].medY, 2));
-
+  
 }
 
 
@@ -172,6 +166,7 @@ void processMap(){
   //imgProcessed e sidesInfo são variaveis globais
 
   uchar *map = imgProcessed.data;
+  float erro;
 
   pra_vale::RosiMovement tractionCommandDir;
   pra_vale::RosiMovement tractionCommandEsq;
@@ -187,15 +182,13 @@ void processMap(){
   //Implementacao da maquina de estado
 
   //desvia do obstaculo na frente
-  if(sidesInfo[_FRONT].area > _MIN_AREA && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
+  if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
-    if(sentido ==_HORARIO){
-      tractionCommandDir.joint_var = (float) _V0 +_KP*(1/(sidesInfo[_FRONT].medY));
-      tractionCommandEsq.joint_var = (float) _V0 -_KP*(1/(sidesInfo[_FRONT].medY));
-    }else{
-      tractionCommandDir.joint_var = (float) _V0 -_KP*(1/(sidesInfo[_FRONT].medY));
-      tractionCommandEsq.joint_var = (float) _V0 +_KP*(1/(sidesInfo[_FRONT].medY));
-    }
+    if(sentido ==_HORARIO)
+      erro = 1/(sidesInfo[_FRONT].medY);
+    else
+      erro = -1/(sidesInfo[_FRONT].medY);
+    
 
     estado = _DESVIA_FRENTE;
 
@@ -204,12 +197,15 @@ void processMap(){
     cout << " | DF: " << sidesInfo[_FRONT].distance;
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
+
+  //esta entre dois obstaculos
+  /*}else if(sidesInfo[_RIGHT].area && sidesINFO){
+*/
   
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.2 && sidesInfo[_RIGHT].area > _MIN_AREA/2){
+  }else if(sidesInfo[_RIGHT].medY < -0.2){
     
-    tractionCommandDir.joint_var = (float) _V0 - _KP*(1/(sidesInfo[_RIGHT].medX));
-    tractionCommandEsq.joint_var = (float) _V0 + _KP*(1/(sidesInfo[_RIGHT].medX));
+    erro = -1/(sidesInfo[_RIGHT].medX);
     estado = _RECUPERA_DIREITA;
 
     cout << "E: RercuDir";
@@ -221,8 +217,7 @@ void processMap(){
   //segue a parede da direita
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
-    tractionCommandDir.joint_var = (float) _V0 +_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].medX)/2.5;
-    tractionCommandEsq.joint_var = (float) _V0 -_KP*(_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].medX)/2.5;
+    erro = (_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].medX)/2.5;
     estado = _SEQUE_DIREITA;
 
     cout << "E: SegueDir";
@@ -232,10 +227,9 @@ void processMap(){
 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.2 && sidesInfo[_LEFT].area > _MIN_AREA/2){
+  }else if(sidesInfo[_LEFT].medY < -0.2){
     
-    tractionCommandDir.joint_var = (float) _V0 + _KP*(1/(sidesInfo[_LEFT].medX));
-    tractionCommandEsq.joint_var = (float) _V0 - _KP*(1/(sidesInfo[_LEFT].medX));
+    erro = 1/(sidesInfo[_LEFT].medX);
     estado = _RECUPERA_ESQUERDA;
 
     cout << "E: RercuEsq";
@@ -247,8 +241,7 @@ void processMap(){
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
-    tractionCommandDir.joint_var = (float) _V0 - _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].medX)/2.5;
-    tractionCommandEsq.joint_var = (float) _V0 + _KP*(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].medX)/2.5;
+    erro = -(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].medX)/2.5;
     estado = _SEGUE_ESQUERDA;
 
     cout << "E: SegueEsq";
@@ -260,13 +253,17 @@ void processMap(){
   //segue reto caso nao tenha nada
   }else{
     
-    tractionCommandDir.joint_var = _V0;
-    tractionCommandEsq.joint_var = _V0;
+    erro = 0;
     estado = _NO_OBSTACLE;
 
     cout << "E: NormalEt";
   
   }
+
+
+  tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
+  tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
+
 
   if(tractionCommandDir.joint_var > _MAX_SPEED)
     tractionCommandDir.joint_var = _MAX_SPEED;
@@ -284,11 +281,14 @@ void processMap(){
 
 
   //altera o vetor das velocidades das 'joints'
+
+  //Eireita:
   tractionCommandDir.nodeID = 1;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
   tractionCommandDir.nodeID = 2;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
   
+  //Esquerda:
   tractionCommandEsq.nodeID = 3;
   tractionCommandList.movement_array.push_back(tractionCommandEsq);
   tractionCommandEsq.nodeID = 4;
@@ -324,12 +324,6 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   img = Mat::zeros(img.size(), img.type());
   imgProcessed = Mat::zeros(imgProcessed.size(), imgProcessed.type());
 
-  
-  //inicializa as janelas
-  String windowOriginal = "Original"; 
-  String windowProcessed = "Threshold";
-  namedWindow(windowOriginal);
-  namedWindow(windowProcessed);
 
 
   for(register int i = 0 ; i < out_pointcloud.points.size(); ++i){
@@ -404,6 +398,14 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
 int main(int argc, char **argv){
   
+
+
+  //inicializa as janelas
+  String windowOriginal = "Original"; 
+  String windowProcessed = "Threshold";
+  namedWindow(windowOriginal);
+  namedWindow(windowProcessed);
+  
   sidesInfo = (Sides_Info_t*) malloc(sizeof(Sides_Info_t)*3);
 
   //inicia o Ros  
@@ -420,6 +422,5 @@ int main(int argc, char **argv){
   ros::spin();
   
 
-  
   return 0;
 }
