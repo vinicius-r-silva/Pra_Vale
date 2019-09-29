@@ -18,7 +18,7 @@ from std_msgs.msg import Int32
 
 #-------------------CONST----------------#    
 pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
-hokuyo_publisher = rospy.Publisher('/pra_vale/enable_hokuyo', Int8, queue_size=10)
+#hokuyo_publisher = rospy.Publisher('/pra_vale/enable_hokuyo', Int8, queue_size=10)
 
 hokuyo_enabled = 0
 
@@ -191,14 +191,14 @@ def cam_found_fire(data):
 def listener():
     rospy.init_node('arm', anonymous=True)
     
-    rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
-    rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
+    #rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
+    #rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
     rospy.Subscriber('/pra_vale/cam_found_fire', Int32, cam_found_fire)
     #rospy.Subscriber('/pra_vale/arm_tilt',Int32MultiArray , arm_tilt)
     rospy.Subscriber("/sensor/imu", Imu, arm_tilt)
 
     #pub = rospy.Publisher()
-    pubb = rospy.Publisher('/pra_vale/findFire_enabled', Bool, queue_size=10)
+    #pubb = rospy.Publisher('/pra_vale/findFire_enabled', Bool, queue_size=10)
 
     rospy.spin()
     #pubb.publish(data = False)
