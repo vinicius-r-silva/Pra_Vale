@@ -141,23 +141,46 @@ catkin build
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosInterface.so $VREP_ROOT
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosVelodyne.so $VREP_ROOT
 ``` 
+# 5. Checking dependencies
+Before clone the team's repository from git, it is necessary to check if some dependencies is updated in your system.
 
-# 5. Cloning Pra Vale submission
+The follow commands update the OpenCV libraries in your computer to enable python and C++ files
+
+```
+pip install opencv-python
+pip install opencv-contrib-python
+sudo apt-get install libopencv-dev
+```
+
+# 6. Cloning Pra Vale submission
+To access the Pra Vale's git repository, run the following commands in your terminal
+``` 
+cd $ROS_CATKIN_WS/src
+git clone https://github.com/vinicius-r-silva/Pra_Vale.git pra_vale
+``` 
+When the repository is cloned, it is necessary to do the following changes.
+
+Add the pra_vale package in the PKG_DEPS of the CMakeLists.txt, with the following commands
+ 
+```
+cd $ROS_CATKIN_WS/src/vrep_ros_interface
+``` 
+Open the CMakeLists.txt file with a text editor (gedit can be used) and add ```pra_vale``` in a new line inside the parentesis of the PKG_DEPS
+
+After that, open the package.xml file with a text editor and, just like it seems in the file, add the following line
+
+``` 
+<depend>pra_vale</depend>
+``` 
+After that, run the following commands
+
+``` 
+cd $ROS_CATKIN_WS/
+catkin clean
+catkin build
 ``` 
 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
-
-
-``` 
-``` 
+With that, the repository setting is completed. 
 
 
 ``` 
