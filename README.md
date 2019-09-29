@@ -1,35 +1,35 @@
 # Pra_Vale
 
-Esse repositório contém o pacote ROS e os arquivos V-REP necessários para o funcioamento da submissão da equipe Pra Vale no desafio ROSI.
+This repository contains the ROS package and the V-REP files required to run the submission of Pra Vale team to function in the ROSI challenge.
 
-A descrição sobre a competição, assim como os arquivos V-REP oficiais, podem ser encontrados no seguinte repositório: https://github.com/filRocha/rosiChallenge-sbai2019
+The description of the competition, as well as the official V-REP files, can be found in the following repository: https://github.com/filRocha/rosiChallenge-sbai2019
 
-# Descrição do repositório:
-Este respositório consiste da mesma estruta de um pacote ROS. A organização das pastas se dá da seguinte forma:
+# Description of repository:
+This repository consists in the same structure as an ROS package. The folders are organized as follows:
 
-- `config` - Contém o arquivo com os parametros da simulação
+- `config` - Contains file with simulation parameters
 
-- `launch` - Contêm os arquivos do tipo .launch do ROS
+- `launch` - Contains files with the ROS' .launch type
 
-- `msg` - Contêm os arquivos do tipo .launch do ROS necessários para a comunição com a simulação
+- `msg` - Contains files with the ROS' launch type required to communicate with the simulation
 
-- `resources` - Contêm o regulamento e o banner da competição
+- `resources` - Contains the competition's rules and banner
 
-- `script` - Códigos criados pela equipe para o processamento de dados da simulação e controle do robô
+- `script` - Team's codes made to processing the data from simulation and robot's control
 
-- `urdf` - Comtém o modelo URDF do robô ROSI
+- `urdf` - Contains the ROSI robot URDF model
 
-- `vrep_content` - Contêm os arquivos V-REP necessários para a simulação
+- `vrep_content` - Contains the V-REP files required to simulation
 
 
-# Instalação
-Toda a programção foi feita no SO **Ubuntu 18.2**, junto com o **ROS Melodic** e **VREP 3.6.2 (rev.0)**.
+# Installation
+The codes were programming in the **Ubuntu 18.2** SO, with the **ROS Melodic** and **VREP 3.6.2 (rev.0)**.
 
-# 1. Instalando ROS Melodic
-A explicação detalhada sobre como instalar o ROS Melodic pode ser encontrada no seguinte link:
+# 1. ROS Melodic Installation
+The detailed explanation on how to install ROS Melodic can be found in the follow link:
 http://wiki.ros.org/melodic/Installation/Ubuntu
 
-Caso queira somente copiar e colar os comandos necessários, sem saber os detalhes, pode seguir os passos abaixo:
+If you want only copy and pase the required commands, without knowing the details, follow the steps below:
 ``` 
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
@@ -54,11 +54,11 @@ source ~/.bashrc
 sudo apt install python-rosinstall python-rosinstall-generator python-wstool build-essential
 ``` 
 
-# 2. Configurando Catkin Workspace
-Do mesmo modo que o primeiro itêm, a explicação detelhada de como configurar o workspace pode ser encontrado no seguinte link:
+# 2. Setting Catkin Workspace
+In the same way as the first item, the detailed explanation on how to configure the workspace can be found in the follow link:
 http://wiki.ros.org/catkin/Tutorials/create_a_workspace
 
-Caso queira somente os comandos, eles estão listados abaixo:
+If you want only copy and pase the required commands, follow the steps below:
 ``` 
 sudo apt-get install ros-melodic-catkin python-catkin-tools
 ``` 
