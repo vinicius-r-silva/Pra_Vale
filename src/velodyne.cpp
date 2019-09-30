@@ -3,16 +3,22 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/Image.h>
 #include "pra_vale/RosiMovementArray.h"
+#include <image_transport/image_transport.h>
+#include <sensor_msgs/image_encodings.h>
 
 
 //opencv:
 #include <opencv2/opencv.hpp>
-
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 //c++:
 #include <iostream>
-
+#include <math.h>
 
 //defines-----------------------------
 
@@ -27,7 +33,6 @@
 
 //controle do robo
 #define _V0 2.2 //velocidade do robo
-#define _MAX_VEL 5.0 // velocidade maxima do robo
 #define _KP 4.0 //constante para o PID
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
@@ -61,7 +66,7 @@
 //namespaces---------------------------
 using namespace cv;
 using namespace std;
-
+namespace enc = sensor_msgs::image_encodings;
 
 
 typedef struct{
@@ -110,10 +115,12 @@ const int RIGHT_X = (_MAX_DIST-0.6)*_SCALE - RIGHT_SIZE_X;
 const int RIGHT_Y = _MAX_DIST*_SCALE - RIGHT_SIZE_Y/3;
 
 
-//salva o estado
-int estado = _NO_OBSTACLE;
+int estado = _NO_OBSTACLE; //salva o estado
+float saveAngle = 10; 
 bool sentido = _HORARIO;
 bool _isLadderInFront = true;
+bool rodar = false;
+double yAngle = 0.0f;
 
 //imagens
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
@@ -130,10 +137,7 @@ pra_vale::RosiMovementArray tractionCommandList;
 pra_vale::RosiMovementArray wheelsCommandList;
 
 
-
-
 void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
-
 
   int line;
   int column;
@@ -168,23 +172,33 @@ void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
 
 void climbLadder(){
   pra_vale::RosiMovement wheelCommand;
-  float trigger = 1.0;
   float wheelFrontSpeed;
   float wheelRearSpeed;
 
-  enum{FRONT_WHEELS, REAR_WHEELS};
-  int state = FRONT_WHEELS;
+  if(yAngle < 0.01f && yAngle > -0.01f){
+    
+    cout << "FRONT WHEELS IS ON\n";
+    wheelRearSpeed = _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
+  
+  }else if(yAngle > 0.07f || yAngle < -0.07f){
 
-  switch(state){
-    case FRONT_WHEELS:
-      wheelRearSpeed = 0.0f;
-      wheelFrontSpeed = -1.0f * trigger * _MAX_WHEEL_R_SPEED;
-    break;
+    cout << "REAR WHEELS IS ON\n";
+    wheelRearSpeed = -1.0f *_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
 
-    case REAR_WHEELS:
-      wheelRearSpeed = trigger * _MAX_WHEEL_R_SPEED;
-      wheelFrontSpeed = 0.0f;
-    break;
+  }else if(yAngle < 0.003f && yAngle > -0.003f){
+
+    cout << "IT'S OKAY\n";
+    wheelRearSpeed = 0.0f;
+    wheelFrontSpeed = 0.0f;
+
+  }else{
+
+    cout << "ESTABILIZING\n";
+    wheelRearSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = 0.0f;
+
   }
 
   for(int i = 0; i < 4; i++){
@@ -193,6 +207,12 @@ void climbLadder(){
     wheelsCommandList.movement_array.push_back(wheelCommand);    
   }
 
+  wheelPub.publish(wheelsCommandList);
+
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();  
 }
 
 //controle do robo a partir do mapa
@@ -222,7 +242,7 @@ void processMap(){
     
     estado = _LADDER_UP;
 
-    cout << "E: SubirEscada";
+    cout << "E: SubirEscada\t yAngle: " << yAngle;
 
   //desvia do obstaculo na frente
   }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
@@ -242,11 +262,15 @@ void processMap(){
 
 
   //esta entre dois obstaculos
-  /*}else if(sidesInfo[_RIGHT].area && sidesINFO){
-*/
-  
+  /*}else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
+    if(sidesInfo[_RIGHT].medX < sidesInfo[_LEFT].medY){
+      erro = sidesInfo[_RIGHT].medX - sidesInfo[_LEFT].medX;
+    }
+  */
+
+
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.2){
+  }else if(sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
     estado = _RECUPERA_DIREITA;
@@ -270,7 +294,7 @@ void processMap(){
 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.2){
+  }else if(sidesInfo[_LEFT].medY < -0.2 && sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
     estado = _RECUPERA_ESQUERDA;
@@ -304,8 +328,8 @@ void processMap(){
   }
 
   if(_isLadderInFront){
-    tractionCommandDir.joint_var = (float) _MAX_VEL;
-    tractionCommandEsq.joint_var = (float) _MAX_VEL; 
+    tractionCommandDir.joint_var = (float) _MAX_SPEED;
+    tractionCommandEsq.joint_var = (float) _MAX_SPEED; 
   }else{
     tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
     tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
@@ -350,9 +374,84 @@ bool isImportant(geometry_msgs::Point32 pointInput){
         && pointInput.y < _MAX_DIST && pointInput.y > -_MAX_DIST;
 }
 
-void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
+
+void rodarFunction(float zAngle){
   
+  float dif;
+
+  pra_vale::RosiMovement tractionCommandDir;
+  pra_vale::RosiMovement tractionCommandEsq;
+
+  if(zAngle < 0)
+    zAngle += M_PI*2;
+    
+  if(saveAngle == 10)
+    saveAngle = zAngle;
+
+  if(sentido == _HORARIO){
+    tractionCommandDir.joint_var = 3;
+    tractionCommandEsq.joint_var = -3;
+
+    if(saveAngle >= 0 && saveAngle < M_PI && zAngle > M_PI)
+        dif = saveAngle + M_PI*2 - zAngle;
+
+    else
+      dif = saveAngle - zAngle;
+  
+  }else{
+    tractionCommandDir.joint_var = -3;
+    tractionCommandEsq.joint_var = 3;
+
+    if(zAngle >= 0 && zAngle < M_PI && saveAngle > M_PI)
+        dif =  M_PI*2 - saveAngle + zAngle;
+      
+    else
+      dif = saveAngle - zAngle;
+  }
+
+  if(dif < 0)
+    dif *=-1;
+
+  if(dif > 3){
+    rodar = false; //para de rodar
+    sentido = !sentido; //troca o sentido
+    saveAngle = 10; //da um reset no angulo
+  } 
+    
+
+  cout << "girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
+
+
+  //Direita:
+  tractionCommandDir.nodeID = 1;
+  tractionCommandList.movement_array.push_back(tractionCommandDir);
+  tractionCommandDir.nodeID = 2;
+  tractionCommandList.movement_array.push_back(tractionCommandDir);
+  
+  //Esquerda:
+  tractionCommandEsq.nodeID = 3;
+  tractionCommandList.movement_array.push_back(tractionCommandEsq);
+  tractionCommandEsq.nodeID = 4;
+  tractionCommandList.movement_array.push_back(tractionCommandEsq);
+
+
+  speedPub.publish(tractionCommandList);
+  
+  //limpa o vetor
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();
+  tractionCommandList.movement_array.pop_back();  
+
+}
+
+
+void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
+/*
+  if(rodar)
+    return;
+
   int MAX = 255-_ADD_GRAY_SCALE;
 
   //converte o publisher
@@ -367,8 +466,6 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   //preenche as imagens de preto
   img = Mat::zeros(img.size(), img.type());
   imgProcessed = Mat::zeros(imgProcessed.size(), imgProcessed.type());
-
-
 
   for(register int i = 0 ; i < out_pointcloud.points.size(); ++i){
     
@@ -426,7 +523,9 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   imshow("Threshold", imgProcessed);
   imshow("Original", img);
   waitKey(1);
+*/
 
+  processMap();
 
   speedPub.publish(tractionCommandList);
   
@@ -435,26 +534,63 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   tractionCommandList.movement_array.pop_back();
   tractionCommandList.movement_array.pop_back();
   tractionCommandList.movement_array.pop_back();
+}
 
-  wheelPub.publish(wheelsCommandList);
+void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
+  
+  float qx = msg->orientation.x;
+  float qy = msg->orientation.y;
+  float qz = msg->orientation.z;
+  float qw = msg->orientation.w;
+  float zAngle;
 
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();  
+  double t2 = 2.0f * (qw * qy - qx * qx);
+  t2 = (t2 > 1.0f)? 1.0f : t2;
+  t2 = (t2 < -1.0f)? -1.0f : t2;
+  yAngle = asin(t2);
+
+  float t3 = +2.0 * (qw * qz + qx * qy);
+  float t4 = +1.0 - 2.0 * (qy * qy + qz * qz);
+      
+  zAngle = atan2(t4, t3) + M_PI/2;  //z angulo de euler
+
+  if(rodar){
+    rodarFunction(zAngle);
+    return;
+  }
+
+}
+
+void kinectCallback(const  sensor_msgs::ImageConstPtr msg){
+  
+/*
+
+ cv_bridge::CvImagePtr cv_ptr;
+  try{
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+  }
+  catch (cv_bridge::Exception& e){
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+  
+  namedWindow("kinect");
+  imshow("kinect", cv_ptr->image);
+  waitKey(1);
+*/
+  //Mat imgKinect = msg;
 
 }
 
 int main(int argc, char **argv){
   
 
-
   //inicializa as janelas
-  String windowOriginal = "Original"; 
+/*  String windowOriginal = "Original"; 
   String windowProcessed = "Threshold";
   namedWindow(windowOriginal);
   namedWindow(windowProcessed);
-  
+*/  
   sidesInfo = (Sides_Info_t*) malloc(sizeof(Sides_Info_t)*3);
 
   //inicia o Ros  
@@ -464,9 +600,14 @@ int main(int argc, char **argv){
 
   //le o publisher do vrep
   ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
+
+  ros::Rate loop_rate(1);
+  ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
+  ros::Subscriber subImu = n.subscribe("/sensor/imu", 1, ImuCallback);
+  ros::Subscriber subKinectRGB = n.subscribe("/sensor/kinect_rgb", 1, kinectCallback);
+
   speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
   wheelPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_arms_speed",1);
-  ros::Rate loop_rate(1);
  
   ros::spin();
   
