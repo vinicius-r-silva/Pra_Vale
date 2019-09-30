@@ -26,7 +26,7 @@ This repository consists in the same structure as an ROS package. The folders ar
 
 # Installation
 The codes were programming in the **Ubuntu 18.2** SO, with the **ROS Melodic** and **VREP 3.6.2 (rev.0)**.
-In case your system already have installed ROS, VREP and the compettion base code, you can skip to step 5
+In case your system already have installed ROS, VREP and the competition base code, you can skip the installation to step 5
 
 # 1. ROS Melodic Installation
 The detailed explanation on how to install ROS Melodic can be found in the follow link:
