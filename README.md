@@ -153,7 +153,7 @@ copy the vrep-ros Interface
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosInterface.so $VREP_ROOT
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosVelodyne.so $VREP_ROOT
 ``` 
-# 5. Checking Pra Vale codes dependencies
+# 5. Checking Pra Vale code's dependencies
 Before cloning the team's repository from git, it is necessary to check if some dependencies are updated in your system.
 
 The following commands install or update the OpenCV libraries in your computer to enable python and C++ files
