@@ -26,6 +26,7 @@ This repository consists in the same structure as an ROS package. The folders ar
 
 # Installation
 The codes were programming in the **Ubuntu 18.2** SO, with the **ROS Melodic** and **VREP 3.6.2 (rev.0)**.
+In case your system already have installed ROS, VREP and the compettion base code, you can skip to step 5
 
 # 1. ROS Melodic Installation
 The detailed explanation on how to install ROS Melodic can be found in the follow link:
@@ -142,25 +143,29 @@ set(PKG_DEPS
   rosi_defy
 )
 ```
-
+compile ros packpages
 ``` 
 cd ~/catkin_ws
 catkin build
 ``` 
-
+copy the vrep-ros Interface
 ``` 
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosInterface.so $VREP_ROOT
 cp $ROS_CATKIN_WS/devel/lib/libv_repExtRosVelodyne.so $VREP_ROOT
 ``` 
-# 5. Checking dependencies
+# 5. Checking Pra Vale codes dependencies
 Before cloning the team's repository from git, it is necessary to check if some dependencies are updated in your system.
 
-The following commands update the OpenCV libraries in your computer to enable python and C++ files
+The following commands install or update the OpenCV libraries in your computer to enable python and C++ files
 
 ```
 pip install opencv-python
 pip install opencv-contrib-python
 sudo apt-get install libopencv-dev
+```
+The following command install the keyboard library necessary in the arm_joy and arm_joint scripts
+```
+sudo pip install keyboard
 ```
 
 # 6. Cloning Pra Vale submission
