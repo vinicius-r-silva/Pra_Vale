@@ -27,10 +27,12 @@
 
 //controle do robo
 #define _V0 2.2 //velocidade do robo
+#define _MAX_VEL 5.0 // velocidade maxima do robo
 #define _KP 4.0 //constante para o PID
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 2.3 //distancia ideal para seguir a parede
+#define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
 
 
 //maquina de estado
@@ -40,6 +42,7 @@
 #define _RECUPERA_ESQUERDA 3
 #define _SEQUE_DIREITA 4
 #define _RECUPERA_DIREITA 5
+#define _LADDER_UP 6
 #define _HORARIO true 
 #define _ANTI_HORARIO false
 
@@ -71,6 +74,7 @@ typedef struct{
 
 //variaveis globais------------------
 ros::Publisher speedPub;
+ros::Publisher wheelPub;
 
 
 //dimensoes da tela
@@ -109,6 +113,7 @@ const int RIGHT_Y = _MAX_DIST*_SCALE - RIGHT_SIZE_Y/3;
 //salva o estado
 int estado = _NO_OBSTACLE;
 bool sentido = _HORARIO;
+bool _isLadderInFront = true;
 
 //imagens
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
@@ -120,6 +125,9 @@ Sides_Info_t *sidesInfo;
 
 //velocidade do robo
 pra_vale::RosiMovementArray tractionCommandList;
+
+//velocidade para a roda do robo
+pra_vale::RosiMovementArray wheelsCommandList;
 
 
 
@@ -158,7 +166,34 @@ void getInfo(int SIDE, int X, int Y, int SizeX, int SizeY){
   
 }
 
+void climbLadder(){
+  pra_vale::RosiMovement wheelCommand;
+  float trigger = 1.0;
+  float wheelFrontSpeed;
+  float wheelRearSpeed;
 
+  enum{FRONT_WHEELS, REAR_WHEELS};
+  int state = FRONT_WHEELS;
+
+  switch(state){
+    case FRONT_WHEELS:
+      wheelRearSpeed = 0.0f;
+      wheelFrontSpeed = -1.0f * trigger * _MAX_WHEEL_R_SPEED;
+    break;
+
+    case REAR_WHEELS:
+      wheelRearSpeed = trigger * _MAX_WHEEL_R_SPEED;
+      wheelFrontSpeed = 0.0f;
+    break;
+  }
+
+  for(int i = 0; i < 4; i++){
+    wheelCommand.joint_var = (i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed;
+    wheelCommand.nodeID = i + 1;
+    wheelsCommandList.movement_array.push_back(wheelCommand);    
+  }
+
+}
 
 //controle do robo a partir do mapa
 void processMap(){
@@ -181,8 +216,16 @@ void processMap(){
 
   //Implementacao da maquina de estado
 
+  //sobe a escada 
+  if(_isLadderInFront){
+    climbLadder();
+    
+    estado = _LADDER_UP;
+
+    cout << "E: SubirEscada";
+
   //desvia do obstaculo na frente
-  if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
+  }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(sentido ==_HORARIO)
       erro = 1/(sidesInfo[_FRONT].medY);
@@ -260,10 +303,13 @@ void processMap(){
   
   }
 
-
-  tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
-  tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
-
+  if(_isLadderInFront){
+    tractionCommandDir.joint_var = (float) _MAX_VEL;
+    tractionCommandEsq.joint_var = (float) _MAX_VEL; 
+  }else{
+    tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
+    tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
+  }
 
   if(tractionCommandDir.joint_var > _MAX_SPEED)
     tractionCommandDir.joint_var = _MAX_SPEED;
@@ -282,7 +328,7 @@ void processMap(){
 
   //altera o vetor das velocidades das 'joints'
 
-  //Eireita:
+  //Direita:
   tractionCommandDir.nodeID = 1;
   tractionCommandList.movement_array.push_back(tractionCommandDir);
   tractionCommandDir.nodeID = 2;
@@ -303,8 +349,6 @@ bool isImportant(geometry_msgs::Point32 pointInput){
   return pointInput.z > _MIN_HIGHT && pointInput.x < _MAX_DIST && pointInput.x > _MAX_DIST_NEG 
         && pointInput.y < _MAX_DIST && pointInput.y > -_MAX_DIST;
 }
-
-
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
@@ -390,11 +434,16 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   tractionCommandList.movement_array.pop_back();
   tractionCommandList.movement_array.pop_back();
   tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();  
+  tractionCommandList.movement_array.pop_back();
+
+  wheelPub.publish(wheelsCommandList);
+
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();
+  wheelsCommandList.movement_array.pop_back();  
 
 }
-
-
 
 int main(int argc, char **argv){
   
@@ -416,7 +465,7 @@ int main(int argc, char **argv){
   //le o publisher do vrep
   ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
   speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
-
+  wheelPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_arms_speed",1);
   ros::Rate loop_rate(1);
  
   ros::spin();
