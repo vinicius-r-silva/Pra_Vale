@@ -61,8 +61,20 @@ def cinematicaInversa():
 
     print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
+    if(x < 0):
+        print("erro: posicao fora do alcance do braco robotico")
+
+        #change to the last valid position
+        x = last_x
+        y = last_y
+        z = last_z
+        #recalculates joint angles to the last valid position
+        return cinematicaInversa()
+
+
     #a error is given when the desired position is invalid
     try:
+
         #main calculations
         x_const = x - d0
         x_const_pow = x_const*x_const
@@ -218,7 +230,8 @@ def listener():
 
     rospy.spin()
 
-print("\nL\nA\nU\nN\nC\nH\nE\nD\n")
+#main
+print("arm launched")
 listener()
 
 

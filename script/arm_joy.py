@@ -1,39 +1,35 @@
-#!/usr/bin/env python3
-#sudo pip3 install rospkg catkin_pkg
+#!/usr/bin/env python
 
 import rospy
-import readchar
-from std_msgs.msg import Int32MultiArray
-from sensor_msgs.msg import Joy
 from math import pi
 from math import pow
+from math import acos
 from math import sqrt
 from math import atan2
-from math import acos
+from getkey import getkey, keys
+from std_msgs.msg import Int32MultiArray
 
+
+#use a,w,s,d,e,q keys to move the arm
 def listener():
-    rospy.init_node('listener', anonymous=True)
-
-    step = 10
-    global x
-    global y
-    global z
-
-    #rospy.Subscriber("/ur5/jointsPositionCurrentState", ManipulatorJoints, callback)
-    #rospy.Subscriber('/joy', Joy, callback_Joy)
-
+    rospy.init_node('arm_joy', anonymous=True)
     arm_publisher = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 
-
-    node_sleep_rate = rospy.Rate(3)
+    #step (in mm) wich the arm position is incremented
+    step = 10
     pos = [0,0,0]
+
+    node_sleep_rate = rospy.Rate(10)
     while not rospy.is_shutdown():    
         x = 0
         y = 0
         z = 0
 
-        key = readchar.readkey()
-        key = key.lower()
+        #read a key and check if it means a increment
+        #w,s increments/decrements at x axis
+        #a,d increments/decrements at y axis
+        #e,q increments/decrements at z axis
+        key = getkey()
         if key in ('wsadqe'):
             print ('Key:' + key)
             if key == 'w':
@@ -51,18 +47,22 @@ def listener():
             if key == 'q':
                 z = -step
 
+        #'.' key finishes the program
         if key == '.':
             print ("finished")
             break
         
+        #publishes the colected key
         pos[0] = x
         pos[1] = y
         pos[2] = z
-
         arm_publisher.publish(data = pos)
+
         node_sleep_rate.sleep()
 
-print("\nL\nA\nU\nN\nC\nH\nE\nD\n")
+
+#main
+print("arm_joy launched")
 listener()
 
 

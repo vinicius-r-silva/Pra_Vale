@@ -15,12 +15,12 @@ from sensor_msgs.msg import Image
 #enabled = True
 
 #publish joint values to arm.py
-pub = rospy.Publisher('/pra_vale/cam_found_fire', Int32, queue_size=10)
+arm_publisher = rospy.Publisher('/pra_vale/cam_found_fire', Int32, queue_size=10)
 
 #ur5Cam Callback
 #find fire in the given image and calculates the x,y coordinates of the fire
 def ur5_callback(data):
-    global pub
+    global arm_publisher
     # global enabled
     # if(not enabled):
     #     return
@@ -34,14 +34,14 @@ def ur5_callback(data):
     
     # Find contours:
     contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    if (len(contours) == 0):
-        return
-    #Get biggest object found
-    fire=max(contours,key=cv2.contourArea)
+    
     
     #Check size of object
-    if(cv2.contourArea(fire)>100):
-		# Draw contour:
+    if(len(contours) > 0 and cv2.contourArea(max(contours,key=cv2.contourArea))>100):
+        #Get biggest object found
+        fire = max(contours,key=cv2.contourArea)
+        
+        # Draw contour:
         cv2.drawContours(frame, [fire], 0, (0, 0, 255), 3)
 
 		# Calculate image moments of the detected contour
@@ -52,22 +52,25 @@ def ur5_callback(data):
         cv2.line(frame, (frame.shape[1]/2,0), (frame.shape[1]/2, frame.shape[0]), (255,0,0), 1)
         cv2.line(frame, ((int)(x),0), ((int)(x), frame.shape[0]), (0,255,0), 1)
 
-        x = frame.shape[1]/2 - x
-        print(x)
-        
-        #cv2.imshow("Threshold",mask)
-        cv2.imshow("Camera",frame)
-        cv2.waitKey(1)
+        error = frame.shape[1]/2 - x
 
-        if(x > 6):
-            x = x/3
-            if x > 50:
-                x = x/3
-        elif(x > 3):
-            x = x/2
+        kp = 1
+        if(error > 100):
+            kp = 6
+        elif(error > 6):
+            kp = 3
+        elif(error > 3):
+            kp = 2
+        else:
+            kp = 1
             
         #publishes to the arm node
-        pub.publish(data = x)
+        print(error)
+        arm_publisher.publish(data = (int)(error/kp))
+            
+    #cv2.imshow("Threshold",mask)
+    cv2.imshow("Camera",frame)
+    cv2.waitKey(1)
 
 
 # def findFire_enabled(data):
@@ -84,6 +87,8 @@ def listener():
 
     rospy.spin()
 
-print("\nL\nA\nU\nN\nC\nH\nE\nD\n")
 
+
+#main
+print("my_5cam launched")
 listener()

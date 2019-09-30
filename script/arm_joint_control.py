@@ -1,39 +1,37 @@
-#!/usr/bin/env python3
-
-#sudo pip3 install rospkg catkin_pkg
+#!/usr/bin/env python
 
 import rospy
-import readchar
-from rosi_defy.msg import ManipulatorJoints
-from sensor_msgs.msg import Joy
 from math import pi
 from math import pow
+from math import acos
 from math import sqrt
 from math import atan2
-from math import acos
+from getkey import getkey, keys
+from rosi_defy.msg import ManipulatorJoints
 
 
-
+#use a,s,d,f,g,h,z,x,c,c,v,b,n keys to move the joints of the arm
 def listener():
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('arm_joint', anonymous=True)
 
+    #step (in rads) wich the arm joint position is incremented
     step = 0.01
-    global x
-    global y
-    global z
-
-    #rospy.Subscriber("/ur5/jointsPositionCurrentState", ManipulatorJoints, callback)
-    #rospy.Subscriber('/joy', Joy, callback_Joy)
     
-    pub = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
-    #pos = [pi/2,0,0,0,-pi/2,0]
+    #Publishes to the ur5 joints topic
+    arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
+    
+    #initial pose
     pos = [4.577346777463163, -0.1397862826679197, -0.9876880430729198, 1.1274743257408393, -7.718939431052956, 0]
-    #node_sleep_rate = rospy.Rate(10)
+
     while not rospy.is_shutdown():    
-        #pos = cinematicaInversa()
-        #pub.publish(joint_variable = pos)
-        key = readchar.readkey()
-        key = key.lower()
+        #read a key and check if it means a increment
+        #a,z increments/decrements the first   joint
+        #s,x increments/decrements the seconds joint
+        #d,c increments/decrements the third   joint
+        #f,v increments/decrements the fourth  joint
+        #g,b increments/decrements the fifth   joint
+        #h,n increments/decrements the sixth   joint
+        key = getkey()
         if key == 'a':
             pos[0] += step
         if key == 'z':
@@ -69,10 +67,12 @@ def listener():
             break
         
         print(str(pos[0]) + ", " + str(pos[1]) + ", " + str(pos[2]) + ", " + str(pos[3]) + ", " + str(pos[4]) + ", " + str(pos[5]))
-        pub.publish(joint_variable = pos)
+        arm_publisher.publish(joint_variable = pos)
         #node_sleep_rate.sleep()
 
-print("\nL\nA\nU\nN\nC\nH\nE\nD\n")
+
+#main
+print("arm joint launched")
 listener()
 
 

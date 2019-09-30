@@ -1,8 +1,0 @@
-<launch>
-
-	<!-- Reading the camera (trying) -->
-	<node name="Camera" pkg="pra_vale" type="arm_joy.py" output="screen"/>
-
-	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
-
-</launch>
