@@ -3,6 +3,7 @@
 import rospy
 from std_msgs.msg import Int32
 
+#defined states
 _NOTHING = 0
 _ENABLE_VELODYME = 1
 _FOLLOW_TRACK = 3
@@ -11,13 +12,18 @@ _FOUND_FIRE_RIGHT = 5
 _FOUND_FIRE_TOUCH = 6
 _SETTING_UP_HOKUYO = 7
 
+
+#global variable
 state = _NOTHING
 
 
+#callback function called when a node requires a state change
 def set_state(data):
     global state
     state = data.data
-    print("\n\n\nstate changed: \n\n")
+
+    #print the state change
+    # print("\n\n\nstate changed: \n\n")
     if (state & (1 << _ENABLE_VELODYME)):
         print ("_ENABLE_VELODYME")
 
@@ -35,12 +41,11 @@ def set_state(data):
 
     if (state & (1 << _SETTING_UP_HOKUYO)):
         print ("_SETTING_UP_HOKUYO")
-    print("\n\n\n")
+    # print("\n\n\n")
 
 
 
 #main
-
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
