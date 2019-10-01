@@ -13,8 +13,8 @@ enabled = 0
 
 def callback(data):
     global enabled
-    if(enabled == 0):
-        return
+    #if(enabled == 0):
+    #    return
 
     blank_image = np.zeros((500,500), np.uint8)
 
