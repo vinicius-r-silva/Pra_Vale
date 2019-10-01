@@ -5,6 +5,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Int32.h>
 #include "pra_vale/RosiMovementArray.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
@@ -22,7 +23,8 @@
 
 //defines-----------------------------
 
-//Analise do veloyne:
+//Analise do velodyne:
+#define _VELODYNE_ENABLED 1
 #define _MIN_HIGHT -10 //altura minima para capturar dados do velodyne
 #define _SCALE  40 //aumenta a resolucao dos dados do velodyne
 #define _ADD_GRAY_SCALE 10 //deixa mais definido quais tem mais pontos em z
@@ -34,6 +36,7 @@
 //controle do robo
 #define _V0 2.2 //velocidade do robo
 #define _KP 4.0 //constante para o PID
+#define _KP_OBSTACLE 15.0
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 2.3 //distancia ideal para seguir a parede
@@ -48,6 +51,7 @@
 #define _SEQUE_DIREITA 4
 #define _RECUPERA_DIREITA 5
 #define _LADDER_UP 6
+#define _IN_LADDER 7
 #define _HORARIO true 
 #define _ANTI_HORARIO false
 
@@ -121,6 +125,10 @@ bool sentido = _HORARIO;
 bool _isLadderInFront = true;
 bool rodar = false;
 double yAngle = 0.0f;
+double zAngle = 0.0f;
+bool _climbing = false;
+int enable = 0;
+
 
 //imagens
 Mat img(HEIGHT, LENGHT, CV_8UC1, Scalar(0)); //imagem com o isImportant() aplicado
@@ -175,23 +183,34 @@ void climbLadder(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
 
-  if(yAngle < 0.01f && yAngle > -0.01f){
-    
-    cout << "FRONT WHEELS IS ON\n";
-    wheelRearSpeed = _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
+  if(yAngle < 0.002f && yAngle > -0.002f){
+
+    cout << "IT'S OKAY\n";
+    wheelRearSpeed = 0.0f;
+    wheelFrontSpeed = 0.0f;
   
+    if(_climbing){
+      static int i = 0;
+      i++;
+      if(i > 15){
+        estado = _IN_LADDER;
+        _isLadderInFront = false;
+      }
+    } 
+
   }else if(yAngle > 0.07f || yAngle < -0.07f){
 
     cout << "REAR WHEELS IS ON\n";
     wheelRearSpeed = -1.0f *_MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    _climbing = true;
 
-  }else if(yAngle < 0.003f && yAngle > -0.003f){
-
-    cout << "IT'S OKAY\n";
-    wheelRearSpeed = 0.0f;
-    wheelFrontSpeed = 0.0f;
+  }else if(yAngle < 0.01f && yAngle > -0.01f){
+    
+    cout << "FRONT WHEELS IS ON\n";
+    wheelRearSpeed = _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
+    _climbing = true;
 
   }else{
 
@@ -222,7 +241,6 @@ void processMap(){
 
   uchar *map = imgProcessed.data;
   float erro;
-
   pra_vale::RosiMovement tractionCommandDir;
   pra_vale::RosiMovement tractionCommandEsq;
   
@@ -238,13 +256,24 @@ void processMap(){
 
   //sobe a escada 
   if(_isLadderInFront){
-    climbLadder();
     
     estado = _LADDER_UP;
+
+    if(saveAngle == 10){
+      saveAngle = zAngle;
+    }
+
+    climbLadder();
 
     cout << "E: SubirEscada\t yAngle: " << yAngle;
 
   //desvia do obstaculo na frente
+  }else if(estado == _IN_LADDER){
+    
+    erro = (zAngle - saveAngle)*_KP_OBSTACLE;
+
+    cout << "E: NaEscada\t ZAngle: " << zAngle << "  AngleSaved:" << saveAngle << "Erro:" << erro;
+    
   }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(sentido ==_HORARIO)
@@ -376,7 +405,7 @@ bool isImportant(geometry_msgs::Point32 pointInput){
 
 
 
-void rodarFunction(float zAngle){
+void rodarFunction(){
   
   float dif;
 
@@ -448,7 +477,10 @@ void rodarFunction(float zAngle){
 
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-/*
+
+  if(enable & (1 << _VELODYNE_ENABLED))
+    return;
+
   if(rodar)
     return;
 
@@ -523,7 +555,7 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   imshow("Threshold", imgProcessed);
   imshow("Original", img);
   waitKey(1);
-*/
+
 
   processMap();
 
@@ -542,23 +574,25 @@ void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
   float qy = msg->orientation.y;
   float qz = msg->orientation.z;
   float qw = msg->orientation.w;
-  float zAngle;
 
   double t2 = 2.0f * (qw * qy - qx * qx);
   t2 = (t2 > 1.0f)? 1.0f : t2;
   t2 = (t2 < -1.0f)? -1.0f : t2;
   yAngle = asin(t2);
 
-  float t3 = +2.0 * (qw * qz + qx * qy);
-  float t4 = +1.0 - 2.0 * (qy * qy + qz * qz);
-      
-  zAngle = atan2(t4, t3) + M_PI/2;  //z angulo de euler
+  double t3 = +2.0 * (qw * qz + qx * qy);
+  double t4 = +1.0 - 2.0 * (qy * qy + qz * qz);    
+  zAngle = (double) (atan2(t4, t3) + M_PI/2);  //z angulo de euler
 
   if(rodar){
-    rodarFunction(zAngle);
+    rodarFunction();
     return;
   }
 
+}
+
+void statesCallback(const std_msgs::Int32::ConstPtr & _enable){
+  enable = _enable->data;
 }
 
 void kinectCallback(const  sensor_msgs::ImageConstPtr msg){
@@ -583,14 +617,14 @@ void kinectCallback(const  sensor_msgs::ImageConstPtr msg){
 }
 
 int main(int argc, char **argv){
-  
+  enable = _VELODYNE_ENABLED;
 
   //inicializa as janelas
-/*  String windowOriginal = "Original"; 
+  String windowOriginal = "Original"; 
   String windowProcessed = "Threshold";
   namedWindow(windowOriginal);
   namedWindow(windowProcessed);
-*/  
+  
   sidesInfo = (Sides_Info_t*) malloc(sizeof(Sides_Info_t)*3);
 
   //inicia o Ros  
@@ -599,12 +633,13 @@ int main(int argc, char **argv){
   ros::NodeHandle n;
 
   //le o publisher do vrep
-  ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
+  //ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
 
   ros::Rate loop_rate(1);
   ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
   ros::Subscriber subImu = n.subscribe("/sensor/imu", 1, ImuCallback);
   ros::Subscriber subKinectRGB = n.subscribe("/sensor/kinect_rgb", 1, kinectCallback);
+  ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback);
 
   speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
   wheelPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_arms_speed",1);
