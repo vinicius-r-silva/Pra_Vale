@@ -19,9 +19,9 @@ _FIRE_NOT_FOUND = 1000
   
 #consts used on the detection if thre is a track at the cam
 #define the row use on the detection
-_TRACK_DETECTION_ROW = 180
+_TRACK_DETECTION_ROW = 150
 #define the max qtd of balck pixels
-_TRACK_DETECTION_MAX_PIXELS = 25
+_TRACK_DETECTION_MAX_PIXELS = 50
 
 
 #-------------------GLOBAL VARIABLES----------------# 

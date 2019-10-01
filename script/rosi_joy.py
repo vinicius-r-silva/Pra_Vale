@@ -98,7 +98,7 @@ class RosiNodeClass():
 
 	# joystick callback function
 	def callback_Joy(self, msg):
-		print("oi")
+		#print("oi")
 		# saving joy commands
 		axes_lin = msg.axes[1]
 		axes_ang = msg.axes[0]

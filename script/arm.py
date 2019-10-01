@@ -11,7 +11,9 @@ from math import asin
 from std_msgs.msg import Int32
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float32
+from rosi_defy.msg import RosiMovement
 from std_msgs.msg import Int32MultiArray
+from rosi_defy.msg import RosiMovementArray
 from rosi_defy.msg import ManipulatorJoints  
 
 
@@ -19,6 +21,7 @@ from rosi_defy.msg import ManipulatorJoints
 #const received form the ur5_Cam when no fire is detected
 _FIRE_NOT_FOUND = 1000
 
+#const for the initial pose for each case
 _FIRE_FOUND_X_VALUE =  400
 _FIRE_FOUND_Y_VALUE = -150
 _FIRE_FOUND_Z_VALUE =  600
@@ -26,13 +29,24 @@ _FIRE_NOT_FOUND_X_VALUE =  400
 _FIRE_NOT_FOUND_Y_VALUE = -150
 _FIRE_NOT_FOUND_Z_VALUE =  850
 
+#const for minimum angle difference betwwen the current angle and the desired angle
+# used to calculates if a joint of the arm is in place
 _MAX_JOINT_ANGLE_DIFF = 0.1
+
+#enable consts
+#used on the state topic
+_ENABLE_VELODYME = 1
+_FOLLOW_TRACK = 3
+_FOUND_FIRE_FRONT = 4
+_FOUND_FIRE_RIGHT = 5
+_FOUND_FIRE_TOUCH = 6
 
 
 #-------------------GLOBAL VARIABLES----------------#    
 #publish joint values to ur5 arm
 arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
 
+#const used to check wether the y axis tilt is going to be detect by the imu or by the ur5 camera
 get_tilt_y_from_imu = False
 
 #it's true when a fire was detect by the ur5 camera
@@ -65,12 +79,22 @@ tilt_x = 0
 tilt_y = 0
 tilt_z = 0
 
+#conts wich show wich state the system is currently, see at the states defines
+state = 0
+
 #current desired arm joint angles
 joint_angles = [0,0,0,0,0,0]
 
 #makes the arm ignore all icoming requests to position changes
 #goes to false always when the current arm position is equal to the desired position
 wait_pose_change = False
+
+#just like the wait_pose_change, it makes the arm ignores all requests to position changes
+#used when a fire is detect and it's necessary rotate the robot
+#goes to false when the robot rotates 90 degrees
+wait_robot_rotation = False
+
+desired_robot_roatation = 0
 
 #return UR5 arm joints angles given the desired position
 def cinematicaInversa():
@@ -88,7 +112,7 @@ def cinematicaInversa():
 
     global joint_angles
 
-    print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
+    #print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
         print("erro: posicao fora do alcance do braco robotico")
@@ -154,7 +178,7 @@ def cinematicaInversa():
         last_z = z
 
         #print the joint angles 
-        print(joint_angles)
+        #print(joint_angles)
         return joint_angles
     
     except:
@@ -195,12 +219,15 @@ def arm_pos(data):
 #the ur5 camera publishes the x distance between the arm and the fire
 def arm_move(data):
     global wait_pose_change
-    if(wait_pose_change):
+    global wait_robot_rotation
+    global desired_robot_roatation
+    if(wait_pose_change or wait_robot_rotation):
         return
         
     global x
     global y
     global z
+    global state
     global fire_found
     global arm_publisher
     #print(data) #debug
@@ -230,6 +257,11 @@ def arm_move(data):
             y += data.data[1]
             z += data.data[2]
 
+            if(x < 250 and not (state & (1 << _FOUND_FIRE_FRONT))):
+                state = _FOUND_FIRE_RIGHT
+                wait_robot_rotation = True
+                desired_robot_roatation = -1
+
     #get the joints angles
     pos = cinematicaInversa()
     #publish joints angles
@@ -241,7 +273,8 @@ def arm_imu(data):
     global wait_pose_change
     if(wait_pose_change):
         return
-        
+
+    global state        
     global tilt_x
     global tilt_y
     global tilt_z
@@ -269,7 +302,12 @@ def arm_imu(data):
     tilt_z = atan2(t4, t3) + pi/2  #z euler angle
     
     #tilt_y += 0.05
-    print((tilt_x, tilt_y, tilt_z))
+    #print((tilt_x, tilt_y, tilt_z))
+
+    if state & (1 << _FOUND_FIRE_FRONT):
+        temp = tilt_x
+        tilt_x = tilt_y
+        tilt_y = temp
 
     #get the joints angles
     pos = cinematicaInversa()
@@ -277,17 +315,18 @@ def arm_imu(data):
     arm_publisher.publish(joint_variable = pos)
 
 
+
 #callback from the ur5 camera, make the ur5 arm follow the track automatically
 def arm_tilt(data):
     global wait_pose_change
-    if(wait_pose_change):
+    global wait_robot_rotation
+    if(wait_pose_change or wait_robot_rotation):
         return
         
     global tilt_y 
     global get_tilt_y_from_imu
     # get_tilt_y_from_imu = True
     # return
-    print ("wait_pose_change")
 
     if(data.data == -1):
         get_tilt_y_from_imu = True
@@ -299,24 +338,80 @@ def arm_tilt(data):
         tilt_y += data.data
 
 
-def arm_current_position(data):
-    global wait_pose_change
-    global joint_angles
+def update_rosi_speed(speeds):
+    traction_command_list = RosiMovementArray()
 
-    if(not wait_pose_change):
+    traction_command = RosiMovement()
+    traction_command.nodeID = 1
+    traction_command.joint_var = speeds[0]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 2
+    traction_command.joint_var = speeds[1]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 3
+    traction_command.joint_var = speeds[2]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 4
+    traction_command.joint_var = speeds[3]
+    traction_command_list.movement_array.append(traction_command)
+
+    pub_traction = rospy.Publisher('/rosi/command_traction_speed', RosiMovementArray, queue_size=1)
+    pub_traction.publish(traction_command_list)
+
+
+def arm_current_position(data):
+    global state
+    global joint_angles
+    global wait_pose_change
+    global wait_robot_rotation
+    global desired_robot_roatation
+
+    if(not wait_pose_change and not wait_robot_rotation):
         return
         
-    for x in range(len(joint_angles)):
-        if(abs(joint_angles[x] - data.joint_variable[x]) > _MAX_JOINT_ANGLE_DIFF):
-           return
-    
-    wait_pose_change = False
+    if(wait_pose_change):
+        print ("wait_pose_change")
+        for x in range(len(joint_angles)):
+            if(abs(joint_angles[x] - data.joint_variable[x]) > _MAX_JOINT_ANGLE_DIFF):
+                return
+        
+        if (wait_robot_rotation):
+            desired_robot_roatation = data.joint_variable[0] + (pi/2)
+            print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
 
+        wait_pose_change = False
+
+    elif(wait_robot_rotation):
+        print ("wait_robot_rotation")
+        if(desired_robot_roatation == -1):
+            wait_pose_change = True
+            return
+            
+
+        print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
+        print (abs(desired_robot_roatation - data.joint_variable[0]))
+        
+        if(abs(desired_robot_roatation - data.joint_variable[0]) < _MAX_JOINT_ANGLE_DIFF):
+            state = 1 << _FOUND_FIRE_FRONT
+            wait_robot_rotation = False
+            update_rosi_speed([0,0,0,0])
+        else:
+            update_rosi_speed([-2,-2,2,2])
+            
 
 
 
 def listener():
     rospy.init_node('arm', anonymous=True)
+
+    global state
+    state = 0 | (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK)
     
     #rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
     rospy.Subscriber("/ur5/jointsPositionCurrentState", ManipulatorJoints, arm_current_position)
