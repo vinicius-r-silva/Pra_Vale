@@ -110,6 +110,7 @@ catkin_package(
    DEPENDS message_runtime std_msgs
 )
 
+
 ###########
 ## Build ##
 ###########
@@ -151,8 +152,38 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(velodyne src/velodyne.cpp)
-target_link_libraries(velodyne ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_library(
+	ROBOT
+	src/headers/robot.h
+	src/robot.cpp
+	)
+
+add_library(
+	SIDESINFO
+	src/headers/sidesinfo.h
+	src/sidesinfo.cpp
+	)
+
+add_library(
+	VISUALIZATION
+	src/headers/visualization.h
+	src/visualization.cpp
+	)
+
+add_executable(velodyne 
+	src/main.cpp
+	src/robot.cpp
+	src/sidesinfo.cpp
+	src/visualization.cpp)
+
+target_link_libraries(velodyne
+ 	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
+	ROBOT
+	SIDESINFO
+	VISUALIZATION	 
+	)
+
 add_dependencies(velodyne pra_vale_generate_messages_cpp)
 
 #############
