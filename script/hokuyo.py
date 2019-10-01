@@ -2,83 +2,88 @@
 
 import rospy
 from std_msgs.msg import Bool
-from std_msgs.msg import Int8
+from std_msgs.msg import Int32
 from rosi_defy.msg import HokuyoReading
 import numpy as np
 import cv2
 
-max_range = 25
+_IMG_SIZE = 1000
+_MAX_RANGE = 250
 
-enabled = 0
+_STATE_DISABLE = 0
+_STATE_READING = 1
+_STATE_FOLLOWING = 2
+
+_HOKUYO_READING_MAX = 10
+
+last_distance = 0
+state = _STATE_DISABLE
+is_following_fire = False
+
+distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32, queue_size = 1)
 
 def callback(data):
-    global enabled
-    #if(enabled == 0):
-    #    return
+    global state
+    global last_distance
+    global distance_publisher
+    if(state == _STATE_DISABLE):
+        if(last_distance != -1):
+            distance_publisher.publish(data = -1)
+            last_distance = -1
 
-    blank_image = np.zeros((500,500), np.uint8)
+        #return
 
-    for x in range(499):
-        blank_image[x,250] = 120
-    
+
+    blank_image = np.zeros((_IMG_SIZE,_IMG_SIZE), np.uint8)
     size = len(data.reading)
-    i = 0
-    #item = [0, 0, 0]
-    #indeces =[(int)(0)]
-    # while (i < len(data.reading)):
-    #     print(data.reading[i], end = '')
-    #     print("  ", end = '')
-    #     if(i % 3 == 2):
-    #         print(" ")
-    #     i = i + 1
 
-    melhor_x_centro = 1000
-    melhor_y_robo   = 0
-    distancia = 0
     i = 0
+    distancia = 0
+    melhor_y_robo   = 0
+    melhor_x_centro = _IMG_SIZE
+
+    half_img_size = _IMG_SIZE/2
+    half_max = _HOKUYO_READING_MAX/2
+    Kp = _IMG_SIZE/_HOKUYO_READING_MAX
+
     while i < size:
         y = data.reading[i]
         x = data.reading[i + 1]
-        #c = data.reading[i + 2]
-        #item = [a,b,c]
 
-        y = 500 - (y+5)*50
-        x = 500 - (x+5)*50
+        y = _IMG_SIZE - (y+half_max)*Kp
+        x = _IMG_SIZE - (x+half_max)*Kp
 
-        if(y < 250 and y > melhor_y_robo):
+        if(y < half_img_size and y > melhor_y_robo):
             melhor_y_robo = y
         
-        if(melhor_y_robo - y  < max_range):
-            if abs(x - 250) < melhor_x_centro:
-                melhor_x_centro = abs(x - 250)
-                distancia = 250 - y
+        if(melhor_y_robo - y  < _MAX_RANGE):
+            if abs(x - half_img_size) < melhor_x_centro:
+                melhor_x_centro = abs(x - half_img_size)
+                distancia = half_img_size - y
 
             blank_image[(int)(y) , (int)(x)] = 255
-        #indeces.append((int)((a+5)*50*50 + (b+5)*5))
-        #print(item)
+            
         i += 3
 
-    #print("\n\n\n")
-    #print(indeces)
-    #print(type(indeces))
-    #teste = [2,3,4]
-    #blank_image[indeces] = 255
+    for x in range(499):
+        blank_image[x,half_img_size] = 120
+
+    distance_publisher.publish(data = distancia)
     np.transpose(blank_image)
-    print("dist: " + str(distancia) + ",  best_y: " + str(melhor_y_robo))
-    #print("\n\n\n")
+    print("dist: " + str(distancia))
     cv2.imshow('image',blank_image)
     cv2.waitKey(1)
 
-def enable_hokuyo(data):
-    global enabled
-    enabled = data.data
-    print("hokuyo is: " + str(enabled))
+def hokuyo_state(data):
+    global state
+    state = data.data
+    print("hokuyo is: " + str(state))
 
 def listener():
     rospy.init_node('listener', anonymous=True)
 
     rospy.Subscriber("/sensor/hokuyo", HokuyoReading, callback)
-    rospy.Subscriber("/pra_vale/enable_hokuyo", Int8, enable_hokuyo)
+    rospy.Subscriber("/pra_vale/hokuyo_state", Int32, hokuyo_state)
 
     rospy.spin()
 

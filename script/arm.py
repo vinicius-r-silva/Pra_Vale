@@ -7,6 +7,8 @@ from math import sqrt
 from math import atan2
 from math import acos
 from math import asin
+from math import sin
+from math import cos
 #from std_msgs.msg import Int8
 from std_msgs.msg import Int32
 from sensor_msgs.msg import Imu
@@ -40,11 +42,21 @@ _FOLLOW_TRACK = 3
 _FOUND_FIRE_FRONT = 4
 _FOUND_FIRE_RIGHT = 5
 _FOUND_FIRE_TOUCH = 6
+_SETTING_UP_HOKUYO = 7
+
+
+_HOKUYO_STATE_DISABLE = 0
+_HOKUYO_STATE_READING = 1
+_HOKUYO_STATE_FOLLOWING = 2
+_HOKUYO_START_TO_FOLLOW_FIRE = -2
 
 
 #-------------------GLOBAL VARIABLES----------------#    
 #publish joint values to ur5 arm
 arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
+
+hokuyo_publisher = rospy.Publisher('/pra_vale/hokuyo_state', Int32, queue_size=1)
+
 
 #const used to check wether the y axis tilt is going to be detect by the imu or by the ur5 camera
 get_tilt_y_from_imu = False
@@ -55,6 +67,7 @@ fire_found = False
 #enable hokuyo
 #hokuyo_publisher = rospy.Publisher('/pra_vale/enable_hokuyo', Int8, queue_size=10)
 #hokuyo_enabled = 0
+hokuyo_distance = -1
 
 #arm sizes
 probe_lenght = 71 #279
@@ -96,6 +109,37 @@ wait_robot_rotation = False
 
 desired_robot_roatation = 0
 
+
+
+
+def update_rosi_speed(speeds):
+    traction_command_list = RosiMovementArray()
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 1
+    traction_command.joint_var = speeds[0]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 2
+    traction_command.joint_var = speeds[1]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 3
+    traction_command.joint_var = speeds[2]
+    traction_command_list.movement_array.append(traction_command)
+
+    traction_command = RosiMovement()
+    traction_command.nodeID = 4
+    traction_command.joint_var = speeds[3]
+    traction_command_list.movement_array.append(traction_command)
+
+    pub_traction = rospy.Publisher('/rosi/command_traction_speed', RosiMovementArray, queue_size=1)
+    pub_traction.publish(traction_command_list)
+
+
+
 #return UR5 arm joints angles given the desired position
 def cinematicaInversa():
     global x
@@ -112,7 +156,7 @@ def cinematicaInversa():
 
     global joint_angles
 
-    #print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
+    print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
         print("erro: posicao fora do alcance do braco robotico")
@@ -232,6 +276,7 @@ def arm_move(data):
     global arm_publisher
     #print(data) #debug
 
+    
     if(data.data[0] == _FIRE_NOT_FOUND):
         if(fire_found):
             fire_found = False
@@ -248,6 +293,7 @@ def arm_move(data):
         if(not fire_found):
             fire_found = True
             wait_pose_change = True
+            state = 1 << _ENABLE_VELODYME | 1 << _SETTING_UP_HOKUYO
 
             x = _FIRE_FOUND_X_VALUE
             y = _FIRE_FOUND_Y_VALUE
@@ -257,10 +303,25 @@ def arm_move(data):
             y += data.data[1]
             z += data.data[2]
 
-            if(x < 250 and not (state & (1 << _FOUND_FIRE_FRONT))):
+            if(state & (1 << _SETTING_UP_HOKUYO)):
+                if(data.data[0] == 0):
+                    #state = 1 << _ENABLE_VELODYME | 1 << _FOUND_FIRE_RIGHT
+                    update_rosi_speed([0,0,0,0])
+                    hokuyo_publisher.publish(data = _HOKUYO_STATE_READING)
+                    state = 0 
+                    #save hokuyo distance
+                elif(data.data[0] < 0):
+                    state = 1 << _SETTING_UP_HOKUYO
+                    update_rosi_speed([-0.25,-0.25,-0.25,-0.25])
+                elif(data.data[0] < 10):
+                    state = 1 << _SETTING_UP_HOKUYO
+                    update_rosi_speed([0.5,0.5,0.5,0.5])
+
+
+            elif(x < 300 and not (state & (1 << _FOUND_FIRE_FRONT))):
                 state = _FOUND_FIRE_RIGHT
                 wait_robot_rotation = True
-                desired_robot_roatation = -1
+                desired_robot_roatation = 1
 
     #get the joints angles
     pos = cinematicaInversa()
@@ -268,8 +329,36 @@ def arm_move(data):
     arm_publisher.publish(joint_variable = pos)
 
 
+def print_state():
+    global state
+
+    if (state & (1 << _ENABLE_VELODYME)):
+        print ("_ENABLE_VELODYME")
+
+    if (state & (1 << _FOLLOW_TRACK)):
+        print ("_FOLLOW_TRACK")
+
+    if (state & (1 << _FOUND_FIRE_FRONT)):
+        print ("_FOUND_FIRE_FRONT")
+
+    if (state & (1 << _FOUND_FIRE_RIGHT)):
+        print ("_FOUND_FIRE_RIGHT")
+
+    if (state & (1 << _FOUND_FIRE_TOUCH)):
+        print ("_FOUND_FIRE_TOUCH")  
+
+    if (state & (1 << _SETTING_UP_HOKUYO)):
+        print ("_SETTING_UP_HOKUYO")
+
+    statePublisher = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
+    statePublisher.publish(data = state)
+
+
+
 #callback from the IMU sensor, make the ur5 arm follow the track automatically
 def arm_imu(data):
+    print_state()
+
     global wait_pose_change
     if(wait_pose_change):
         return
@@ -291,23 +380,23 @@ def arm_imu(data):
     t1 = +1.0 - 2.0 * (qx * qx + qy * qy)
     tilt_x = atan2(t0, t1)  #x euler angle
 
+    t3 = +2.0 * (qw * qz + qx * qy)
+    t4 = +1.0 - 2.0 * (qy * qy + qz * qz)
+    tilt_z = atan2(t4, t3) + pi/2  #z euler angle
+
     if(get_tilt_y_from_imu):
         t2 = +2.0 * (qw * qy - qz * qx)
         t2 = +1.0 if t2 > +1.0 else t2
         t2 = -1.0 if t2 < -1.0 else t2
         tilt_y = asin(t2)  #y euler angle
 
-    t3 = +2.0 * (qw * qz + qx * qy)
-    t4 = +1.0 - 2.0 * (qy * qy + qz * qz)
-    tilt_z = atan2(t4, t3) + pi/2  #z euler angle
-    
-    #tilt_y += 0.05
-    #print((tilt_x, tilt_y, tilt_z))
+        x_temp = cos(tilt_z)*tilt_x - sin(tilt_z)*tilt_y
+        y_temp = sin(tilt_z)*tilt_x + cos(tilt_z)*tilt_y
 
-    if state & (1 << _FOUND_FIRE_FRONT):
-        temp = tilt_x
-        tilt_x = tilt_y
-        tilt_y = temp
+        tilt_x = x_temp
+        tilt_y = y_temp
+
+    #print((tilt_x, tilt_y, tilt_z))
 
     #get the joints angles
     pos = cinematicaInversa()
@@ -337,32 +426,6 @@ def arm_tilt(data):
             
         tilt_y += data.data
 
-
-def update_rosi_speed(speeds):
-    traction_command_list = RosiMovementArray()
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 1
-    traction_command.joint_var = speeds[0]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 2
-    traction_command.joint_var = speeds[1]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 3
-    traction_command.joint_var = speeds[2]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 4
-    traction_command.joint_var = speeds[3]
-    traction_command_list.movement_array.append(traction_command)
-
-    pub_traction = rospy.Publisher('/rosi/command_traction_speed', RosiMovementArray, queue_size=1)
-    pub_traction.publish(traction_command_list)
 
 
 def arm_current_position(data):
@@ -405,13 +468,18 @@ def arm_current_position(data):
             update_rosi_speed([-2,-2,2,2])
             
 
+def hokuyo_distance_callback(data):
+    global hokuyo_distance
+    hokuyo_distance = data.data
+    print ("hokuyo distance: " + str (hokuyo_distance))
+
 
 
 def listener():
     rospy.init_node('arm', anonymous=True)
 
     global state
-    state = 0 | (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK)
+    state = (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK)
     
     #rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
     rospy.Subscriber("/ur5/jointsPositionCurrentState", ManipulatorJoints, arm_current_position)
@@ -420,8 +488,16 @@ def listener():
     rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
     #rospy.Subscriber('/pra_vale/cam_found_fire', Int32, cam_found_fire)
     rospy.Subscriber("/sensor/imu", Imu, arm_imu)
+    rospy.Subscriber("/pra_vale/hokuyo_distance", Int32, hokuyo_distance_callback)
 
     rospy.spin()
+
+    # node_sleep_rate = rospy.Rate(10)
+    # while not rospy.is_shutdown(): 
+
+    #     statePublisher.publish(data = state)
+    #     node_sleep_rate.sleep()
+
 
 #main
 print("arm launched")

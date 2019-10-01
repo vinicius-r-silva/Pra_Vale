@@ -19,9 +19,12 @@ _FIRE_NOT_FOUND = 1000
   
 #consts used on the detection if thre is a track at the cam
 #define the row use on the detection
-_TRACK_DETECTION_ROW = 150
+_TRACK_DETECTION_ROW = 180
 #define the max qtd of balck pixels
-_TRACK_DETECTION_MAX_PIXELS = 50
+_TRACK_DETECTION_MAX_PIXELS = 25
+
+#defines how close the fire has to be to center of the image to be considered fire
+_ERROR_UPPER_LIMIT = 300
 
 
 #-------------------GLOBAL VARIABLES----------------# 
@@ -61,14 +64,18 @@ def there_is_track(frame):
     row = _TRACK_DETECTION_ROW
     black_pixels_qtd = 0
     col = 0
+
     while col < frame.shape[1]:
-        if np.all(frame[row, col] == 0):
+        if np.all(frame[row, col] == [0,0,0]):
             black_pixels_qtd += 1
             if(black_pixels_qtd > _TRACK_DETECTION_MAX_PIXELS):
                 return False
 
         col += 1
     
+    cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
+
+    print("black pixels: " + str(black_pixels_qtd))
     return True
 
 
@@ -159,25 +166,28 @@ def ur5_callback(data):
         cv2.line(frame, ((int)(x),0), ((int)(x), frame.shape[0]), (0,255,0), 1)
 
         error = frame.shape[1]/2 - x
-
-        kp = 1
-        if(error > 100):
-            kp = 10
-        elif(error > 10):
-            kp = 3
-        elif(error > 3):
-            kp = 2
+        if(abs(error) > _ERROR_UPPER_LIMIT):
+            error = _FIRE_NOT_FOUND
         else:
             kp = 1
+            if(error > 100):
+                kp = 10
+            elif(error > 10):
+                kp = 3
+            elif(error > 3):
+                kp = 2
+            else:
+                kp = 1
 
-        #multiplies the erro to a constant kp
-        error = error/kp
+            #multiplies the erro to a constant kp
+            error = error/kp
             
 
     #check if there is a track on the camera sight
     if there_is_track(frame): #if there is a track, get the tilt angle from it
         #get the tilt angle of the camera
         angle, b = get_tilt_angle(frame)
+        print((angle,b))
     else:                     #ortherwise, just return -1
         angle = -1
         b = -1
@@ -188,8 +198,8 @@ def ur5_callback(data):
     #calculates how much the arm has to move in the z axis
     #keeps the camera in the same height as the the track rolls
     z = 0
-    if(b != -1):
-        z = (b - desired_z)/5
+    # if(b != -1):
+    #     z = (b - desired_z)/5
 
     #publishes to the arm node
     arm_move.publish(data = [error, 0, z])
