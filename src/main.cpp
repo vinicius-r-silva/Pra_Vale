@@ -32,10 +32,11 @@ void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
 }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-    //if(!(enable & (1 << _VELODYNE_ENABLED)))
-    //    return;
+    if(!(enable & (1 << _VELODYNE_ENABLED)))
+        return;
+    
     vis->processImages(msg);
-    vis->printImages();
+    vis->printRect();
     rob->processMap(vis->getSidesInfo());
 }
 
@@ -43,30 +44,10 @@ void statesCallback(const std_msgs::Int32::ConstPtr & _enable){
   enable = _enable->data;
 }
 
-void kinectCallback(const  sensor_msgs::ImageConstPtr msg){
-  
-/*
-
- cv_bridge::CvImagePtr cv_ptr;
-  try{
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-  }
-  catch (cv_bridge::Exception& e){
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-  
-  namedWindow("kinect");
-  imshow("kinect", cv_ptr->image);
-  waitKey(1);
-*/
-  //Mat imgKinect = msg;
-
-}
 
 int main(int argc, char **argv){
   
-  enable = _VELODYNE_ENABLED;
+  enable = 1 << _VELODYNE_ENABLED;
 
   vis = new Visualization();
   rob = new Robot();
@@ -82,7 +63,6 @@ int main(int argc, char **argv){
   ros::Rate loop_rate(1);
   ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
   ros::Subscriber subImu = n.subscribe("/sensor/imu", 1, ImuCallback);
-  ros::Subscriber subKinectRGB = n.subscribe("/sensor/kinect_rgb", 1, kinectCallback);
   ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback);
 
   

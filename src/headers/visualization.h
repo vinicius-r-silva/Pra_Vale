@@ -38,7 +38,7 @@ class Visualization {
         void createRectangles();
         void showImages();
         void processImages(const sensor_msgs::PointCloud2::ConstPtr msg);
-        void printImages();
+        void printRect();
         void getInfo();
         bool isImportant(geometry_msgs::Point32 pointInput);
         SidesInfo* getSidesInfo();
