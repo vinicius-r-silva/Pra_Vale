@@ -8,6 +8,7 @@ int enable;
 
 void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
   
+  
   float qx = msg->orientation.x;
   float qy = msg->orientation.y;
   float qz = msg->orientation.z;
@@ -24,20 +25,24 @@ void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
 
   rob->setAngles(yAngle, zAngle);
 
-  if(rob->getRodar()){
-    rob->rodarFunction();
-    return;
-  }
 
 }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-    if(!(enable & (1 << _VELODYNE_ENABLED)))
-        return;
-    
-    vis->processImages(msg);
-    vis->printRect();
-    rob->processMap(vis->getSidesInfo());
+  if(!(enable & (1 << _VELODYNE_ENABLED)))
+      return;
+  
+
+  vis->processImages(msg);
+  vis->printRect();
+
+  if(rob->getRodar()){
+    rob->rodarFunction(vis->getSidesInfo());
+    return;
+  }
+
+  
+  rob->processMap(vis->getSidesInfo());
 }
 
 void statesCallback(const std_msgs::Int32::ConstPtr & _enable){

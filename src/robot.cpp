@@ -4,17 +4,18 @@ using namespace std;
 
 Robot::Robot(){
     _state = NO_OBSTACLE;
-    sentido = _ANTI_HORARIO;
+    sentido = _HORARIO;
     _isStairsInFront = false;
     _climbing = false;
-    rodar = false;
+    rodar = true;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
   if(rodar)
     return;
 
-  //imgProcessed e sidesInfo são variaveis globais
+  //imgProcessed e sidesInfo são variaveis globais7
+
 
   float erro;
   pra_vale::RosiMovement tractionCommandDir;
@@ -54,7 +55,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: DesviaFr";
     cout << " | AF: " << sidesInfo[_FRONT].area;
-    cout << " | DF: " << sidesInfo[_FRONT].distance;
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
 
@@ -74,7 +74,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: RercuDir";
     cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DD: " << sidesInfo[_RIGHT].distance;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
@@ -86,7 +85,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: SegueDir";
     cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DD: " << sidesInfo[_RIGHT].distance;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
@@ -98,7 +96,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: RercuEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DE: " << sidesInfo[_LEFT].distance;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
@@ -110,7 +107,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: SegueEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DE: " << sidesInfo[_LEFT].distance;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
@@ -227,11 +223,13 @@ void Robot::climbStairs(){
   wheelsCommandList.movement_array.pop_back();      
 }
 
-void Robot::rodarFunction(){
+void Robot::rodarFunction(SidesInfo* sidesInfo){
   float dif;
 
   pra_vale::RosiMovement tractionCommandDir;
   pra_vale::RosiMovement tractionCommandEsq;
+
+  
 
   if(zAngle < 0)
     zAngle += M_PI*2;
@@ -239,9 +237,15 @@ void Robot::rodarFunction(){
   if(saveAngle == 10)
     saveAngle = zAngle;
 
-  if(sentido == _HORARIO){
-    tractionCommandDir.joint_var = 3;
+  if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){
+    tractionCommandDir.joint_var = -3;
     tractionCommandEsq.joint_var = -3;
+  
+  }else if(sentido == _HORARIO){
+    
+
+    tractionCommandDir.joint_var = -3;
+    tractionCommandEsq.joint_var = 0;
 
     if(saveAngle >= 0 && saveAngle < M_PI && zAngle > M_PI)
         dif = saveAngle + M_PI*2 - zAngle;
@@ -250,8 +254,8 @@ void Robot::rodarFunction(){
       dif = saveAngle - zAngle;
   
   }else{
-    tractionCommandDir.joint_var = -3;
-    tractionCommandEsq.joint_var = 3;
+    tractionCommandDir.joint_var = 0;
+    tractionCommandEsq.joint_var = -3;
 
     if(zAngle >= 0 && zAngle < M_PI && saveAngle > M_PI)
         dif =  M_PI*2 - saveAngle + zAngle;
@@ -270,7 +274,7 @@ void Robot::rodarFunction(){
   } 
     
 
-  cout << "girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
+  cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
 
 
   //Direita:
