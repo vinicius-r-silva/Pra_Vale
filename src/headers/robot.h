@@ -32,7 +32,7 @@ class Robot {
         Robot();
         void processMap(SidesInfo *sidesInfo);
         void climbStairs();
-        void rodarFunction();
+        void rodarFunction(SidesInfo *sidesInfo);
         void setAngles(double yAngle, double zAngle);
         bool getRodar();
         void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub);

@@ -47,6 +47,7 @@
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 1.5 //distancia ideal para seguir a parede
+#define _MIN_SAFE_DIST_SPIN 1.0 //distancia minima da frente para girar
 #define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
 #define _HORARIO true 
 #define _ANTI_HORARIO false
