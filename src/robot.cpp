@@ -4,7 +4,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = NO_OBSTACLE;
-    sentido = _HORARIO;
+    sentido = _ANTI_HORARIO;
     _isStairsInFront = false;
     _climbing = false;
     rodar = false;
@@ -67,7 +67,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
+  }else if(sidesInfo[_RIGHT].medY < - 0.35 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
     _state = RECUPERA_DIREITA;
@@ -91,7 +91,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.2 && sentido == _ANTI_HORARIO){
+  }else if(sidesInfo[_LEFT].medY < -0.35 && sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
     _state = RECUPERA_ESQUERDA;
