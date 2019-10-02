@@ -4,6 +4,7 @@ import cv2
 import time
 import rospy
 import numpy as np
+import defines as defs
 from math import atan2
 from cv_bridge import CvBridge
 from scipy.optimize import leastsq
@@ -26,17 +27,6 @@ _TRACK_DETECTION_MAX_PIXELS = 25
 #defines how close the fire has to be to center of the image to be considered fire
 _ERROR_UPPER_LIMIT = 300
 
-#enable consts
-#used on the state topic
-_NOTHING = 0
-_ENABLE_VELODYME = 1
-_ARM_CHANGING_POSE = 2
-_FOLLOW_TRACK = 3
-_FOUND_FIRE_FRONT = 4
-_FOUND_FIRE_RIGHT = 5
-_FOUND_FIRE_TOUCH = 6
-_SETTING_UP_HOKUYO = 7
-
 #-------------------GLOBAL VARIABLES----------------# 
 #enabled = True
 
@@ -47,7 +37,7 @@ arm_tilt = rospy.Publisher('/pra_vale/arm_tilt', Float32, queue_size=10)
 #desired z (height) position of the arm
 desired_z = 20
 
-state = 1 << _NOTHING
+state = 1 << defs._NOTHING
 
 
 #----------------------FUNCTIONS----------------------# 
@@ -165,7 +155,7 @@ def ur5_callback(data):
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
 
-    if(state & (1 << _ARM_CHANGING_POSE) or state & (1 << _FOUND_FIRE_FRONT) or state & (1 << _FOUND_FIRE_TOUCH)):
+    if(state & (1 << defs._ARM_CHANGING_POSE) or state & (1 << defs._FOUND_FIRE_FRONT) or state & (1 << defs._FOUND_FIRE_TOUCH)):
         cv2.imshow("Camera",frame)
         cv2.waitKey(1)
         return
@@ -227,7 +217,7 @@ def ur5_callback(data):
     #calculates how much the arm has to move in the z axis
     #keeps the camera in the same height as the the track rolls
     z = 0
-    if((state & (1 << _FOUND_FIRE_FRONT) or state & (1 << _FOUND_FIRE_TOUCH)) and b != -1):
+    if((state & (1 << defs._FOUND_FIRE_FRONT) or state & (1 << defs._FOUND_FIRE_TOUCH)) and b != -1):
         z = (b - desired_z)/5
 
     #publishes to the arm node
