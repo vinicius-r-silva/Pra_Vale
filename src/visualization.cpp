@@ -93,7 +93,7 @@ void Visualization::processImages(const sensor_msgs::PointCloud2::ConstPtr msg){
   erode(*imgProcessed, *imgProcessed, getStructuringElement(MORPH_ELLIPSE, Size(1, 3)));  
 }
 
-void Visualization::printImages(){
+void Visualization::printRect(){
     rectangle(*imgProcessed, *robotRect, 100, 7);
     rectangle(*imgProcessed, *frontRect, 100, 1);
     rectangle(*imgProcessed, *leftRect, 100, 1);
