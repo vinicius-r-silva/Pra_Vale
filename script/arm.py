@@ -9,12 +9,11 @@ from math import acos
 from math import asin
 from math import sin
 from math import cos
-#from std_msgs.msg import Int8
 from std_msgs.msg import Int32
-from sensor_msgs.msg import Imu
 from std_msgs.msg import Float32
 from rosi_defy.msg import RosiMovement
 from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float32MultiArray
 from rosi_defy.msg import RosiMovementArray
 from rosi_defy.msg import ManipulatorJoints  
 
@@ -37,13 +36,15 @@ _MAX_JOINT_ANGLE_DIFF = 0.1
 
 #enable consts
 #used on the state topic
+_NOTHING = 0
 _ENABLE_VELODYME = 1
+_ARM_CHANGING_POSE = 2 #makes the arm ignore all icoming requests to position changes
 _FOLLOW_TRACK = 3
 _FOUND_FIRE_FRONT = 4
 _FOUND_FIRE_RIGHT = 5
 _FOUND_FIRE_TOUCH = 6
 _SETTING_UP_HOKUYO = 7
-
+_INITIAL_SETUP     = 8
 
 _HOKUYO_STATE_DISABLE = 0
 _HOKUYO_STATE_READING = 1
@@ -56,7 +57,8 @@ _HOKUYO_START_TO_FOLLOW_FIRE = -2
 arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
 
 hokuyo_publisher = rospy.Publisher('/pra_vale/hokuyo_state', Int32, queue_size=1)
-
+state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+rosi_speed_publisher = rospy.Publisher("/pra_vale/rosi_speed", Float32MultiArray, queue_size = 1)
 
 #const used to check wether the y axis tilt is going to be detect by the imu or by the ur5 camera
 get_tilt_y_from_imu = False
@@ -93,50 +95,18 @@ tilt_y = 0
 tilt_z = 0
 
 #conts wich show wich state the system is currently, see at the states defines
-state = 0
+state = _NOTHING
 
 #current desired arm joint angles
 joint_angles = [0,0,0,0,0,0]
 
-#makes the arm ignore all icoming requests to position changes
-#goes to false always when the current arm position is equal to the desired position
-wait_pose_change = False
-
-#just like the wait_pose_change, it makes the arm ignores all requests to position changes
+#it makes the arm ignores all requests to position changes
 #used when a fire is detect and it's necessary rotate the robot
 #goes to false when the robot rotates 90 degrees
 wait_robot_rotation = False
 
 desired_robot_roatation = 0
 
-
-
-
-def update_rosi_speed(speeds):
-    traction_command_list = RosiMovementArray()
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 1
-    traction_command.joint_var = speeds[0]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 2
-    traction_command.joint_var = speeds[1]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 3
-    traction_command.joint_var = speeds[2]
-    traction_command_list.movement_array.append(traction_command)
-
-    traction_command = RosiMovement()
-    traction_command.nodeID = 4
-    traction_command.joint_var = speeds[3]
-    traction_command_list.movement_array.append(traction_command)
-
-    pub_traction = rospy.Publisher('/rosi/command_traction_speed', RosiMovementArray, queue_size=1)
-    pub_traction.publish(traction_command_list)
 
 
 
@@ -238,8 +208,8 @@ def cinematicaInversa():
 
 #receive an absolute x,y,z position and sets in the simulation
 def arm_pos(data):
-    global wait_pose_change
-    if(wait_pose_change):
+    global state
+    if(state & 1 << _ARM_CHANGING_POSE):
         return
 
     global x
@@ -262,16 +232,16 @@ def arm_pos(data):
 #receive incremental x,y,z position and sets in the simulation
 #the ur5 camera publishes the x distance between the arm and the fire
 def arm_move(data):
-    global wait_pose_change
+    global state
     global wait_robot_rotation
+    global rosi_speed_publisher
     global desired_robot_roatation
-    if(wait_pose_change or wait_robot_rotation):
+    if((state & (1 << _ARM_CHANGING_POSE)) or wait_robot_rotation):
         return
         
     global x
     global y
     global z
-    global state
     global fire_found
     global arm_publisher
     #print(data) #debug
@@ -280,7 +250,8 @@ def arm_move(data):
     if(data.data[0] == _FIRE_NOT_FOUND):
         if(fire_found):
             fire_found = False
-            wait_pose_change = True
+            state |= 1 << _ARM_CHANGING_POSE
+            state_publisher.publish(data = state)
 
             x = _FIRE_NOT_FOUND_X_VALUE
             y = _FIRE_NOT_FOUND_Y_VALUE
@@ -292,36 +263,45 @@ def arm_move(data):
     else:
         if(not fire_found):
             fire_found = True
-            wait_pose_change = True
-            state = 1 << _ENABLE_VELODYME | 1 << _SETTING_UP_HOKUYO
+            state = 1 << _ENABLE_VELODYME | 1 << _SETTING_UP_HOKUYO | 1 << _ARM_CHANGING_POSE
+            state_publisher.publish(data = state)
 
+            rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
             x = _FIRE_FOUND_X_VALUE
             y = _FIRE_FOUND_Y_VALUE
             z = _FIRE_FOUND_Z_VALUE
         else:
-            x += data.data[0]
+            if((not state & (1 << _FOUND_FIRE_FRONT)) and (not state & (1 << _FOUND_FIRE_TOUCH))):
+                x += data.data[0]
+                z += data.data[2]
+            
             y += data.data[1]
-            z += data.data[2]
 
             if(state & (1 << _SETTING_UP_HOKUYO)):
                 if(data.data[0] == 0):
                     #state = 1 << _ENABLE_VELODYME | 1 << _FOUND_FIRE_RIGHT
-                    update_rosi_speed([0,0,0,0])
+                    rosi_speed_publisher.publish(data = ([0,0,0,0]))
                     hokuyo_publisher.publish(data = _HOKUYO_STATE_READING)
-                    state = 0 
+
+                    # state = 1 << _NOTHING
+                    # state_publisher.publish(data = state)
                     #save hokuyo distance
                 elif(data.data[0] < 0):
                     state = 1 << _SETTING_UP_HOKUYO
-                    update_rosi_speed([-0.25,-0.25,-0.25,-0.25])
+                    state_publisher.publish(data = state)
+                    rosi_speed_publisher.publish(data = ([-0.25,-0.25,-0.25,-0.25]))
                 elif(data.data[0] < 10):
                     state = 1 << _SETTING_UP_HOKUYO
-                    update_rosi_speed([0.5,0.5,0.5,0.5])
+                    state_publisher.publish(data = state)
+                    rosi_speed_publisher.publish(data = ([0.5,0.5,0.5,0.5]))
 
 
-            elif(x < 300 and not (state & (1 << _FOUND_FIRE_FRONT))):
-                state = _FOUND_FIRE_RIGHT
+            elif(x < 300 and (state & (1 << _FOUND_FIRE_RIGHT))):
+                z = _FIRE_FOUND_Z_VALUE
+                state = 1 << _FOUND_FIRE_RIGHT
+                state_publisher.publish(data = state)
                 wait_robot_rotation = True
-                desired_robot_roatation = 1
+                desired_robot_roatation = -10
 
     #get the joints angles
     pos = cinematicaInversa()
@@ -329,11 +309,133 @@ def arm_move(data):
     arm_publisher.publish(joint_variable = pos)
 
 
-def print_state():
+#callback from the IMU sensor, make the ur5 arm follow the track automatically
+def arm_imu(data):
     global state
+    if(state & 1 << _ARM_CHANGING_POSE):
+        return
+  
+    global tilt_x
+    global tilt_y
+    global tilt_z
+    global arm_publisher
+    global get_tilt_y_from_imu
 
+    angles = data.data
+    tilt_x = angles[0]
+    tilt_z = angles[2]
+
+    if get_tilt_y_from_imu:    
+        tilt_y = angles[1]
+        
+    pos = cinematicaInversa()
+    #publish joints angles
+    arm_publisher.publish(joint_variable = pos)
+
+
+
+#callback from the ur5 camera, make the ur5 arm follow the track automatically
+def arm_tilt(data):
+    global state
+    global wait_robot_rotation
+    if((state & 1 << _ARM_CHANGING_POSE) or wait_robot_rotation):
+        return
+        
+    global tilt_y 
+    global get_tilt_y_from_imu
+    # get_tilt_y_from_imu = True
+    # return
+
+    if(data.data == -1 or state & (1 << _FOUND_FIRE_FRONT) or state & (1 << _FOUND_FIRE_TOUCH)):
+        get_tilt_y_from_imu = True
+    else:
+        if(get_tilt_y_from_imu == True):
+            get_tilt_y_from_imu = False
+            tilt_y = 0
+            
+        tilt_y += data.data
+
+
+
+def arm_current_position(data):
+    global state
+    global joint_angles
+    global wait_robot_rotation
+    global rosi_speed_publisher
+    global desired_robot_roatation
+    global state_publisher
+         
+    if(state & (1 << _ARM_CHANGING_POSE)):
+        print ("wait_pose_change")
+        for x in range(len(joint_angles)):
+            if(abs(joint_angles[x] - data.joint_variable[x]) > _MAX_JOINT_ANGLE_DIFF):
+                return
+        
+
+        if (wait_robot_rotation):
+            desired_robot_roatation = data.joint_variable[0] + (pi/2)
+            print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
+
+        if(state & (1 << _INITIAL_SETUP)):
+            state = (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK)# | (1 << _ARM_CHANGING_POSE)
+        else:
+            state = state & ~(1 << _ARM_CHANGING_POSE)
+        state_publisher.publish(data = state)
+
+    elif(wait_robot_rotation):
+        print ("wait_robot_rotation")
+        if(desired_robot_roatation == -10):
+            state |= 1 << _ARM_CHANGING_POSE
+            state_publisher.publish(data = state)
+            return
+            
+
+        print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
+        print (abs(desired_robot_roatation - data.joint_variable[0]))
+        
+        if(abs(desired_robot_roatation - data.joint_variable[0]) < _MAX_JOINT_ANGLE_DIFF):
+            state = 1 << _FOUND_FIRE_FRONT
+            state_publisher.publish(data = 1 << _FOUND_FIRE_FRONT)
+            wait_robot_rotation = False
+
+            rosi_speed_publisher.publish(data = ([0,0,0,0]))
+        else:
+            rosi_speed_publisher.publish(data = ([-2,-2, 2, 2]))
+            
+
+def hokuyo_distance_callback(data):
+    global x
+    global state
+    global state_publisher
+    global hokuyo_distance
+    hokuyo_distance = data.data[0]
+
+    if(state & (1 << _FOUND_FIRE_RIGHT) or state & (1 << _FOUND_FIRE_TOUCH)):
+        x_dist = data.data[1]
+        if(x_dist > 10):
+            x_dist = 10
+        elif(x_dist < -10):
+            x_dist = -10
+
+        x += (int)(x_dist)
+        print("getting distance by hokuyo. x_dist: " + str(x_dist))
+
+    print ("hokuyo distance: " + str (hokuyo_distance))
+
+    if (state & (1 << _SETTING_UP_HOKUYO)):
+        state = (1 << _ENABLE_VELODYME) | (1 << _FOUND_FIRE_RIGHT)
+        state_publisher.publish(data = state)
+
+
+def state_callback(data):
+    global state
+    state = data.data
+    #print ("state: " + str(state))
     if (state & (1 << _ENABLE_VELODYME)):
         print ("_ENABLE_VELODYME")
+
+    if (state & (1 << _ARM_CHANGING_POSE)):
+        print ("_ARM_CHANGING_POSE")
 
     if (state & (1 << _FOLLOW_TRACK)):
         print ("_FOLLOW_TRACK")
@@ -350,153 +452,39 @@ def print_state():
     if (state & (1 << _SETTING_UP_HOKUYO)):
         print ("_SETTING_UP_HOKUYO")
 
-    statePublisher = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
-    statePublisher.publish(data = state)
+    if (state & (1 << _INITIAL_SETUP)):
+        global arm_publisher
+        global state_publisher
+        pos = cinematicaInversa()
+        arm_publisher.publish(joint_variable = pos)
 
 
-
-#callback from the IMU sensor, make the ur5 arm follow the track automatically
-def arm_imu(data):
-    print_state()
-
-    global wait_pose_change
-    if(wait_pose_change):
-        return
-
-    global state        
-    global tilt_x
-    global tilt_y
-    global tilt_z
-    global arm_publisher
-
-    #get imu quartenions
-    qx = data.orientation.x
-    qy = data.orientation.y
-    qz = data.orientation.z
-    qw = data.orientation.w
-    
-    #transform quartenions to euler angles
-    t0 = +2.0 * (qw * qx + qy * qz)
-    t1 = +1.0 - 2.0 * (qx * qx + qy * qy)
-    tilt_x = atan2(t0, t1)  #x euler angle
-
-    t3 = +2.0 * (qw * qz + qx * qy)
-    t4 = +1.0 - 2.0 * (qy * qy + qz * qz)
-    tilt_z = atan2(t4, t3) + pi/2  #z euler angle
-
-    if(get_tilt_y_from_imu):
-        t2 = +2.0 * (qw * qy - qz * qx)
-        t2 = +1.0 if t2 > +1.0 else t2
-        t2 = -1.0 if t2 < -1.0 else t2
-        tilt_y = asin(t2)  #y euler angle
-
-        x_temp = cos(tilt_z)*tilt_x - sin(tilt_z)*tilt_y
-        y_temp = sin(tilt_z)*tilt_x + cos(tilt_z)*tilt_y
-
-        tilt_x = x_temp
-        tilt_y = y_temp
-
-    #print((tilt_x, tilt_y, tilt_z))
-
-    #get the joints angles
-    pos = cinematicaInversa()
-    #publish joints angles
-    arm_publisher.publish(joint_variable = pos)
-
-
-
-#callback from the ur5 camera, make the ur5 arm follow the track automatically
-def arm_tilt(data):
-    global wait_pose_change
-    global wait_robot_rotation
-    if(wait_pose_change or wait_robot_rotation):
-        return
-        
-    global tilt_y 
-    global get_tilt_y_from_imu
-    # get_tilt_y_from_imu = True
-    # return
-
-    if(data.data == -1):
-        get_tilt_y_from_imu = True
-    else:
-        if(get_tilt_y_from_imu == True):
-            get_tilt_y_from_imu = False
-            tilt_y = 0
-            
-        tilt_y += data.data
-
-
-
-def arm_current_position(data):
-    global state
-    global joint_angles
-    global wait_pose_change
-    global wait_robot_rotation
-    global desired_robot_roatation
-
-    if(not wait_pose_change and not wait_robot_rotation):
-        return
-        
-    if(wait_pose_change):
-        print ("wait_pose_change")
-        for x in range(len(joint_angles)):
-            if(abs(joint_angles[x] - data.joint_variable[x]) > _MAX_JOINT_ANGLE_DIFF):
-                return
-        
-        if (wait_robot_rotation):
-            desired_robot_roatation = data.joint_variable[0] + (pi/2)
-            print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
-
-        wait_pose_change = False
-
-    elif(wait_robot_rotation):
-        print ("wait_robot_rotation")
-        if(desired_robot_roatation == -1):
-            wait_pose_change = True
-            return
-            
-
-        print("joint: " + str(data.joint_variable[0]) + "  desired: " + str(desired_robot_roatation))
-        print (abs(desired_robot_roatation - data.joint_variable[0]))
-        
-        if(abs(desired_robot_roatation - data.joint_variable[0]) < _MAX_JOINT_ANGLE_DIFF):
-            state = 1 << _FOUND_FIRE_FRONT
-            wait_robot_rotation = False
-            update_rosi_speed([0,0,0,0])
-        else:
-            update_rosi_speed([-2,-2,2,2])
-            
-
-def hokuyo_distance_callback(data):
-    global hokuyo_distance
-    hokuyo_distance = data.data
-    print ("hokuyo distance: " + str (hokuyo_distance))
-
-
-
+#main
 def listener():
     rospy.init_node('arm', anonymous=True)
 
-    global state
-    state = (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK)
+    global x
+    global y
+    global z
+
+    x = _FIRE_NOT_FOUND_X_VALUE
+    y = _FIRE_NOT_FOUND_Y_VALUE
+    z = _FIRE_NOT_FOUND_Z_VALUE
+    # arm_publisher.publish(joint_angles = pos)
+
+    #state_publisher.publish(data = (1 << _ENABLE_VELODYME) | (1 << _FOLLOW_TRACK))
     
-    #rospy.Subscriber('/pra_vale/arm_pos', Int32MultiArray, arm_pos)
+    #receives the current position of the arm
+    #used when it's necessa
     rospy.Subscriber("/ur5/jointsPositionCurrentState", ManipulatorJoints, arm_current_position)
 
+    rospy.Subscriber("/pra_vale/imu", Float32MultiArray, arm_imu)
     rospy.Subscriber('/pra_vale/arm_tilt', Float32, arm_tilt)
+    rospy.Subscriber("/pra_vale/estados", Int32, state_callback)
     rospy.Subscriber('/pra_vale/arm_move', Int32MultiArray, arm_move)
-    #rospy.Subscriber('/pra_vale/cam_found_fire', Int32, cam_found_fire)
-    rospy.Subscriber("/sensor/imu", Imu, arm_imu)
-    rospy.Subscriber("/pra_vale/hokuyo_distance", Int32, hokuyo_distance_callback)
+    rospy.Subscriber("/pra_vale/hokuyo_distance", Int32MultiArray, hokuyo_distance_callback)
 
     rospy.spin()
-
-    # node_sleep_rate = rospy.Rate(10)
-    # while not rospy.is_shutdown(): 
-
-    #     statePublisher.publish(data = state)
-    #     node_sleep_rate.sleep()
 
 
 #main

@@ -19,13 +19,23 @@ _FIRE_NOT_FOUND = 1000
   
 #consts used on the detection if thre is a track at the cam
 #define the row use on the detection
-_TRACK_DETECTION_ROW = 180
+_TRACK_DETECTION_ROW = 150
 #define the max qtd of balck pixels
 _TRACK_DETECTION_MAX_PIXELS = 25
 
 #defines how close the fire has to be to center of the image to be considered fire
 _ERROR_UPPER_LIMIT = 300
 
+#enable consts
+#used on the state topic
+_NOTHING = 0
+_ENABLE_VELODYME = 1
+_ARM_CHANGING_POSE = 2
+_FOLLOW_TRACK = 3
+_FOUND_FIRE_FRONT = 4
+_FOUND_FIRE_RIGHT = 5
+_FOUND_FIRE_TOUCH = 6
+_SETTING_UP_HOKUYO = 7
 
 #-------------------GLOBAL VARIABLES----------------# 
 #enabled = True
@@ -37,8 +47,15 @@ arm_tilt = rospy.Publisher('/pra_vale/arm_tilt', Float32, queue_size=10)
 #desired z (height) position of the arm
 desired_z = 20
 
+state = 1 << _NOTHING
+
 
 #----------------------FUNCTIONS----------------------# 
+
+def state_callback(data):
+    global state
+    state = data.data
+
 
 #given two array of values, find the best line that best fit the arrays
 def leastSquare (x_list, y_list):
@@ -90,7 +107,7 @@ def get_tilt_angle(frame):
     pixels_found = 0
     step = (int)(cols/qtd)
     upper_limit = (int)((2*rows)/3)
-    botton_limit = (int)(rows - 1)
+    botton_limit = (int)(rows - 1) - 40
 
     #main loop
     #check the first black pixels from the botton of the image
@@ -100,6 +117,11 @@ def get_tilt_angle(frame):
     y_list = []
     while cont < qtd:
         x = botton_limit   #start from the botton
+        if np.all(frame[x, current_col] == 0):
+            cont += 1
+            current_col += step
+            continue
+        x -= 1
         while(x > upper_limit): #to the upperlimit
             if np.all(frame[x, current_col] == 0): #check if pixel is black
                 x_list.append(x)                   #if it is, count it
@@ -132,7 +154,8 @@ def get_tilt_angle(frame):
 #ur5Cam Callback
 #find fire in the given image and calculates the x,y coordinates of the fire
 def ur5_callback(data):
-    global arm_publisher
+    global arm_move
+    global arm_tilt
     # global enabled
     # if(not enabled):
     #     return
@@ -140,6 +163,12 @@ def ur5_callback(data):
     #get the image
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
+
+
+    if(state & (1 << _ARM_CHANGING_POSE) or state & (1 << _FOUND_FIRE_FRONT) or state & (1 << _FOUND_FIRE_TOUCH)):
+        cv2.imshow("Camera",frame)
+        cv2.waitKey(1)
+        return
 
     #Calculates RGB threshold to find fire
     mask=cv2.inRange(frame,(0,175,210),(64,255,255))
@@ -198,7 +227,7 @@ def ur5_callback(data):
     #calculates how much the arm has to move in the z axis
     #keeps the camera in the same height as the the track rolls
     z = 0
-    if(b != -1):
+    if((state & (1 << _FOUND_FIRE_FRONT) or state & (1 << _FOUND_FIRE_TOUCH)) and b != -1):
         z = (b - desired_z)/5
 
     #publishes to the arm node

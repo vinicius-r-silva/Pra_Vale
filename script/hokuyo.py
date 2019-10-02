@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
+
 import rospy
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32
+from std_msgs.msg import Int32MultiArray
 from rosi_defy.msg import HokuyoReading
 import numpy as np
 import cv2
 
-_IMG_SIZE = 1000
+_IMG_SIZE = 750
 _MAX_RANGE = 50
 _RADIOS_FIRE = 9
 
@@ -17,116 +19,171 @@ _STATE_FOLLOWING = 2
 
 _HOKUYO_READING_MAX = 10
 
-last_distance = 0
+last_fire_coord = [-1,-1]
 state = _STATE_DISABLE
 is_following_fire = False
 
-distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32, queue_size = 1)
+distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32MultiArray, queue_size = 1)
 
-
-def getHalfDistance(data):
-
-    blank_image = np.zeros((_IMG_SIZE,_IMG_SIZE), np.uint8)
+#make an grayscale image from the hokuyo data.reading
+def getHokuyoData(data):
     size = len(data.reading)
-
-    i = 0
-    distancia = 0
-    menor_distancia   = 0
-    melhor_x_robo   = 0
-    melhor_x_centro = _IMG_SIZE
-
-    half_img_size = _IMG_SIZE/2
     half_max = _HOKUYO_READING_MAX/2
     Kp = _IMG_SIZE/_HOKUYO_READING_MAX
 
-    x_fogo = 0
-    y_fogo = 0
+    i = 0
+    frame = np.zeros((_IMG_SIZE,_IMG_SIZE), np.uint8) #create a black image
 
-    while i < size:
-        y = data.reading[i]
+    #interate every three elements, saving the x and y values
+    while i < size:                
+        y = data.reading[i]     
         x = data.reading[i + 1]
 
+        #transform the hokuyo value to pixels position
         y = _IMG_SIZE - (y+half_max)*Kp
         x = _IMG_SIZE - (x+half_max)*Kp
 
-        if(y < half_img_size and y > menor_distancia):
-            menor_distancia = y
-        
-        if(menor_distancia - y  < _MAX_RANGE):
-            if abs(x - half_img_size) < melhor_x_centro:
-                melhor_x_centro = abs(x - half_img_size)
-                melhor_x_robo = x
-                y_fogo = y
-                distancia = half_img_size - y
-
-            blank_image[(int)(y) , (int)(x)] = 255
-            
+        #paint white the x,y pixel 
+        frame[(int)(y) , (int)(x)] = 255 
         i += 3
+    
+    #draw a line in the center of the image
+    # for i in range(499):
+    #     frame[i,half_max] = 120
 
-    for x in range(499):
-        blank_image[x,half_img_size] = 120
-
-    #distance_publisher.publish(data = distancia)
-    np.transpose(blank_image)
-    print("dist: " + str(distancia))
-    #cv2.imshow('image',blank_image)
-    cv2.waitKey(1)
-
-    print(menor_distancia, melhor_x_centro)
-    return (int) (y_fogo), (int) (melhor_x_robo), blank_image
+    return frame
 
 
+#given a frame, find the nearest pixel from the robot and from the center of the y axis
+def getFireInitialPos(frame):
+    botton_limit = _IMG_SIZE/2
+    upper_limit = _IMG_SIZE/5
 
-def find_nearest_white(img, target):
-    nonzero = np.argwhere(img == 255)
-    distances = (nonzero[:,0] - target[0]) ** 2 + (nonzero[:,1] - target[1]) ** 2
-    nearest_index = np.argmin(distances)
-    return nonzero[nearest_index]
+    #given that the robot is in the center of the image
+    #search the center line of the until found a white pixel
+    i = botton_limit
+    half_frame = _IMG_SIZE/2
+    while(i > upper_limit):
+        if(frame[i][half_frame] == 255):
+            return i, half_frame
+        i -= 1
+    
+    #if no white pixel was found in the previously loop
+    #search in the adjacents columns of the image
+    dist = 1
+    while (dist < half_frame):
+        i = botton_limit
+        j = half_frame + dist
+        while(i > upper_limit):
+            if(frame[i][j] == 255):
+                return i, j
+            i -= 1
+
+        i = botton_limit
+        j = half_frame - dist
+        while(i > upper_limit):
+            if(frame[i][j] == 255):
+                return i, j
+            i -= 1
+        
+        dist += 1
+
+    return -1,-1
+
+
+#given a previously position of the fire, find where is the given frame
+#search in a small area arround the fire position given 
+# and return the center point of the white pixels
+def getFireCenter(frame, fogoX, fogoY):
+
+    #search limits form a small square arround the previously fire position
+    botton = fogoY + _RADIOS_FIRE
+    top = fogoY - _RADIOS_FIRE
+    left = fogoX - _RADIOS_FIRE
+    right = fogoX + _RADIOS_FIRE
+
+    i = top
+    j = left
+    sumY = 0
+    sumX = 0
+    points_found = 0
+
+    #find all white pixels inside the small square
+    #make weighted average of the pixels location to find the center of all white pixels
+    while i < botton:
+        j = left
+        while(j < right):
+            if(frame[i][j] == 255):
+                points_found += 1
+                sumY += i - top + 1
+                sumX += j - left + 1
+            j += 1
+        i += 1
+    
+    #calculates the center pixel
+    fogoX = fogoX + (sumX/points_found - _RADIOS_FIRE)
+    fogoY = fogoY + (sumY/points_found - _RADIOS_FIRE)
+
+    #print for debuging
+    #print((sumX/points_found - _RADIOS_FIRE), (sumY/points_found - _RADIOS_FIRE))
+    #print(fogoX, fogoY)
+    
+    return fogoX, fogoY
 
 
 
 def callback(data):
     global state
-    global last_distance
+    global last_fire_coord
     global distance_publisher   
     if(state == _STATE_DISABLE):
-        if(last_distance != -1):
-            distance_publisher.publish(data = -1)
-            last_distance = -1
-
+        if(last_fire_coord[0] != -1):
+            last_fire_coord[0] = -1
+            last_fire_coord[1] = -1
+            cvs.destroyWindow('image')
         return
 
-    elif(state == _STATE_FOLLOWING or state == _STATE_READING):
-        fogoY, fogoX, blank_image = getHalfDistance(data)
-        cv2.circle(blank_image, (fogoX,fogoY), _RADIOS_FIRE, 255, 1,8,0)
+    frame = getHokuyoData(data)
+
+    if(last_fire_coord[0] == -1):
+        fogoY, fogoX = getFireInitialPos(frame)
+        cv2.circle(frame    , (fogoX,fogoY), _RADIOS_FIRE, color = 255, thickness = 1, lineType = 8, shift = 0)
+        last_fire_coord[0] = fogoX
+        last_fire_coord[1] = fogoY
+    else:
+        fogoX, fogoY = getFireCenter(frame, last_fire_coord[0], last_fire_coord[1])
+        last_fire_coord[0] = fogoX
+        last_fire_coord[1] = fogoY
+
+    dist_Y = _IMG_SIZE/2 - fogoY
+    dist_X = _IMG_SIZE/2 - fogoX
+    distance_publisher.publish(data = [dist_Y, dist_X])
+    cv2.circle(frame, (fogoX,fogoY), _RADIOS_FIRE, color = 255, thickness = 1, lineType = 8, shift = 0)
         
-        try:
-            fogoCoord = find_nearest_white(blank_image,(fogoX,fogoY))
-            print ("fogo: " + str(fogoCoord))
-            cv2.circle(blank_image, tuple(fogoCoord) , _RADIOS_FIRE, 100, 1,8,0)
+    # except Exception as e:
+    #     print(e)
+
+    cv2.imshow('image', frame)
+    cv2.waitKey(1)
+
             
-        except Exception as e:
-            print(e)
-        
-        
-
-        cv2.imshow('image', blank_image)
-
-        
-
+#enables or disables the hokuyo processing
 def hokuyo_state(data):
     global state
     state = data.data
     print("hokuyo is: " + str(state))
 
+
+
 def listener():
-    rospy.init_node('listener', anonymous=True)
+    rospy.init_node('hokuyo', anonymous=True)
 
     rospy.Subscriber("/sensor/hokuyo", HokuyoReading, callback)
     rospy.Subscriber("/pra_vale/hokuyo_state", Int32, hokuyo_state)
 
     rospy.spin()
 
-print("\nL\nA\nU\nN\nC\nH\nE\nD\n")
 
+#main
+print("hokuyo launched")
 listener()

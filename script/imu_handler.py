@@ -45,7 +45,7 @@ def imu_callback(data):
     angles[1] = y
     angles[2] = z 
 
-    print(angles)
+    #print(angles)
 
 
 
