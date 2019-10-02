@@ -117,5 +117,6 @@ bool Visualization::isImportant(geometry_msgs::Point32 pointInput){
 }
 
 SidesInfo* Visualization::getSidesInfo(){
+    Visualization::getInfo();
     return this->sidesInfo;
 }
