@@ -2,6 +2,7 @@
 
 
 import rospy
+import defines as defs
 from std_msgs.msg import Bool
 from std_msgs.msg import Int32
 from std_msgs.msg import Int32MultiArray
@@ -13,14 +14,10 @@ _IMG_SIZE = 750
 _MAX_RANGE = 50
 _RADIOS_FIRE = 9
 
-_STATE_DISABLE = 0
-_STATE_READING = 1
-_STATE_FOLLOWING = 2
-
 _HOKUYO_READING_MAX = 10
 
 last_fire_coord = [-1,-1]
-state = _STATE_DISABLE
+state = defs._NOTHING
 is_following_fire = False
 
 distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32MultiArray, queue_size = 1)
@@ -50,7 +47,6 @@ def getHokuyoData(data):
     #draw a line in the center of the image
     # for i in range(499):
     #     frame[i,half_max] = 120
-
     return frame
 
 
@@ -121,8 +117,12 @@ def getFireCenter(frame, fogoX, fogoY):
         i += 1
     
     #calculates the center pixel
-    fogoX = fogoX + (sumX/points_found - _RADIOS_FIRE)
-    fogoY = fogoY + (sumY/points_found - _RADIOS_FIRE)
+    if (points_found == 0):
+        fogoX = 0
+        fogoY = 0
+    else:
+        fogoX = fogoX + (sumX/points_found - _RADIOS_FIRE)
+        fogoY = fogoY + (sumY/points_found - _RADIOS_FIRE)
 
     #print for debuging
     #print((sumX/points_found - _RADIOS_FIRE), (sumY/points_found - _RADIOS_FIRE))
@@ -132,16 +132,17 @@ def getFireCenter(frame, fogoX, fogoY):
 
 
 
-def callback(data):
+def hokuyo_callback(data):
     global state
     global last_fire_coord
     global distance_publisher   
-    if(state == _STATE_DISABLE):
+    if((not (state & 1 << defs._HOKUYO_READING)) and (not (state & 1 << defs._HOKUYO_FOLLOWING))):
         if(last_fire_coord[0] != -1):
             last_fire_coord[0] = -1
             last_fire_coord[1] = -1
-            cvs.destroyWindow('image')
+            #cv2.destroyWindow('image')
         return
+
 
     frame = getHokuyoData(data)
 
@@ -157,29 +158,32 @@ def callback(data):
 
     dist_Y = _IMG_SIZE/2 - fogoY
     dist_X = _IMG_SIZE/2 - fogoX
-    distance_publisher.publish(data = [dist_Y, dist_X])
+
     cv2.circle(frame, (fogoX,fogoY), _RADIOS_FIRE, color = 255, thickness = 1, lineType = 8, shift = 0)
-        
+    cv2.imshow('hokuyo', frame)
+    cv2.waitKey(1)
+
+    distance_publisher.publish(data = [dist_Y, dist_X])
+
     # except Exception as e:
     #     print(e)
 
-    cv2.imshow('image', frame)
-    cv2.waitKey(1)
+    # cv2.imshow('image', frame)
+    # cv2.waitKey(1)
 
             
 #enables or disables the hokuyo processing
-def hokuyo_state(data):
+def state_callback(data):
     global state
     state = data.data
-    print("hokuyo is: " + str(state))
 
 
 
 def listener():
     rospy.init_node('hokuyo', anonymous=True)
 
-    rospy.Subscriber("/sensor/hokuyo", HokuyoReading, callback)
-    rospy.Subscriber("/pra_vale/hokuyo_state", Int32, hokuyo_state)
+    rospy.Subscriber("/sensor/hokuyo", HokuyoReading, hokuyo_callback)
+    rospy.Subscriber("/pra_vale/estados", Int32, state_callback)
 
     rospy.spin()
 
