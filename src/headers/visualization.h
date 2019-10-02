@@ -1,7 +1,7 @@
 #ifndef VISUALIZATION_H
 #define VISUALIZATION_H
 
-#include "headers.h"
+#include "consts.h"
 #include "sidesinfo.h"
 
 class Visualization {

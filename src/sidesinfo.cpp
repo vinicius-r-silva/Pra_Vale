@@ -21,9 +21,6 @@ void SidesInfo::getInfo(cv::Mat *img, int LENGHT, int X, int Y, int SizeX, int S
       }
   }
 
-
-
-  
   this->medX = (this->area < _MIN_AREA_REC) ? 10 : (sumX/(this->area*_SCALE)  - _MAX_DIST);
   if(this->medX < 0) this->medX = -this->medX;
 

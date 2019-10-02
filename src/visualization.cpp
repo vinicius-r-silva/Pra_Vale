@@ -3,8 +3,7 @@
 using namespace cv;
 
 Visualization::Visualization(){
-
-
+    
     HEIGHT = 2 * _MAX_DIST * _SCALE;
     LENGHT = 2 * _MAX_DIST * _SCALE;
 
@@ -24,10 +23,10 @@ Visualization::Visualization(){
 void Visualization::createRectangles(){
 
     //retangulo da frente
-    const int FRONT_SIZE_X = 2.0*_SCALE;
+    const int FRONT_SIZE_X = 2.0*_SCALE - 20;
     const int FRONT_SIZE_Y = 1.5*_SCALE;
     const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
-    const int FRONT_Y = (_MAX_DIST+0.85)*_SCALE;
+    const int FRONT_Y = (_MAX_DIST+0.85)*_SCALE + 10;
 
     frontRect = new Rect(FRONT_X, FRONT_Y, FRONT_SIZE_X, FRONT_SIZE_Y);
 

@@ -1,7 +1,7 @@
 #ifndef SIDES_INFO_H
 #define SIDES_INFO_H
 
-#include "headers.h"
+#include "consts.h"
 
 class SidesInfo {
     public:

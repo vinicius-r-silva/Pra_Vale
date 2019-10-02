@@ -6,6 +6,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/Float32MultiArray.h>
 #include "pra_vale/RosiMovementArray.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
@@ -50,6 +51,7 @@
 #define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
 #define _HORARIO true 
 #define _ANTI_HORARIO false
+#define _TRACK_ANGLE 0.0
 
 //informacoes da struct
 #define _FRONT 0

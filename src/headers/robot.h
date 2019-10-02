@@ -1,7 +1,7 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
-#include "headers.h"
+#include "consts.h"
 #include "sidesinfo.h"
 
 class Robot {
@@ -15,8 +15,7 @@ class Robot {
         pra_vale::RosiMovementArray wheelsCommandList;
 
         //Máquina de estado
-        enum{NO_OBSTACLE, DESVIA_FRENTE, SEGUE_ESQUERDA, RECUPERA_ESQUERDA,
-            SEGUE_DIREITA, RECUPERA_DIREITA, LADDER_UP, IN_LADDER};
+        enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN};
         int _state;
 
         //Parâmetros utlizados em cálculos
@@ -24,7 +23,7 @@ class Robot {
         double zAngle;
         double saveAngle;
         bool sentido;
-        bool _isStairsInFront;
+        bool _isInStairs;
         bool _climbing;
         bool rodar;
 

@@ -2,10 +2,15 @@
 
 using namespace std;
 
+#define FRONT_WHEELS 0.15
+#define REAR_WHEELS 0.35
+#define OKAY 0.04
+
 Robot::Robot(){
-    _state = NO_OBSTACLE;
+    _state = WALKING;
+    saveAngle = 10;
     sentido = _HORARIO;
-    _isStairsInFront = false;
+    _isInStairs = false;
     _climbing = false;
     rodar = false;
 }
@@ -14,33 +19,38 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(rodar)
     return;
 
-  //imgProcessed e sidesInfo são variaveis globais
-
-  float erro;
+  int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
   pra_vale::RosiMovement tractionCommandDir;
   pra_vale::RosiMovement tractionCommandEsq;
-  
+  float erro;
+
+  if(_state == IN_LADDER){
+    static int i = 0;
+    i++;
+    if(i > 15)
+      _state = LADDER_DOWN;
+  }
+
+
+  if(_isInStairs && !(_state == LADDER_UP || _state == IN_LADDER || _state == LADDER_DOWN)){
+    _state = LADDER_UP;  
+  }
+
   //Implementacao da maquina de estado
 
   //sobe a escada 
-  if(_isStairsInFront){
-    
-    _state = LADDER_UP;
-
-    if(saveAngle == 10){
-      saveAngle = zAngle;
-    }
+  if(_state == LADDER_UP){
 
     climbStairs();
 
     cout << "E: SubirEscada\t yAngle: " << yAngle;
 
   //desvia do obstaculo na frente
-  }else if(_state == IN_LADDER){
+  }else if(_state == IN_LADDER || _state == LADDER_DOWN){
     
-    erro = (zAngle - saveAngle)*_KP_OBSTACLE;
+    erro = (zAngle - _TRACK_ANGLE)*_KP_OBSTACLE;
 
-    cout << "E: NaEscada\t ZAngle: " << zAngle << "  AngleSaved:" << saveAngle << "Erro:" << erro;
+    cout << "E: NaEscada\t ZAngle: " << zAngle << "Erro:" << erro;
     
   }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
@@ -48,15 +58,11 @@ void Robot::processMap(SidesInfo *sidesInfo){
       erro = 1/(sidesInfo[_FRONT].medY);
     else
       erro = -1/(sidesInfo[_FRONT].medY);
-    
-
-    _state = DESVIA_FRENTE;
 
     cout << "E: DesviaFr";
     cout << " | AF: " << sidesInfo[_FRONT].area;
     cout << " | DF: " << sidesInfo[_FRONT].distance;
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
-
 
   //esta entre dois obstaculos
   /*}else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
@@ -70,23 +76,19 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else if(sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
-    _state = RECUPERA_DIREITA;
 
     cout << "E: RercuDir";
     cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DD: " << sidesInfo[_RIGHT].distance;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
   //segue a parede da direita
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
-    erro = (_DIST_SEGUE_PAREDE - sidesInfo[_RIGHT].medX)/2.5;
-    _state = SEGUE_DIREITA;
+    erro = zAngle - _TRACK_ANGLE;
 
     cout << "E: SegueDir";
     cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DD: " << sidesInfo[_RIGHT].distance;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
@@ -94,39 +96,33 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else if(sidesInfo[_LEFT].medY < -0.2 && sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
-    _state = RECUPERA_ESQUERDA;
 
     cout << "E: RercuEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DE: " << sidesInfo[_LEFT].distance;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
-    erro = -(_DIST_SEGUE_PAREDE - sidesInfo[_LEFT].medX)/2.5;
-    _state = SEGUE_ESQUERDA;
+    erro = zAngle - _TRACK_ANGLE;
 
     cout << "E: SegueEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DE: " << sidesInfo[_LEFT].distance;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
 
   //segue reto caso nao tenha nada
   }else{
     
-    erro = 0;
-    _state = NO_OBSTACLE;
+    erro = zAngle - _TRACK_ANGLE;
 
     cout << "E: NormalEt";
   
   }
-
-  if(_isStairsInFront){
-    tractionCommandDir.joint_var = (float) _MAX_SPEED;
-    tractionCommandEsq.joint_var = (float) _MAX_SPEED; 
+  if(_isInStairs){
+    tractionCommandDir.joint_var = (float) stairsDir * _MAX_SPEED;
+    tractionCommandEsq.joint_var = (float) stairsDir * _MAX_SPEED; 
   }else{
     tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
     tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
@@ -176,7 +172,7 @@ void Robot::climbStairs(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
 
-  if(yAngle < 0.002f && yAngle > -0.002f){
+  if(abs(yAngle) < OKAY){
 
     cout << "IT'S OKAY\n";
     wheelRearSpeed = 0.0f;
@@ -187,18 +183,17 @@ void Robot::climbStairs(){
       i++;
       if(i > 15){
         _state = IN_LADDER;
-        _isStairsInFront = false;
       }
     } 
 
-  }else if(yAngle > 0.07f || yAngle < -0.07f){
+  }else if(abs(yAngle) > REAR_WHEELS){
 
     cout << "REAR WHEELS IS ON\n";
     wheelRearSpeed = -1.0f *_MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
-  }else if(yAngle < 0.01f && yAngle > -0.01f){
+  }else if(abs(yAngle) < FRONT_WHEELS){
     
     cout << "FRONT WHEELS IS ON\n";
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
@@ -268,10 +263,8 @@ void Robot::rodarFunction(){
     sentido = !sentido; //troca o sentido
     saveAngle = 10; //da um reset no angulo
   } 
-    
 
   cout << "girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
-
 
   //Direita:
   tractionCommandDir.nodeID = 1;
