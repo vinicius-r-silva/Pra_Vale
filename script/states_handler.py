@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+##!/usr/bin/env python
 
 import rospy
 import defines as defs
+
 from std_msgs.msg import Int32
 
 
@@ -14,26 +15,34 @@ state =  (1 << defs._INITIAL_SETUP) | (1 << defs._ARM_CHANGING_POSE) | (1 << def
 def print_state():
     global state
     string = ""
+
+    #enable velodyne detection path planning
     if (state & (1 << defs._ENABLE_VELODYME)):
         string += ("  _ENABLE_VELODYME")
 
+    #moves the robot arm when the position desired is far away
     if (state & (1 << defs._ARM_CHANGING_POSE)):
-        string += ("  _ARM_CHANGING_POSE")
+        print ("_ARM_CHANGING_POSE")
 
+    #keeps the robot arm aligned to the track
     if (state & (1 << defs._FOLLOW_TRACK)):
-        string += ("  _FOLLOW_TRACK")
+        print ("_FOLLOW_TRACK")
 
+    #signalize that fire was found in front of the robot
     if (state & (1 << defs._FOUND_FIRE_FRONT)):
-        string += ("  _FOUND_FIRE_FRONT")
-
+        print ("_FOUND_FIRE_FRONT")
+    
+    #signalize that fire was found in the right of the robot
     if (state & (1 << defs._FOUND_FIRE_RIGHT)):
-        string += ("  _FOUND_FIRE_RIGHT")
-
+        print ("_FOUND_FIRE_RIGHT")
+    
+    #when the arm is touching the fire
     if (state & (1 << defs._FOUND_FIRE_TOUCH)):
-        string += ("  _FOUND_FIRE_TOUCH")  
-
+        print ("_FOUND_FIRE_TOUCH")  
+    
+    #detects the fire easel with hokuyo
     if (state & (1 << defs._SETTING_UP_HOKUYO)):
-        string += ("  _SETTING_UP_HOKUYO")
+        print ("_SETTING_UP_HOKUYO")
 
     if (state & (1 << defs._INITIAL_SETUP)):
         string += ("  _INITIAL_SETUP")
