@@ -111,7 +111,7 @@ def cinematicaInversa():
         y = last_y
         z = last_z
         #recalculates joint angles to the last valid position
-        return cinematicaInversa()
+        return joint_angles
 
 
     #a error is given when the desired position is invalid
@@ -178,7 +178,7 @@ def cinematicaInversa():
         y = last_y
         z = last_z
         #recalculates joint angles to the last valid position
-        return cinematicaInversa()
+        return joint_angles
 
 
 #receive an absolute x,y,z position and sets in the simulation
