@@ -10,9 +10,9 @@ _FOUND_FIRE_TOUCH  = 7
 _SETTING_UP_HOKUYO = 8
 _INITIAL_SETUP     = 9
 _ROBOT_ROTATION    = 10
-_ROBOT_ON_LEFT     = 11
+_ROBOT_DIR_RIGHT   = 11
 _HOKUYO_READING    = 12
-_HOKUYO_FOLLOWING  = 13
+_LEAVING_FIRE      = 13
 
 
 #const for minimum angle difference betwwen the current angle and the desired angle

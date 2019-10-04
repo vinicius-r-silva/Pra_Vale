@@ -7,7 +7,7 @@ from std_msgs.msg import Int32
 
 
 #global variable
-state =  (1 << defs._INITIAL_SETUP) | (1 << defs._ARM_CHANGING_POSE)
+state =  (1 << defs._INITIAL_SETUP) | (1 << defs._ARM_CHANGING_POSE) | (1 << defs._ROBOT_DIR_RIGHT)
 
 
 
@@ -40,6 +40,18 @@ def print_state():
 
     if (state & (1 << defs._ROBOT_ROTATION)):
         string += ("  _ROBOT_ROTATION")
+
+    if (state & (1 << defs._HOKUYO_READING)):
+        string += ("  _HOKUYO_READING")
+
+    if (state & (1 << defs._ROBOT_DIR_RIGHT)):
+        string += ("  _ROBOT_DIR_RIGHT")
+
+    if (state & (1 << defs._LEAVING_FIRE)):
+        string += ("  _LEAVING_FIRE")
+
+    if (state & (1 << defs._NOTHING)):
+        string += ("  _NOTHING")
     
     print(string)
 
@@ -51,9 +63,9 @@ def set_state(data):
     state = data.data
 
     #print the state change
-    print("\n\n\nstate changed: \n\n")
-    print_state()
-    print("\n\n\n")
+    # print("\n\n\nstate changed: \n\n")
+    # print_state()
+    # print("\n\n\n")
 
 
 
@@ -67,5 +79,6 @@ if __name__ == '__main__':
     node_sleep_rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
+        print_state()
         pub.publish(data = state)
         node_sleep_rate.sleep()

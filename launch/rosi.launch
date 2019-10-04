@@ -7,6 +7,8 @@
 	<node name="rosi_speed_handler" pkg="pra_vale" type="rosi_speed_handler.py" output="screen"/>
 	<node name="state_handler" pkg="pra_vale" type="states_handler.py" output="screen"/>
 	<node name="hokuyo" pkg="pra_vale" type="hokuyo.py" output="screen"/>
+	<node name="robot_roation" pkg="pra_vale" type="rotate_robot.py" output="screen"/>
+
 
 	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
 

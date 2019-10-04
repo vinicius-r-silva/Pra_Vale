@@ -13,55 +13,62 @@ state = defs._NOTHING
 half_pi = pi/2
 
 _FRONT_ANGLE = 0
-_RIGHT_ANGLE = 1
-_LEFT_ANGLE  = 2
+_FOLLOW_ANGLE = 1
 
-robot_on_right = [0,0,0]
-robot_on_left = [0,0,0]
+robot_on_right = [0,0]
+robot_on_left = [0,0]
 
-robot_on_right[_FRONT_ANGLE] = half_pi
-robot_on_right[_LEFT_ANGLE] =  -half_pi
-robot_on_right[_RIGHT_ANGLE] = 0
+robot_on_left[_FRONT_ANGLE] = half_pi
+robot_on_left[_FOLLOW_ANGLE] = 0
 
-robot_on_left[_FRONT_ANGLE] = -half_pi
-robot_on_left[_LEFT_ANGLE] =  0
-robot_on_left[_RIGHT_ANGLE] = half_pi
+robot_on_right[_FRONT_ANGLE] = -half_pi
+robot_on_right[_FOLLOW_ANGLE] = half_pi
 
 rotation_direction = defs._CLOCKWISE
-rotation_type = defs._NOTHING
+
+_NO_ANGLE = -10
 
 #callback function called when a node requires a state change
 def set_state(data):
     global state
     global half_pi
-    global rotation_type
     global desired_z_angle
     global rotation_direction
 
     state = data.data
-    if(state & (1 << defs._ROBOT_ROTATION) and rotation_type == defs._NOTHING):
-        if(state & (1 << defs._FOUND_FIRE_RIGHT)):        
+    track_on_right = False
+    if(actual_z_angle > -half_pi and actual_z_angle < half_pi):
+        track_on_right = True
 
 
-            desired_z_angle = robot_on_right[_FRONT_ANGLE]
-            rotation_type = defs._TRACK_ON_FRONT
-
-            if(actual_z_angle > -half_pi and actual_z_angle < half_pi):
+    if(state & (1 << defs._ROBOT_ROTATION) and desired_z_angle == _NO_ANGLE):
+        if (state & 1 << defs._ROBOT_DIR_RIGHT):
+            if(state & (1 << defs._FOUND_FIRE_RIGHT)):       
                 rotation_direction = defs._CLOCKWISE  
-    
-            else:
-                rotation_direction = defs._ANTI_CLOCKWISE  
-    
+                if(track_on_right):
+                    desired_z_angle = robot_on_left[_FRONT_ANGLE]
+                else:
+                    desired_z_angle = robot_on_right[_FRONT_ANGLE]
 
+            elif(state & (1 << defs._FOUND_FIRE_TOUCH)):
+                rotation_direction = defs._ANTI_CLOCKWISE
+                if(track_on_right):
+                    desired_z_angle = robot_on_left[_FOLLOW_ANGLE]
+                else:
+                    desired_z_angle = robot_on_right[_FOLLOW_ANGLE]
+                
+
+
+    
 
 
 def imu_callback(data):
     global state
-    global rotation_type
     global actual_z_angle
+    global desired_z_angle
 
     actual_z_angle = data.data[2]
-    if (rotation_type == defs._NOTHING):
+    if (desired_z_angle == _NO_ANGLE):
         return
 
     rosi_speed = [0,0,0,0]
@@ -70,19 +77,16 @@ def imu_callback(data):
     else:
         rosi_speed = [2,2,-2,-2]
     
-    if (rotation_type == defs._TRACK_ON_FRONT):
-        if (abs(actual_z_angle - desired_z_angle) < defs._MAX_JOINT_ANGLE_DIFF):
-            rosi_speed = [0,0,0,0]
-            rotation_type = defs._NOTHING
-            state = state & ~(1 << defs._ROBOT_ROTATION) 
+    if (abs(actual_z_angle - desired_z_angle) < defs._MAX_JOINT_ANGLE_DIFF):
+        rosi_speed = [0,0,0,0]
+        desired_z_angle = _NO_ANGLE
+        state &= ~(1 << defs._ROBOT_ROTATION) 
+        state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+        state_publisher.publish(data = state)
     
 
     speed_publisher = rospy.Publisher("/pra_vale/rosi_speed", Float32MultiArray, queue_size = 1)
     speed_publisher.publish(data = rosi_speed)
-
-    if(not (state & 1 << defs._ROBOT_ROTATION)):
-        state_publisher = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
-        state_publisher.publish(data = state)
         
 
 

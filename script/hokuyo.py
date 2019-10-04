@@ -136,11 +136,11 @@ def hokuyo_callback(data):
     global state
     global last_fire_coord
     global distance_publisher   
-    if((not (state & 1 << defs._HOKUYO_READING)) and (not (state & 1 << defs._HOKUYO_FOLLOWING))):
+    if(not (state & 1 << defs._HOKUYO_READING)):
         if(last_fire_coord[0] != -1):
             last_fire_coord[0] = -1
             last_fire_coord[1] = -1
-            #cv2.destroyWindow('image')
+            cv2.destroyWindow('image')
         return
 
 

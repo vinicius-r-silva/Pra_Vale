@@ -9,6 +9,7 @@ from math import atan2
 from cv_bridge import CvBridge
 from scipy.optimize import leastsq
 
+from std_msgs.msg import Int32
 from std_msgs.msg import Float32
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray
@@ -82,7 +83,7 @@ def there_is_track(frame):
     
     cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
 
-    print("black pixels: " + str(black_pixels_qtd))
+    #print("black pixels: " + str(black_pixels_qtd))
     return True
 
 
@@ -154,8 +155,8 @@ def ur5_callback(data):
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
-
-    if(state & (1 << defs._ARM_CHANGING_POSE) or state & (1 << defs._FOUND_FIRE_FRONT) or state & (1 << defs._FOUND_FIRE_TOUCH)):
+#| (1 << defs._FOUND_FIRE_FRONT) | (1 << defs._FOUND_FIRE_TOUCH) | (1 << defs._NOTHING))
+    if(state & ((1 << defs._ARM_CHANGING_POSE) | (1 << defs._FOUND_FIRE_FRONT) | (1 << defs._FOUND_FIRE_TOUCH) | (1 << defs._NOTHING))):
         cv2.imshow("Camera",frame)
         cv2.waitKey(1)
         return
@@ -206,7 +207,7 @@ def ur5_callback(data):
     if there_is_track(frame): #if there is a track, get the tilt angle from it
         #get the tilt angle of the camera
         angle, b = get_tilt_angle(frame)
-        print((angle,b))
+        #print((angle,b))
     else:                     #ortherwise, just return -1
         angle = -1
         b = -1
@@ -224,7 +225,7 @@ def ur5_callback(data):
     arm_move.publish(data = [error, 0, z])
 
 
-    print(error)
+    #print(error)
     #cv2.imshow("Threshold",mask)
     cv2.imshow("Camera",frame)
     cv2.waitKey(1)
@@ -234,12 +235,16 @@ def ur5_callback(data):
 #     global enabled
 #     enabled = data.data
 #     print("5cam is: " + str(enabled))
+def state_set(data):
+    global state
+    state = data.data
 
 
 def listener():
     rospy.init_node('findFire', anonymous=True)
 
     rospy.Subscriber("/sensor/ur5toolCam", Image, ur5_callback)
+    rospy.Subscriber("/pra_vale/estados", Int32, state_set)
     #rospy.Subscriber("/pra_vale/findFire_enabled", Bool, findFire_enabled)
 
     rospy.spin()
