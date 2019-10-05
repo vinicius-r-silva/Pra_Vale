@@ -15,6 +15,7 @@ Robot::Robot(){
     rodar = false;
     avoidingObs = false;
     inObs = false;
+    saveAngle = 10;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){

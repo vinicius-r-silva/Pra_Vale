@@ -18,6 +18,8 @@ Visualization::Visualization(){
     robotRect = new Rect(ROBOT_X, ROBOT_Y, ROBOT_SIZE_X, ROBOT_SIZE_Y);
 
     sidesInfo = (SidesInfo*) malloc(3 * sizeof(SidesInfo));
+
+    avoidingObs = false;
 }
 
 void Visualization::createRectangles(){
@@ -119,4 +121,8 @@ bool Visualization::isImportant(geometry_msgs::Point32 pointInput){
 SidesInfo* Visualization::getSidesInfo(){
     Visualization::getInfo();
     return this->sidesInfo;
+}
+
+void Visualization::setAvoidingObs(bool avoid){
+    avoidingObs = avoid;
 }

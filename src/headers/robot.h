@@ -22,6 +22,7 @@ class Robot {
         //Parâmetros utlizados em cálculos
         double yAngle;
         double zAngle;
+        double saveAngle;
         bool sentido;
         bool _isInStairs;
         bool rodar;
