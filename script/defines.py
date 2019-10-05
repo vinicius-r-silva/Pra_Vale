@@ -12,9 +12,8 @@ _INITIAL_SETUP     = 9
 _ROBOT_ROTATION    = 10
 _ROBOT_DIR_RIGHT   = 11
 _HOKUYO_READING    = 12
-_HOKUYO_FOLLOWING  = 13
-_FOUND_STAIR       = 14
-_LEAVING_FIRE      = 15
+_FOUND_STAIR       = 13
+_LEAVING_FIRE      = 14
 
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
