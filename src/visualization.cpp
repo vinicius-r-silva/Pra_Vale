@@ -23,6 +23,10 @@ Visualization::Visualization(){
 }
 
 void Visualization::createRectangles(){
+    float minusX = (avoidingObs) ? 0.25 : 1.0;
+    float minusY = (avoidingObs) ? 0.6 : 1.0;
+    float sizeFX = (avoidingObs) ? 1.2 : 1.0;
+
 
     //retangulo da frente
     const int FRONT_SIZE_X = 1.0*_SCALE;
@@ -33,17 +37,17 @@ void Visualization::createRectangles(){
     frontRect = new Rect(FRONT_X, FRONT_Y, FRONT_SIZE_X, FRONT_SIZE_Y);
 
     //retangulo da lateral esquerda
-    const int LEFT_SIZE_X = 2*_SCALE;
-    const int LEFT_SIZE_Y = 2.2*_SCALE;
-    const int LEFT_X = (_MAX_DIST+0.5)*_SCALE;
+    const int LEFT_SIZE_X = 2*_SCALE * minusX; 
+    const int LEFT_SIZE_Y = 2.2*_SCALE * minusY;
+    const int LEFT_X = (_MAX_DIST+0.25)*_SCALE;
     const int LEFT_Y = _MAX_DIST*_SCALE - LEFT_SIZE_Y/3;
 
     leftRect = new Rect(LEFT_X, LEFT_Y, LEFT_SIZE_X, LEFT_SIZE_Y);
 
     //retangulo da lateral direita
-    const int RIGHT_SIZE_X = 2*_SCALE;
-    const int RIGHT_SIZE_Y = 2.2*_SCALE;
-    const int RIGHT_X = (_MAX_DIST-0.5)*_SCALE - RIGHT_SIZE_X;
+    const int RIGHT_SIZE_X = 2*_SCALE * minusX;
+    const int RIGHT_SIZE_Y = 2.2*_SCALE * minusY;
+    const int RIGHT_X = (_MAX_DIST-0.25)*_SCALE - RIGHT_SIZE_X;
     const int RIGHT_Y = _MAX_DIST*_SCALE - RIGHT_SIZE_Y/3;
 
     rightRect = new Rect(RIGHT_X, RIGHT_Y, RIGHT_SIZE_X, RIGHT_SIZE_Y);
@@ -107,9 +111,11 @@ void Visualization::printRect(){
 }
 
 void Visualization::getInfo(){
+    float minus = 1.0;//(avoidingObs) ? 0.4 : 1.0;
+
     sidesInfo[_FRONT].getInfo(imgProcessed, LENGHT, frontRect->x, frontRect->y, frontRect->width, frontRect->height);
-    sidesInfo[_LEFT].getInfo(imgProcessed, LENGHT, leftRect->x, leftRect->y, leftRect->width, leftRect->height);
-    sidesInfo[_RIGHT].getInfo(imgProcessed, LENGHT, rightRect->x, rightRect->y, rightRect->width, rightRect->height);
+    sidesInfo[_LEFT].getInfo(imgProcessed, LENGHT, leftRect->x, leftRect->y, leftRect->width * minus, leftRect->height);
+    sidesInfo[_RIGHT].getInfo(imgProcessed, LENGHT, rightRect->x, rightRect->y, rightRect->width * minus, rightRect->height);
     sidesInfo[_FRONT_LEFT].getInfo(imgProcessed, LENGHT, frontRect->x + frontRect->width/2, frontRect->y, frontRect->width/2, frontRect->height);
     sidesInfo[_FRONT_RIGHT].getInfo(imgProcessed, LENGHT, frontRect->x, frontRect->y, frontRect->width/2, frontRect->height);
 

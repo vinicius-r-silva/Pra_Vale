@@ -46,9 +46,9 @@
 #define _LEAVING_FIRE       14
 
 //controle do robo
-#define _V0 2.0 //velocidade do robo
+#define _V0 3.0 //velocidade do robo
 #define _KP 5.0 //constante para o PID
-#define _KP_OBSTACLE 10.0
+#define _KP_OBSTACLE 1.2
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 1.5 //distancia ideal para seguir a parede
