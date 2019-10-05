@@ -15,17 +15,18 @@ class Robot {
         pra_vale::RosiMovementArray wheelsCommandList;
 
         //Máquina de estado
-        enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN};
+        enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN, FRONT_OBS, FOLLOW_LEFT,
+            FOLLOW_RIGHT, REC_LEFT, REC_RIGHT, CLS_LEFT, CLS_RIGHT};
         int _state;
 
         //Parâmetros utlizados em cálculos
         double yAngle;
         double zAngle;
-        double saveAngle;
         bool sentido;
         bool _isInStairs;
-        bool _climbing;
         bool rodar;
+        bool avoidingObs;
+        bool inObs;
 
     public:
         Robot();
@@ -35,5 +36,6 @@ class Robot {
         void setAngles(double yAngle, double zAngle);
         bool getRodar();
         void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub);
+        bool getAvoidingObs();
 };
 #endif

@@ -2,22 +2,25 @@
 
 using namespace std;
 
+#define _KP_REC 0.6
+#define NICE_DIST_TRACK 0.80
 #define FRONT_WHEELS 0.15
 #define REAR_WHEELS 0.35
-#define OKAY 0.04
+#define OKAY 0.044
 
 Robot::Robot(){
     _state = WALKING;
-    saveAngle = 10;
     sentido = _HORARIO;
     _isInStairs = false;
-    _climbing = false;
     rodar = false;
+    avoidingObs = false;
+    inObs = false;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
   if(rodar)
     return;
+
 
   int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
   pra_vale::RosiMovement tractionCommandDir;
@@ -31,33 +34,71 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _state = LADDER_DOWN;
   }
 
-
-  if(_isInStairs && !(_state == LADDER_UP || _state == IN_LADDER || _state == LADDER_DOWN)){
+  if(_isInStairs && !(_state == LADDER_UP || _state == LADDER_DOWN)){
     _state = LADDER_UP;  
   }
 
   //Implementacao da maquina de estado
+
+  // switch(_state){
+  //   case WALKING:
+  //     cout << "WALKING\t";
+  //     erro = 0.0;
+
+  //   break;
+
+  //   case LADDER_UP:
+  //     climbStairs();
+  //     erro = zAngle * _KP_OBSTACLE;
+  //     cout << "LADDER_UP\t yAngle: " << yAngle;
+
+  //   break;
+
+  //   case IN_LADDER:
+  //     erro = zAngle - *_KP_OBSTACLE;
+  //     cout << "IN_LADDER\t";
+
+  //   break;
+
+  //   case LADDER_DOWN:
+  //     erro = zAngle *_KP_OBSTACLE;
+  //     cout << "LADDER_DOWN\t";
+
+  //   break;
+
+  //   case FRONT_OBS:
+  //     erro = (sentido == HORARIO) ? 1/(sidesInfo[_FRONT].medY) : -1/(sidesInfo[_FRONT].medY);
+  //     avoidingObs = true;
+
+  // }
 
   //sobe a escada 
   if(_state == LADDER_UP){
 
     climbStairs();
 
+    erro = zAngle *_KP_OBSTACLE;
+
     cout << "E: SubirEscada\t yAngle: " << yAngle;
 
-  //desvia do obstaculo na frente
   }else if(_state == IN_LADDER || _state == LADDER_DOWN){
     
-    erro = (zAngle - _TRACK_ANGLE)*_KP_OBSTACLE;
+    erro = zAngle *_KP_OBSTACLE;
 
     cout << "E: NaEscada\t ZAngle: " << zAngle << "Erro:" << erro;
-    
+
+  //desvia do obstaculo na frente    
   }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(sentido ==_HORARIO)
       erro = 1/(sidesInfo[_FRONT].medY);
     else
       erro = -1/(sidesInfo[_FRONT].medY);
+
+    avoidingObs = true;
+    
+    if(abs(zAngle) < 0.1)
+      inObs = true;
 
     cout << "E: DesviaFr";
     cout << " | AF: " << sidesInfo[_FRONT].area;
@@ -73,7 +114,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
+  }else if(inObs && sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -81,11 +122,21 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << " | AD: " << sidesInfo[_RIGHT].area;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
+    avoidingObs = false;
+    inObs = false;
+
+  }else if(!inObs && abs(sidesInfo[_RIGHT].medX - NICE_DIST_TRACK) > 0.15){
+
+    erro = (NICE_DIST_TRACK - sidesInfo[_RIGHT].medX) * _KP_REC;
+
+    cout << "E: AproxDir | DDX: " << sidesInfo[_RIGHT].medX;
 
   //segue a parede da direita
-  }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
+  }else if(!inObs && sidesInfo[_RIGHT].area > _MIN_AREA){
 
-    erro = zAngle - _TRACK_ANGLE;
+    erro = zAngle * _KP_OBSTACLE;
+
+    avoidingObs = false;
 
     cout << "E: SegueDir";
     cout << " | AD: " << sidesInfo[_RIGHT].area;
@@ -97,6 +148,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
+    avoidingObs = false;
+    inObs = false;
+
     cout << "E: RercuEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
@@ -105,7 +159,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
-    erro = zAngle - _TRACK_ANGLE;
+    erro = zAngle *_KP_OBSTACLE;
 
     cout << "E: SegueEsq";
     cout << " | AE: " << sidesInfo[_LEFT].area;
@@ -115,14 +169,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //segue reto caso nao tenha nada
   }else{
     
-    erro = zAngle - _TRACK_ANGLE;
+    erro = 0.0;
 
     cout << "E: NormalEt";
   
   }
-  if(_isInStairs){
-    tractionCommandDir.joint_var = (float) stairsDir * _MAX_SPEED;
-    tractionCommandEsq.joint_var = (float) stairsDir * _MAX_SPEED; 
+
+
+  if(_isInStairs && !(_state == IN_LADDER)){
+    tractionCommandDir.joint_var = (float) stairsDir * (_MAX_SPEED + erro);
+    tractionCommandEsq.joint_var = (float) stairsDir * (_MAX_SPEED - erro); 
   }else{
     tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
     tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
@@ -140,7 +196,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     tractionCommandEsq.joint_var = -_MAX_SPEED;
 
 
-  cout << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+  cout << " | zAngle: " << zAngle << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
 
 
   //altera o vetor das velocidades das 'joints'
@@ -171,6 +227,7 @@ void Robot::climbStairs(){
   pra_vale::RosiMovement wheelCommand;
   float wheelFrontSpeed;
   float wheelRearSpeed;
+  bool _climbing;
 
   if(abs(yAngle) < OKAY){
 
@@ -223,6 +280,7 @@ void Robot::climbStairs(){
 }
 
 void Robot::rodarFunction(){
+  double saveAngle;
   float dif;
 
   pra_vale::RosiMovement tractionCommandDir;
@@ -301,4 +359,8 @@ bool Robot::getRodar(){
 void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub){
     this->speedPub = speedPub;
     this->wheelPub = wheelPub;
+}
+
+bool Robot::getAvoidingObs(){
+  return avoidingObs;
 }

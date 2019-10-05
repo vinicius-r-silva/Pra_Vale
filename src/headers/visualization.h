@@ -23,6 +23,7 @@ class Visualization {
         int ROBOT_Y;
         int ROBOT_SIZE_X;
         int ROBOT_SIZE_Y;
+        int FRONT_SIZE_X = 1.0*_SCALE;
 
         //Retangulos para visualizações 
         cv::Rect *robotRect;
@@ -32,10 +33,13 @@ class Visualization {
 
         //Informações para os retângulos
         SidesInfo *sidesInfo;
+        bool avoidingObs;
+
 
     public:
         Visualization();
         void createRectangles();
+        void setAvoidingObs(bool avoid);
         void showImages();
         void processImages(const sensor_msgs::PointCloud2::ConstPtr msg);
         void printRect();

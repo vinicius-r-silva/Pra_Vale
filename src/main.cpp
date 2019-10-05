@@ -31,11 +31,12 @@ int enable;
 // }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-    if(!(enable & (1 << _VELODYNE_ENABLED)))
+    if(!(enable & (1 << _VELODYNE_ENABLED)) || enable & (1 << _ARM_CHANGING_POSE))
         return;
     
     vis->processImages(msg);
     vis->printRect();
+    vis->setAvoidingObs(rob->getAvoidingObs());
     rob->processMap(vis->getSidesInfo());
 }
 
