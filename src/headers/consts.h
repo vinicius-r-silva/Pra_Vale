@@ -63,6 +63,8 @@
 #define _FRONT 0
 #define _LEFT 1
 #define _RIGHT 2
+#define _FRONT_LEFT 3
+#define _FRONT_RIGHT 4
 
 //processamento da imagem
 #define _MIN_AREA 25

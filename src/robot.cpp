@@ -16,6 +16,8 @@ Robot::Robot(){
     avoidingObs = false;
     inObs = false;
     saveAngle = 10;
+    straitPath = false;
+    distToTrack = NICE_DIST_TRACK;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
@@ -35,43 +37,20 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _state = LADDER_DOWN;
   }
 
+  if(_HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)){
+
+    erro = zAngle *_KP_OBSTACLE;
+    straitPath = true;
+    distToTrack = NICE_DIST_TRACK - 0.3;
+    cout << "StraitPath\t";
+  
+  }
+
   if(_isInStairs && !(_state == LADDER_UP || _state == LADDER_DOWN)){
     _state = LADDER_UP;  
   }
 
   //Implementacao da maquina de estado
-
-  // switch(_state){
-  //   case WALKING:
-  //     cout << "WALKING\t";
-  //     erro = 0.0;
-
-  //   break;
-
-  //   case LADDER_UP:
-  //     climbStairs();
-  //     erro = zAngle * _KP_OBSTACLE;
-  //     cout << "LADDER_UP\t yAngle: " << yAngle;
-
-  //   break;
-
-  //   case IN_LADDER:
-  //     erro = zAngle - *_KP_OBSTACLE;
-  //     cout << "IN_LADDER\t";
-
-  //   break;
-
-  //   case LADDER_DOWN:
-  //'     erro = zAngle *_KP_OBSTACLE;
-  //     cout << "LADDER_DOWN\t";
-
-  //   break;
-
-  //   case FRONT_OBS:
-  //     erro = (sentido == HORARIO) ? 1/(sidesInfo[_FRONT].medY) : -1/(sidesInfo[_FRONT].medY);
-  //     avoidingObs = true;
-
-  // }
 
   //sobe a escada 
   if(_state == LADDER_UP){
@@ -89,7 +68,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "E: NaEscada\t ZAngle: " << zAngle << "Erro:" << erro;
 
   //desvia do obstaculo na frente    
-  }else if(sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
+  }else if(!straitPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(sentido ==_HORARIO)
       erro = 1/(sidesInfo[_FRONT].medY);
@@ -105,14 +84,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << " | AF: " << sidesInfo[_FRONT].area;
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
-  //esta entre dois obstaculos
-  /*}else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
-    if(sidesInfo[_RIGHT].medX < sidesInfo[_LEFT].medY){
-      erro = sidesInfo[_RIGHT].medX - sidesInfo[_LEFT].medX;
-    }
-  */
-
-
   //Recupera o trajeto da direita
   }else if(inObs && sidesInfo[_RIGHT].medY < -0.35 && sentido == _HORARIO){
     
@@ -125,9 +96,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
     avoidingObs = false;
     inObs = false;
 
-  }else if(!inObs && abs(sidesInfo[_RIGHT].medX - NICE_DIST_TRACK) > 0.15){
+  }else if(!inObs && abs(sidesInfo[_RIGHT].medX - distToTrack) > 0.15){
 
-    erro = (NICE_DIST_TRACK - sidesInfo[_RIGHT].medX) * _KP_REC;
+    erro = (distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
 
     cout << "E: AproxDir | DDX: " << sidesInfo[_RIGHT].medX;
 

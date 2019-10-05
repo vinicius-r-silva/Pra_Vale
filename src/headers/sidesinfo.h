@@ -10,7 +10,8 @@ class SidesInfo {
         float medY;
         float distance;
 
-        void getInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY);    
+        void getInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY);
+        SidesInfo* divideInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY);    
 };
 
 #endif

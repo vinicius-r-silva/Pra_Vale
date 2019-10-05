@@ -23,11 +23,13 @@ class Robot {
         double yAngle;
         double zAngle;
         double saveAngle;
+        float distToTrack;
         bool sentido;
         bool _isInStairs;
         bool rodar;
         bool avoidingObs;
         bool inObs;
+        bool straitPath;
 
     public:
         Robot();
