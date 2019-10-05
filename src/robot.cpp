@@ -11,27 +11,16 @@ using namespace std;
 Robot::Robot(){
     _state = WALKING;
     sentido = _HORARIO;
-<<<<<<< HEAD
     _isInStairs = false;
     rodar = false;
     avoidingObs = false;
     inObs = false;
-=======
-    _isStairsInFront = false;
-    _climbing = false;
-    rodar = true;
->>>>>>> 34abeeb71f90ea01084a74e389bd358b0fd41c1e
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
   if(rodar)
     return;
 
-<<<<<<< HEAD
-=======
-  //imgProcessed e sidesInfo são variaveis globais7
-
->>>>>>> 34abeeb71f90ea01084a74e389bd358b0fd41c1e
 
   int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
   pra_vale::RosiMovement tractionCommandDir;
@@ -72,7 +61,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //   break;
 
   //   case LADDER_DOWN:
-  //     erro = zAngle *_KP_OBSTACLE;
+  //'     erro = zAngle *_KP_OBSTACLE;
   //     cout << "LADDER_DOWN\t";
 
   //   break;
@@ -124,11 +113,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   //Recupera o trajeto da direita
-<<<<<<< HEAD
-  }else if(inObs && sidesInfo[_RIGHT].medY < -0.2 && sentido == _HORARIO){
-=======
-  }else if(sidesInfo[_RIGHT].medY < - 0.35 && sentido == _HORARIO){
->>>>>>> 34abeeb71f90ea01084a74e389bd358b0fd41c1e
+  }else if(inObs && sidesInfo[_RIGHT].medY < -0.35 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -293,12 +278,7 @@ void Robot::climbStairs(){
   wheelsCommandList.movement_array.pop_back();      
 }
 
-<<<<<<< HEAD
-void Robot::rodarFunction(){
-  double saveAngle;
-=======
 void Robot::rodarFunction(SidesInfo* sidesInfo){
->>>>>>> 34abeeb71f90ea01084a74e389bd358b0fd41c1e
   float dif;
 
   pra_vale::RosiMovement tractionCommandDir;
