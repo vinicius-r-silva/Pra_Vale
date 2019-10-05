@@ -74,8 +74,8 @@ int main(int argc, char **argv){
   ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback);
   
 
-  ros::Publisher speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
-  ros::Publisher wheelPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_arms_speed",1);
+  ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1);
+  ros::Publisher wheelPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_arm_speed",1);
   
   rob->setPublishers(speedPub, wheelPub);
   

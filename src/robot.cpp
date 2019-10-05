@@ -26,8 +26,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
-  pra_vale::RosiMovement tractionCommandDir;
-  pra_vale::RosiMovement tractionCommandEsq;
+  float traction = 0;
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
   float erro;
 
   if(_state == IN_LADDER){
@@ -148,57 +149,57 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   if(_isInStairs && !(_state == IN_LADDER)){
-    tractionCommandDir.joint_var = (float) stairsDir * (_MAX_SPEED + erro);
-    tractionCommandEsq.joint_var = (float) stairsDir * (_MAX_SPEED - erro); 
+    traction = (float) (stairsDir * (_MAX_SPEED + erro));
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
+    traction = (float) (stairsDir * (_MAX_SPEED - erro));
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
   }else{
-    tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
-    tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
+    traction = (float) (_V0 + _KP*erro);
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
+    traction = (float) (_V0 - _KP*erro);
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
   }
 
-  if(tractionCommandDir.joint_var > _MAX_SPEED)
-    tractionCommandDir.joint_var = _MAX_SPEED;
-  else if(tractionCommandDir.joint_var < -_MAX_SPEED)
-    tractionCommandDir.joint_var = -_MAX_SPEED;
-
-
-  if(tractionCommandEsq.joint_var > _MAX_SPEED)
-    tractionCommandEsq.joint_var = _MAX_SPEED;
-  else if(tractionCommandEsq.joint_var < -_MAX_SPEED)
-    tractionCommandEsq.joint_var = -_MAX_SPEED;
-
-
-  cout << " | zAngle: " << zAngle << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
-
-
-  //altera o vetor das velocidades das 'joints'
-
-  //Direita:
-  tractionCommandDir.nodeID = 1;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  tractionCommandDir.nodeID = 2;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  
-  //Esquerda:
-  tractionCommandEsq.nodeID = 3;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
-  tractionCommandEsq.nodeID = 4;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
-
-  speedPub.publish(tractionCommandList);
-
-  //limpa o vetor
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-
+  //cout << " | zAngle: " << zAngle << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+  speedPub.publish(msg);
 }
 
 void Robot::climbStairs(){
-  pra_vale::RosiMovement wheelCommand;
+  //pra_vale::RosiMovement wheelCommand;4
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
   float wheelFrontSpeed;
   float wheelRearSpeed;
   bool _climbing;
+
+
 
   if(abs(yAngle) < OKAY){
 
@@ -237,26 +238,28 @@ void Robot::climbStairs(){
   }
 
   for(int i = 0; i < 4; i++){
-    wheelCommand.joint_var = (i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed;
-    wheelCommand.nodeID = i + 1;
-    wheelsCommandList.movement_array.push_back(wheelCommand);    
+    // wheelCommand.joint_var = (i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed;
+    // wheelCommand.nodeID = i + 1;
+    // wheelsCommandList.movement_array.push_back(wheelCommand); 
+    msg.data.push_back((i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed);
   }
 
-  wheelPub.publish(wheelsCommandList);
+  wheelPub.publish(msg);
 
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();      
+  // wheelsCommandList.movement_array.pop_back();
+  // wheelsCommandList.movement_array.pop_back();
+  // wheelsCommandList.movement_array.pop_back();
+  // wheelsCommandList.movement_array.pop_back();      
 }
 
 void Robot::rodarFunction(SidesInfo* sidesInfo){
   float dif;
 
-  pra_vale::RosiMovement tractionCommandDir;
-  pra_vale::RosiMovement tractionCommandEsq;
+  //pra_vale::RosiMovement tractionCommandDir;
+  //pra_vale::RosiMovement tractionCommandEsq;
 
-  
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
 
   if(zAngle < 0)
     zAngle += M_PI*2;
@@ -265,14 +268,20 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
     saveAngle = zAngle;
 
   if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){
-    tractionCommandDir.joint_var = -3;
-    tractionCommandEsq.joint_var = -3;
+    // tractionCommandDir.joint_var = -3;
+    // tractionCommandEsq.joint_var = -3;
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
   
   }else if(sentido == _HORARIO){
-    
-
-    tractionCommandDir.joint_var = -3;
-    tractionCommandEsq.joint_var = 0;
+        // tractionCommandDir.joint_var = -3;
+    // tractionCommandEsq.joint_var = 0;
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(0);
+    msg.data.push_back(0);
 
     if(saveAngle >= 0 && saveAngle < M_PI && zAngle > M_PI)
         dif = saveAngle + M_PI*2 - zAngle;
@@ -281,8 +290,12 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
       dif = saveAngle - zAngle;
   
   }else{
-    tractionCommandDir.joint_var = 0;
-    tractionCommandEsq.joint_var = -3;
+    // tractionCommandDir.joint_var = 0;
+    // tractionCommandEsq.joint_var = -3;
+    msg.data.push_back(0);
+    msg.data.push_back(0);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
 
     if(zAngle >= 0 && zAngle < M_PI && saveAngle > M_PI)
         dif =  M_PI*2 - saveAngle + zAngle;
@@ -300,28 +313,28 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
     saveAngle = 10; //da um reset no angulo
   } 
 
-  cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
+  //cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
 
-  //Direita:
-  tractionCommandDir.nodeID = 1;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  tractionCommandDir.nodeID = 2;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
+  // //Direita:
+  // tractionCommandDir.nodeID = 1;
+  // tractionCommandList.movement_array.push_back(tractionCommandDir);
+  // tractionCommandDir.nodeID = 2;
+  // tractionCommandList.movement_array.push_back(tractionCommandDir);
   
-  //Esquerda:
-  tractionCommandEsq.nodeID = 3;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
-  tractionCommandEsq.nodeID = 4;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
+  // //Esquerda:
+  // tractionCommandEsq.nodeID = 3;
+  // tractionCommandList.movement_array.push_back(tractionCommandEsq);
+  // tractionCommandEsq.nodeID = 4;
+  // tractionCommandList.movement_array.push_back(tractionCommandEsq);
 
 
-  speedPub.publish(tractionCommandList);
+  speedPub.publish(msg);
   
   //limpa o vetor
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();  
+  // tractionCommandList.movement_array.pop_back();
+  // tractionCommandList.movement_array.pop_back();
+  // tractionCommandList.movement_array.pop_back();
+  // tractionCommandList.movement_array.pop_back();  
 
 }
 

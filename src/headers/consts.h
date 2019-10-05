@@ -7,7 +7,6 @@
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Float32MultiArray.h>
-#include "pra_vale/RosiMovementArray.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 

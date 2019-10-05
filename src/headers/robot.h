@@ -11,8 +11,8 @@ class Robot {
         ros::Publisher wheelPub;
 
         //Vetores para receberem informações de velocidade dos robos
-        pra_vale::RosiMovementArray tractionCommandList;    
-        pra_vale::RosiMovementArray wheelsCommandList;
+        std_msgs::Float32MultiArray tractionCommandList;    
+        std_msgs::Float32MultiArray wheelsCommandList;
 
         //Máquina de estado
         enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN, FRONT_OBS, FOLLOW_LEFT,
