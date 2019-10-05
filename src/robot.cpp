@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define _KP_REC 0.6
+#define _KP_REC 0.7
 #define NICE_DIST_TRACK 0.80
 #define FRONT_WHEELS 0.15
 #define REAR_WHEELS 0.35
@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _state = WALKING;
     sentido = _HORARIO;
-    _isInStairs = false;
+    _isInStairs = true;
     rodar = false;
     avoidingObs = false;
     inObs = false;
@@ -39,15 +39,23 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   if(_HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)){
 
-    erro = zAngle *_KP_OBSTACLE;
     straitPath = true;
     distToTrack = NICE_DIST_TRACK - 0.3;
     cout << "StraitPath\t";
   
   }
 
+  // if(straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
+  //   straitPath = false;
+  //   distToTrack = NICE_DIST_TRACK;
+  // }
+
   if(_isInStairs && !(_state == LADDER_UP || _state == LADDER_DOWN)){
     _state = LADDER_UP;  
+  }
+
+  if(!avoidingObs){
+    saveAngleZ = zAngle;
   }
 
   //Implementacao da maquina de estado
@@ -77,62 +85,75 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     avoidingObs = true;
     
-    if(abs(zAngle) < 0.1)
+    if(abs(saveAngleZ) < 0.1)
       inObs = true;
 
-    cout << "E: DesviaFr";
+    cout << "E: DesviaFr | Erro: " << erro;
     cout << " | AF: " << sidesInfo[_FRONT].area;
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
   //Recupera o trajeto da direita
-  }else if(inObs && sidesInfo[_RIGHT].medY < -0.35 && sentido == _HORARIO){
+  }else if(sidesInfo[_RIGHT].medY < -0.20 && sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
-    cout << "E: RercuDir";
+    cout << "E: RecuDir | Erro: " << erro;
     cout << " | AD: " << sidesInfo[_RIGHT].area;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
     avoidingObs = false;
     inObs = false;
 
-  }else if(!inObs && abs(sidesInfo[_RIGHT].medX - distToTrack) > 0.15){
+  }else if(abs(sidesInfo[_RIGHT].medX - distToTrack) > 0.15){
 
-    erro = (distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
+    erro = (sidesInfo[_RIGHT].medX != 10) ? (distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC : -0.1;
 
-    cout << "E: AproxDir | DDX: " << sidesInfo[_RIGHT].medX;
+    cout << "E: AproxDir | erro: " << erro << " | DDX: " << sidesInfo[_RIGHT].medX;
 
   //segue a parede da direita
-  }else if(!inObs && sidesInfo[_RIGHT].area > _MIN_AREA){
+  }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
     erro = zAngle * _KP_OBSTACLE;
 
-    avoidingObs = false;
+    if(straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
+    straitPath = false;
+    distToTrack = NICE_DIST_TRACK;
+    }
 
-    cout << "E: SegueDir";
+    cout << "E: SegueDir | Erro: " << erro;
     cout << " | AD: " << sidesInfo[_RIGHT].area;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.35 && sentido == _ANTI_HORARIO){
+  }else if(sidesInfo[_LEFT].medY < -0.20 && sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
     avoidingObs = false;
     inObs = false;
 
-    cout << "E: RercuEsq";
+    cout << "E: RecuEsq | Erro: " << erro;
     cout << " | AE: " << sidesInfo[_LEFT].area;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 
+  }else if(abs(sidesInfo[_LEFT].medX - distToTrack) > 0.15){
+
+    erro = (sidesInfo[_LEFT].medX != 10) ? (distToTrack - sidesInfo[_LEFT].medX) * _KP_REC : -0.1;
+
+    cout << "E: AproxEsq | Erro: " << erro << " | DDX:" << sidesInfo[_LEFT].medX;
 
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
     erro = zAngle *_KP_OBSTACLE;
 
-    cout << "E: SegueEsq";
+    if(straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
+    straitPath = false;
+    distToTrack = NICE_DIST_TRACK;
+    }
+
+    cout << "E: SegueEsq | Erro: " << erro;
     cout << " | AE: " << sidesInfo[_LEFT].area;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
 

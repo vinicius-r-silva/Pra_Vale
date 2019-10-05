@@ -23,6 +23,7 @@ class Robot {
         double yAngle;
         double zAngle;
         double saveAngle;
+        double saveAngleZ;
         float distToTrack;
         bool sentido;
         bool _isInStairs;
