@@ -3,7 +3,7 @@
 
 Visualization *vis;
 Robot *rob;
-int enable;
+int enable = _ENABLE_VELODYME;
 
 // void ImuCallback(const  sensor_msgs::Imu::ConstPtr msg){
   
@@ -27,19 +27,25 @@ int enable;
 // }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
+
+  //enable = _ENABLE_VELODYME;
   if(!(enable & (1 << _ENABLE_VELODYME)) || enable & (1 << _ARM_CHANGING_POSE))
     return;
-   
+
+ 
   vis->processImages(msg);
   vis->printRect();
-  vis->setAvoidingObs(rob->getAvoidingObs());
-  rob->processMap(vis->getSidesInfo());
+  
 
-
-  if(rob->getRodar()){
+  if(rob->getRodar())
     rob->rodarFunction(vis->getSidesInfo());
-    return;
-  } 
+  else if(rob->getProvavelEscada())
+    rob->aligneEscada(vis->getSidesInfo());
+  else{
+    vis->setAvoidingObs(rob->getAvoidingObs());
+    rob->processMap(vis->getSidesInfo());
+  }
+
 
 }
 
@@ -53,6 +59,8 @@ void anglesCallback(const std_msgs::Float32MultiArray::ConstPtr angles){
 
 
 int main(int argc, char **argv){
+  
+  std::cout << "Velodyne running" << std::endl;
   
   enable = 1 << _ENABLE_VELODYME;
 
@@ -69,7 +77,6 @@ int main(int argc, char **argv){
   //le o publisher do vrep
   ros::Rate loop_rate(1);
   ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback);
-  //ros::Subscriber subImu = n.subscribe("/sensor/imu", 1, ImuCallback);
   ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback);
   ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback);
   

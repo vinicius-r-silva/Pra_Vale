@@ -30,6 +30,7 @@ class Robot {
         bool avoidingObs;
         bool inObs;
         bool straitPath;
+        bool _provavelEscada;
 
     public:
         Robot();
@@ -40,5 +41,7 @@ class Robot {
         bool getRodar();
         void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub);
         bool getAvoidingObs();
+        void aligneEscada(SidesInfo *sidesInfo);
+        bool getProvavelEscada();
 };
 #endif
