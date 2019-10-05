@@ -28,7 +28,6 @@ int enable = _ENABLE_VELODYME;
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
-  //enable = _ENABLE_VELODYME;
   if(!(enable & (1 << _ENABLE_VELODYME)) || enable & (1 << _ARM_CHANGING_POSE))
     return;
 
@@ -36,11 +35,10 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   vis->processImages(msg);
   vis->printRect();
   
-
-  if(rob->getRodar())
-    rob->rodarFunction(vis->getSidesInfo());
-  else if(rob->getProvavelEscada())
+  if(enable & (1 << _FOUND_STAIR) || rob->getProvavelEscada())
     rob->aligneEscada(vis->getSidesInfo());
+  else if(rob->getRodar())
+    rob->rodarFunction(vis->getSidesInfo());
   else{
     vis->setAvoidingObs(rob->getAvoidingObs());
     rob->processMap(vis->getSidesInfo());

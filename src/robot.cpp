@@ -256,6 +256,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
       }
 
     }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
+      _provavelEscada = false;
       cout << "seguindo a esteira" << " | DX: " << sidesInfo[_LEFT].medX;
 
     
@@ -287,7 +288,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
       }
     
     }else if(closeToTrack){
-      
+      _provavelEscada = true;
       cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_LEFT].medX;
 
       if(sidesInfo[_FRONT].area > _MIN_AREA_REC && sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){
