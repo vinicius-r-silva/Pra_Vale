@@ -3,9 +3,11 @@
 
 Visualization *vis;
 Robot *rob;
-int enable;
+int enable = _ENABLE_VELODYME;
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
+
+  //enable = _ENABLE_VELODYME;
   if(!(enable & (1 << _ENABLE_VELODYME)) || enable & (1 << _ARM_CHANGING_POSE))
     return;
 
@@ -13,13 +15,20 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   vis->createRectangles(); 
   vis->processImages(msg);
   vis->printRect();
+ 
+  vis->processImages(msg);
+  vis->printRect();
+  
 
-  if(rob->getRodar()){
+  if(rob->getRodar())
     rob->rodarFunction(vis->getSidesInfo());
-  }else{
+  else if(rob->getProvavelEscada())
+    rob->aligneEscada(vis->getSidesInfo());
+  else{
     vis->setAvoidingObs(rob->getAvoidingObs());
     rob->processMap(vis->getSidesInfo());
-  } 
+  }
+
 
 }
 
@@ -33,6 +42,8 @@ void anglesCallback(const std_msgs::Float32MultiArray::ConstPtr angles){
 
 
 int main(int argc, char **argv){
+  
+  std::cout << "Velodyne running" << std::endl;
   
   enable = 1 << _ENABLE_VELODYME;
 
@@ -53,8 +64,8 @@ int main(int argc, char **argv){
   ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback);
   
 
-  ros::Publisher speedPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_traction_speed",1);
-  ros::Publisher wheelPub = n.advertise<pra_vale::RosiMovementArray>("/rosi/command_arms_speed",1);
+  ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1);
+  ros::Publisher wheelPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_arm_speed",1);
   
   rob->setPublishers(speedPub, wheelPub);
   

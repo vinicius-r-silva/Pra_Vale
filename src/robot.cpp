@@ -4,14 +4,15 @@ using namespace std;
 
 #define _KP_REC 0.7
 #define NICE_DIST_TRACK 0.80
-#define FRONT_WHEELS 0.15
-#define REAR_WHEELS 0.35
-#define OKAY 0.044
+#define FRONT_WHEELS 0.2
+#define REAR_WHEELS 0.3
+#define OKAY 0.06
 
 Robot::Robot(){
     _state = WALKING;
     sentido = _HORARIO;
     _isInStairs = true;
+    _provavelEscada = false;
     rodar = false;
     avoidingObs = false;
     inObs = false;
@@ -26,8 +27,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
-  pra_vale::RosiMovement tractionCommandDir;
-  pra_vale::RosiMovement tractionCommandEsq;
+  float traction = 0;
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
   float erro;
 
   if(_state == IN_LADDER){
@@ -169,61 +171,313 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   if(_isInStairs && !(_state == IN_LADDER)){
-    tractionCommandDir.joint_var = (float) stairsDir * (_MAX_SPEED + erro);
-    tractionCommandEsq.joint_var = (float) stairsDir * (_MAX_SPEED - erro); 
+    traction = (float) (stairsDir * (_MAX_SPEED + erro));
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
+    traction = (float) (stairsDir * (_MAX_SPEED - erro));
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
   }else{
-    tractionCommandDir.joint_var = (float) _V0 + _KP*erro;
-    tractionCommandEsq.joint_var = (float) _V0 - _KP*erro;
+    traction = (float) (_V0 + _KP*erro);
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
+
+    traction = (float) (_V0 - _KP*erro);
+    if(traction > _MAX_SPEED)
+      traction = _MAX_SPEED;
+    else if(traction < -_MAX_SPEED)
+      traction = -_MAX_SPEED; 
+    
+    msg.data.push_back(traction);
+    msg.data.push_back(traction);
   }
 
-  if(tractionCommandDir.joint_var > _MAX_SPEED)
-    tractionCommandDir.joint_var = _MAX_SPEED;
-  else if(tractionCommandDir.joint_var < -_MAX_SPEED)
-    tractionCommandDir.joint_var = -_MAX_SPEED;
+  //cout << " | zAngle: " << zAngle << " | VEsq: " << tractionEsq.joint_var << " | VDir: " << tractionDir.joint_var << endl;
+  
+  // msg.data.clear();
+
+  // msg.data.push_back(0);
+  // msg.data.push_back(0);
+  // msg.data.push_back(0);
+  // msg.data.push_back(0);
+
+  
+  
+  speedPub.publish(msg);
+}
 
 
-  if(tractionCommandEsq.joint_var > _MAX_SPEED)
-    tractionCommandEsq.joint_var = _MAX_SPEED;
-  else if(tractionCommandEsq.joint_var < -_MAX_SPEED)
-    tractionCommandEsq.joint_var = -_MAX_SPEED;
+void Robot::aligneEscada(SidesInfo *sidesInfo){
 
 
-  cout << " | zAngle: " << zAngle << " | VEsq: " << tractionCommandEsq.joint_var << " | VDir: " << tractionCommandDir.joint_var << endl;
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
+  float tractionDir;
+  float tractionEsq;
+  //pra_vale::RosiMovement tractionDir;
+  //pra_vale::RosiMovement tractionEsq;
 
+  static bool frontToTrack = false;
+  static bool closeToTrack = false;
+
+
+  if(sentido == _ANTI_HORARIO){
+    cout << "ANTI_HORARIO";
+
+    if(!frontToTrack && !closeToTrack){
+      
+      cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_LEFT].medX;
+      
+      if(sidesInfo[_FRONT].medY < 1.1){
+        frontToTrack = true;
+        return;
+      
+      }else if(sidesInfo[_LEFT].medX < _MAX_DIST_SIDE_ESCADA){
+        closeToTrack = true;
+        return;
+      
+      
+      }else if((zAngle > M_PI*3/2 - 0.2 || zAngle < -M_PI/2 + 0.2) || sidesInfo[_LEFT].medX < _MIN_DIST_SIDE_ESCADA){ //se estiver de frente para esteira
+        
+        
+        tractionDir = _V0;
+        tractionEsq = _V0;
+
+      }else if(sidesInfo[_LEFT].area > _MIN_AREA_REC/2 && sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA){
+
+        tractionDir = _V0;
+        tractionEsq = _V0;
+      
+
+      }else if(zAngle > -M_PI/2 && zAngle < M_PI/2){
+          tractionDir = _V0;
+          tractionEsq = -_V0;
+          
+      }else{
+          tractionDir = _V0;
+          tractionEsq = -_V0;
+          
+      }
+
+    }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
+      cout << "seguindo a esteira" << " | DX: " << sidesInfo[_LEFT].medX;
+
+    
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle < -0.2){
+        tractionDir = 0;
+        tractionEsq = _V0*1.5;
+      
+      }else if(sidesInfo[_LEFT].area > _MIN_AREA_REC){
+        
+        if(_MIN_DIST_SIDE_ESCADA > sidesInfo[_LEFT].medX || sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA){ //chega ele mais perto
+          tractionDir = _V0 + _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+          tractionEsq = _V0 - _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+
+        
+        }else{
+          tractionEsq = _V0;
+          tractionDir = _V0;
+          closeToTrack = true;
+        }
+        
+
+      }else{
+        tractionEsq = 0;
+        tractionDir = 0;
+        frontToTrack = false;
+
+      
+
+      }
+    
+    }else if(closeToTrack){
+      
+      cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_LEFT].medX;
+
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){
+        cout << " | Alinhando com escada"; 
+        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){
+          cout << " | escada";
+          _isInStairs = true;
+          _provavelEscada = false;
+        }
+
+        tractionDir = -_KP*zAngle*2.5;
+        tractionEsq = +_KP*zAngle*2.5;
+        cout << " | MedY: " << sidesInfo[_FRONT].medY;
+      
+
+      }else{
+        if(sidesInfo[_LEFT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){
+            cout << "PERDEU TUDO" << endl;
+            closeToTrack = false;
+            frontToTrack = false;
+            return;
+
+        }else if(_MIN_DIST_SIDE_ESCADA - 0.1 > sidesInfo[_LEFT].medX || sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA + 0.1 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
+            tractionDir = _V0 + _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+            tractionEsq = _V0 - _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+            cout << " | se endireitando";
+
+        }else{
+          
+          cout << " | Corrigindo zAngle" << " | zAngle: " << zAngle;
+          cout << " | MedY: " << sidesInfo[_FRONT].medY;
+          tractionDir = (_V0 + _KP*zAngle*1.5)/2;
+          tractionEsq = (_V0 - _KP*zAngle*1.5)/2;
+        }
+      }
+    }
+
+  }else{ //sentido horario
+    cout << "HORARIO";
+
+    if(!frontToTrack && !closeToTrack){
+      
+      cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_RIGHT].medX;
+      
+      if(sidesInfo[_FRONT].medY < 1.1){
+        frontToTrack = true;
+
+
+      }else if((zAngle > M_PI/2 - 0.2 && zAngle < M_PI/2 + 0.2) || sidesInfo[_RIGHT].medX < _MIN_DIST_SIDE_ESCADA){ //se estiver de frente para esteira
+        
+        
+        tractionDir = _V0;
+        tractionEsq = _V0;
+
+      }else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC/2){
+
+        tractionDir = _V0;
+        tractionEsq = _V0;
+
+      }else if(zAngle <= M_PI/2){
+          tractionDir = -_V0;
+          tractionEsq = _V0;
+          
+      }else{
+          tractionDir = -_V0;
+          tractionEsq = _V0;
+  
+          
+      }
+
+    }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
+      cout << " | seguindo a esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
+
+    
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle > 0.2){
+        tractionDir = _V0*1.5;
+        tractionEsq = 0;
+      
+      }else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC){
+        
+        if(_MIN_DIST_SIDE_ESCADA > sidesInfo[_RIGHT].medX || sidesInfo[_RIGHT].medX > _MAX_DIST_SIDE_ESCADA){ //chega ele mais perto
+          tractionDir = _V0 - _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+          tractionEsq = _V0 + _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+
+        
+        }else{
+          tractionEsq = _V0;
+          tractionDir = _V0;
+          closeToTrack = true;
+        }
+        
+
+      }else{
+        tractionEsq = 0;
+        tractionDir = 0;
+        frontToTrack = false;
+
+      }
+    
+    }else if(closeToTrack){
+      
+      cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
+
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){
+        cout << " | Alinhando com escada"; 
+        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){
+          cout << " | escada";
+          _isInStairs = true;
+          _provavelEscada = false;
+        }
+
+        tractionDir = +_KP*zAngle*2.5;
+        tractionEsq = -_KP*zAngle*2.5;
+        cout << " | MedY: " << sidesInfo[_FRONT].medY;
+      
+
+      }else{
+        if(sidesInfo[_RIGHT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){
+            cout << "PERDEU TUDO" << endl;
+            closeToTrack = false;
+            frontToTrack = false;
+            return;
+
+        }else if(_MIN_DIST_SIDE_ESCADA-0.1 > sidesInfo[_RIGHT].medX || sidesInfo[_RIGHT].medX > _MAX_DIST_SIDE_ESCADA + 0.1 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
+            //se estiver muito ruim...
+            tractionDir = _V0 - _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+            tractionEsq = _V0 + _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+            cout << " | se endireitando";
+
+        }else{
+          
+          cout << " | Corrigindo zAngle" << " | zAngle: " << zAngle;
+          cout << " | MedY: " << sidesInfo[_FRONT].medY;
+          tractionDir = (_V0 + _KP*zAngle*1.5)/2;
+          tractionEsq = (_V0 - _KP*zAngle*1.5)/2;
+        }
+      }
+    }
+  }  
+
+
+  cout <<" | velE: " << tractionEsq << " | velD: " << tractionDir << endl;
 
   //altera o vetor das velocidades das 'joints'
 
-  //Direita:
-  tractionCommandDir.nodeID = 1;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  tractionCommandDir.nodeID = 2;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  
-  //Esquerda:
-  tractionCommandEsq.nodeID = 3;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
-  tractionCommandEsq.nodeID = 4;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
 
-  speedPub.publish(tractionCommandList);
+  msg.data.push_back(tractionDir);
+  msg.data.push_back(tractionDir);
 
-  //limpa o vetor
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
+  msg.data.push_back(tractionEsq);
+  msg.data.push_back(tractionEsq);
 
+  speedPub.publish(msg);
 }
 
+
 void Robot::climbStairs(){
-  pra_vale::RosiMovement wheelCommand;
+  //pra_vale::RosiMovement wheel;4
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
   float wheelFrontSpeed;
   float wheelRearSpeed;
   bool _climbing;
 
+
+
   if(abs(yAngle) < OKAY){
 
-    cout << "IT'S OKAY\n";
+    cout << " IT'S OKAY\n";
     wheelRearSpeed = 0.0f;
     wheelFrontSpeed = 0.0f;
   
@@ -237,47 +491,45 @@ void Robot::climbStairs(){
 
   }else if(abs(yAngle) > REAR_WHEELS){
 
-    cout << "REAR WHEELS IS ON\n";
-    wheelRearSpeed = -1.0f *_MAX_WHEEL_R_SPEED;
+    cout << " REAR WHEELS IS ON\n";
+    wheelRearSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   }else if(abs(yAngle) < FRONT_WHEELS){
     
-    cout << "FRONT WHEELS IS ON\n";
+    cout << " FRONT WHEELS IS ON\n";
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   }else{
 
-    cout << "ESTABILIZING\n";
+    cout << " ESTABILIZING\n";
     wheelRearSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = 0.0f;
+    wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
 
   }
 
   for(int i = 0; i < 4; i++){
-    wheelCommand.joint_var = (i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed;
-    wheelCommand.nodeID = i + 1;
-    wheelsCommandList.movement_array.push_back(wheelCommand);    
+    // wheel.joint_var = (i == 0 || i == 2)? wheelFrontSpeed : wheelRearSpeed;
+    // wheel. = i + 1;
+    // wheelsList.movement_array.push_back(wheel); 
+    msg.data.push_back((i == 0 || i == 2) ? wheelFrontSpeed : wheelRearSpeed);
   }
 
-  wheelPub.publish(wheelsCommandList);
+  wheelPub.publish(msg);
 
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();
-  wheelsCommandList.movement_array.pop_back();      
 }
 
 void Robot::rodarFunction(SidesInfo* sidesInfo){
   float dif;
 
-  pra_vale::RosiMovement tractionCommandDir;
-  pra_vale::RosiMovement tractionCommandEsq;
+  //pra_vale::RosiMovement tractionDir;
+  //pra_vale::RosiMovement tractionEsq;
 
-  
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
 
   if(zAngle < 0)
     zAngle += M_PI*2;
@@ -286,14 +538,20 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
     saveAngle = zAngle;
 
   if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){
-    tractionCommandDir.joint_var = -3;
-    tractionCommandEsq.joint_var = -3;
+    // tractionDir.joint_var = -3;
+    // tractionEsq.joint_var = -3;
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
   
   }else if(sentido == _HORARIO){
-    
-
-    tractionCommandDir.joint_var = -3;
-    tractionCommandEsq.joint_var = 0;
+        // tractionDir.joint_var = -3;
+    // tractionEsq.joint_var = 0;
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
+    msg.data.push_back(0);
+    msg.data.push_back(0);
 
     if(saveAngle >= 0 && saveAngle < M_PI && zAngle > M_PI)
         dif = saveAngle + M_PI*2 - zAngle;
@@ -302,8 +560,12 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
       dif = saveAngle - zAngle;
   
   }else{
-    tractionCommandDir.joint_var = 0;
-    tractionCommandEsq.joint_var = -3;
+    // tractionDir.joint_var = 0;
+    // tractionEsq.joint_var = -3;
+    msg.data.push_back(0);
+    msg.data.push_back(0);
+    msg.data.push_back(-3);
+    msg.data.push_back(-3);
 
     if(zAngle >= 0 && zAngle < M_PI && saveAngle > M_PI)
         dif =  M_PI*2 - saveAngle + zAngle;
@@ -321,28 +583,28 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){
     saveAngle = 10; //da um reset no angulo
   } 
 
-  cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionCommandEsq.joint_var << " | velD: " << tractionCommandDir.joint_var << endl;
+  //cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionEsq.joint_var << " | velD: " << tractionDir.joint_var << endl;
 
-  //Direita:
-  tractionCommandDir.nodeID = 1;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
-  tractionCommandDir.nodeID = 2;
-  tractionCommandList.movement_array.push_back(tractionCommandDir);
+  // //Direita:
+  // tractionDir. = 1;
+  // tractionList.movement_array.push_back(tractionDir);
+  // tractionDir. = 2;
+  // tractionList.movement_array.push_back(tractionDir);
   
-  //Esquerda:
-  tractionCommandEsq.nodeID = 3;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
-  tractionCommandEsq.nodeID = 4;
-  tractionCommandList.movement_array.push_back(tractionCommandEsq);
+  // //Esquerda:
+  // tractionEsq. = 3;
+  // tractionList.movement_array.push_back(tractionEsq);
+  // tractionEsq. = 4;
+  // tractionList.movement_array.push_back(tractionEsq);
 
 
-  speedPub.publish(tractionCommandList);
+  speedPub.publish(msg);
   
   //limpa o vetor
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();
-  tractionCommandList.movement_array.pop_back();  
+  // tractionList.movement_array.pop_back();
+  // tractionList.movement_array.pop_back();
+  // tractionList.movement_array.pop_back();
+  // tractionList.movement_array.pop_back();  
 
 }
 
@@ -362,4 +624,8 @@ void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub){
 
 bool Robot::getAvoidingObs(){
   return avoidingObs;
+}
+
+bool Robot::getProvavelEscada(){
+  return _provavelEscada;
 }
