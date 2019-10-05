@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from cv_bridge import CvBridge
+from pathlib import Path
 import defines as defs
 import numpy as np
 import imutils
@@ -14,7 +15,8 @@ state = defs._NOTHING
 global scaleList, stair
 
 #Load the template, convert it to grayscale, and detect edges
-stair = cv2.imread('src/pra_vale/resources/print.png')
+
+stair = cv2.imread(Path.home()+'catkin_ws/src/pra_vale/resources/print.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
 stair = cv2.Canny(stair, 50, 200)
 
