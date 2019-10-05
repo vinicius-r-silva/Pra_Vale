@@ -27,7 +27,7 @@ int enable;
 // }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-  if(!(enable & (1 << _VELODYNE_ENABLED)) || enable & (1 << _ARM_CHANGING_POSE))
+  if(!(enable & (1 << _ENABLE_VELODYME)) || enable & (1 << _ARM_CHANGING_POSE))
     return;
    
   vis->processImages(msg);
@@ -54,7 +54,7 @@ void anglesCallback(const std_msgs::Float32MultiArray::ConstPtr angles){
 
 int main(int argc, char **argv){
   
-  enable = 1 << _VELODYNE_ENABLED;
+  enable = 1 << _ENABLE_VELODYME;
 
   vis = new Visualization();
   rob = new Robot();

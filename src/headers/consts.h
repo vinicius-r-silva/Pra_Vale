@@ -31,15 +31,20 @@
 #define _MIN_GRAY_S 100 //minimo de luminosiade para ser processado
 
 //Analise do velodyne:
-#define _NOTHING 0
-#define _VELODYNE_ENABLED 1
-#define _ARM_CHANGING_POSE 2
-#define _FOLLOW_TRACK 3
-#define _FOUND_FIRE_FRONT 4
-#define _FOUND_FIRE_RIGHT 5
-#define _FOUND_FIRE_TOUCH 6
-#define _SETTING_UP_HOKUYO 7
-#define _INITIAL_SETUP     8
+#define _NOTHING            0
+#define _ENABLE_VELODYME    1
+#define _ARM_CHANGING_POSE  2
+#define _FOUND_FIRE_FRONT   4
+#define _FOUND_FIRE_LEFT    5
+#define _FOUND_FIRE_RIGHT   6
+#define _FOUND_FIRE_TOUCH   7
+#define _SETTING_UP_HOKUYO  8
+#define _INITIAL_SETUP      9
+#define _ROBOT_ROTATION     10
+#define _ROBOT_DIR_RIGHT    11
+#define _HOKUYO_READING     12
+#define _FOUND_STAIR        13
+#define _LEAVING_FIRE       14
 
 //controle do robo
 #define _V0 2.0 //velocidade do robo
