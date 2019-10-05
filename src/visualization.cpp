@@ -27,6 +27,7 @@ void Visualization::createRectangles(){
     const int FRONT_SIZE_Y = 1.5*_SCALE;
     const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
     const int FRONT_Y = (_MAX_DIST+0.85)*_SCALE + 10;
+    //const int FRONT_Y = (_MAX_DIST+0.75)*_SCALE;
 
     frontRect = new Rect(FRONT_X, FRONT_Y, FRONT_SIZE_X, FRONT_SIZE_Y);
 

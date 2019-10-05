@@ -23,21 +23,24 @@ int enable;
 
 //   rob->setAngles(yAngle, zAngle);
 
-//   if(rob->getRodar()){
-//     rob->rodarFunction();
-//     return;
-//   }
 
 // }
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-    if(!(enable & (1 << _VELODYNE_ENABLED)) || enable & (1 << _ARM_CHANGING_POSE))
-        return;
-    
-    vis->processImages(msg);
-    vis->printRect();
-    vis->setAvoidingObs(rob->getAvoidingObs());
-    rob->processMap(vis->getSidesInfo());
+  if(!(enable & (1 << _VELODYNE_ENABLED)) || enable & (1 << _ARM_CHANGING_POSE))
+    return;
+   
+  vis->processImages(msg);
+  vis->printRect();
+  vis->setAvoidingObs(rob->getAvoidingObs());
+  rob->processMap(vis->getSidesInfo());
+
+
+  if(rob->getRodar()){
+    rob->rodarFunction(vis->getSidesInfo());
+    return;
+  } 
+
 }
 
 void statesCallback(const std_msgs::Int32::ConstPtr & _enable){
