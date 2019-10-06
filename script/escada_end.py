@@ -2,7 +2,6 @@
 from cv_bridge import CvBridge
 import defines as defs
 import numpy as np
-import imutils
 import rospy
 import cv2
 import rospkg
