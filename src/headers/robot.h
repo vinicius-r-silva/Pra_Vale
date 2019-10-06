@@ -15,7 +15,7 @@ class Robot {
         //Vetores para receberem informações de velocidade dos robos
         std_msgs::Float32MultiArray tractionCommandList;    
         std_msgs::Float32MultiArray wheelsCommandList;
-
+        
         //Recebe o estado do robô
         std_msgs::Int32 _enable; 
 

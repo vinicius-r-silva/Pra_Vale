@@ -355,12 +355,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         tractionDir = _V0;
         tractionEsq = _V0;
 
-      }/*else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC/2){
-
-        tractionDir = _V0;
-        tractionEsq = _V0;
-
-      }*/else if(_zAngle <= M_PI/2){
+      }else if(_zAngle <= M_PI/2){
           tractionDir = -_V0;
           tractionEsq = _V0;
           
