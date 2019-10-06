@@ -229,7 +229,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   // msg.data.push_back(0);
 
   
-  
   speedPub.publish(msg);
 }
 
@@ -241,9 +240,8 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
   msg.data.clear();
   float tractionDir;
   float tractionEsq;
-  //pra_vale::RosiMovement tractionDir;
-  //pra_vale::RosiMovement tractionEsq;
 
+  
   static bool frontToTrack = false;
   static bool closeToTrack = false;
 
@@ -251,16 +249,17 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
   if(sentido == _ANTI_HORARIO){
     cout << "ANTI_HORARIO";
 
-    if(!frontToTrack && !closeToTrack){
-      _provavelEscada = true;
+    if(!frontToTrack && !closeToTrack){ //se nao estiver de frente para escada, endireita
+      _provavelEscada = true; //nao depende mais da identificacao da escada
 
       cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_LEFT].medX;
       
-      if(sidesInfo[_FRONT].medY < 1.1){
+
+      if(sidesInfo[_FRONT].medY < 1.1){ //esta de frente e perto da esteira
         frontToTrack = true;
         return;
       
-      }else if(sidesInfo[_LEFT].medX < _MAX_DIST_SIDE_ESCADA){
+      }else if(sidesInfo[_LEFT].medX < _MAX_DIST_SIDE_ESCADA){ //esta de lado para a esteira
         closeToTrack = true;
         return;
       
@@ -271,86 +270,77 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         tractionDir = _V0;
         tractionEsq = _V0;
 
-      }/*else if(sidesInfo[_LEFT].area > _MIN_AREA_REC/2 && sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA && sidesInfo[_LEFT].medX < 0.9){
-
-        tractionDir = _V0;
-        tractionEsq = _V0;
-      
-
-      }*/else if(zAngle > -M_PI/2 && zAngle < M_PI/2){
+      }else if(zAngle > -M_PI/2 && zAngle < M_PI/2){ //alinha antes de avancar para a esteira
           tractionDir = _V0;
           tractionEsq = -_V0;
           
-      }else{
+      }else{ //alinha antes de avancar para a esteira
           tractionDir = _V0;
           tractionEsq = -_V0;
           
       }
 
-    }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
-      _provavelEscada = false;
+    }else if(frontToTrack && !closeToTrack){
+      _provavelEscada = false; //depende do reconhecimento da escada
       cout << "seguindo a esteira" << " | DX: " << sidesInfo[_LEFT].medX;
 
-    
-      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle < -0.2){
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle < -0.2){ //esta de frente mas precisa alinhar
         tractionDir = 0;
         tractionEsq = _V0*1.5;
       
-      }else if(sidesInfo[_LEFT].area > _MIN_AREA_REC){
+      }else if(sidesInfo[_LEFT].area > _MIN_AREA_REC){ //ja esta perto da esteira
         
         if(_MIN_DIST_SIDE_ESCADA > sidesInfo[_LEFT].medX || sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA){ //chega ele mais perto
           tractionDir = _V0 + _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
           tractionEsq = _V0 - _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
 
         
-        }else{
+        }else{ //ja esta perto da esteira
           tractionEsq = _V0;
           tractionDir = _V0;
           closeToTrack = true;
         }
         
-
-      }else{
+      }else{ //perdeu a esteira
         tractionEsq = 0;
         tractionDir = 0;
         frontToTrack = false;
 
-      
-
       }
     
-    }else if(closeToTrack){
-      _provavelEscada = true;
+    }else if(closeToTrack){ //esta perto da esteira
+      _provavelEscada = true; //nao depende mais da identificacao da escada
       cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_LEFT].medX;
 
-      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){
+      if(sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){ //esta de frente com a escada
         cout << " | Alinhando com escada"; 
-        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){
+        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){ //se estiver alinhado comeca a subir
           cout << " | escada";
           _isInStairs = true;
-          _provavelEscada = false;
-          
+          _provavelEscada = false; 
         }
 
+        //corrige a inclinacao do robo
         tractionDir = +_KP*zAngle*2.5;
         tractionEsq = -_KP*zAngle*2.5;
         cout << " | MedY: " << sidesInfo[_FRONT].medY;
       
 
       }else{
-        if(sidesInfo[_LEFT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){
-            cout << "PERDEU TUDO" << endl;
-            closeToTrack = false;
-            frontToTrack = false;
-            return;
+        if(sidesInfo[_LEFT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){ //se nao esiver identidicando mais nada
+          cout << "PERDEU TUDO" << endl;
+          closeToTrack = false;
+          frontToTrack = false;
+          return;
 
         }else if(_MIN_DIST_SIDE_ESCADA - 0.1 > sidesInfo[_LEFT].medX || sidesInfo[_LEFT].medX > _MAX_DIST_SIDE_ESCADA + 0.1 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
-            tractionDir = _V0 + _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
-            tractionEsq = _V0 - _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
-            cout << " | se endireitando";
+          //se estiver muito distante
+          tractionDir = _V0 + _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+          tractionEsq = _V0 - _KP*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
+          cout << " | se endireitando";
 
         }else{
-          
+          //esta perto mas precisa alinhar
           cout << " | Corrigindo zAngle" << " | zAngle: " << zAngle;
           cout << " | MedY: " << sidesInfo[_FRONT].medY;
           tractionDir = (_V0 + _KP*zAngle*1.5)/2;
@@ -362,73 +352,70 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
   }else{ //sentido horario
     cout << "HORARIO";
 
-    if(!frontToTrack && !closeToTrack){
-      _provavelEscada = true;
+    if(!frontToTrack && !closeToTrack){  //se nao estiver de frente para escada, endireita
+      _provavelEscada = true; //nao depende mais da identificacao da escada
 
       cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_RIGHT].medX;
       
-      if(sidesInfo[_FRONT].medY < 1.1){
+      if(sidesInfo[_FRONT].medY < 1.1){ //esta de frente e perto da esteira
         frontToTrack = true;
+        return;
 
+      }else if(sidesInfo[_RIGHT].medX < _MAX_DIST_SIDE_ESCADA){ //esta de lado para a esteira
+        closeToTrack = true;
+        return;
 
       }else if((zAngle > M_PI/2 - 0.2 && zAngle < M_PI/2 + 0.2) || sidesInfo[_RIGHT].medX < _MIN_DIST_SIDE_ESCADA){ //se estiver de frente para esteira
         
         tractionDir = _V0;
         tractionEsq = _V0;
 
-      }/*else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC/2){
-
-        tractionDir = _V0;
-        tractionEsq = _V0;
-
-      }*/else if(zAngle <= M_PI/2){
+      }else if(zAngle <= M_PI/2){ //alinha antes de avancar para a esteira
           tractionDir = -_V0;
           tractionEsq = _V0;
           
-      }else{
+      }else{ //alinha antes de avancar para a esteira
           tractionDir = -_V0;
           tractionEsq = _V0;
   
           
       }
 
-    }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
-      _provavelEscada = false;
+    }else if(frontToTrack && !closeToTrack){
+      _provavelEscada = false; //depende do reconhecimento da escada
       cout << " | seguindo a esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
 
-    
-      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle > 0.2){
+      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && zAngle > 0.2){ //esta de frente mas precisa alinhar
         tractionDir = _V0*1.5;
         tractionEsq = 0;
       
-      }else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC){
+      }else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC){ //ja esta perto da esteira
         
         if(_MIN_DIST_SIDE_ESCADA > sidesInfo[_RIGHT].medX || sidesInfo[_RIGHT].medX > _MAX_DIST_SIDE_ESCADA){ //chega ele mais perto
           tractionDir = _V0 - _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
           tractionEsq = _V0 + _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
 
         
-        }else{
+        }else{ //ja esta perto da esteira
           tractionEsq = _V0;
           tractionDir = _V0;
           closeToTrack = true;
         }
         
-
-      }else{
+      }else{ //perdeu a esteira
         tractionEsq = 0;
         tractionDir = 0;
         frontToTrack = false;
 
       }
     
-    }else if(closeToTrack){
-      _provavelEscada = true;
+    }else if(closeToTrack){ //esta perto da esteira
+      _provavelEscada = true; //nao depende mais da identificacao da escada
       cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
 
-      if(sidesInfo[_FRONT].area > _MIN_AREA_REC && sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){
+      if(sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){ //esta de frente com a escada
         cout << " | Alinhando com escada"; 
-        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){
+        if(zAngle > -_MAX_ERRO_ESCADA && zAngle < _MAX_ERRO_ESCADA){  //se estiver alinhado comeca a subir
           cout << " | escada";
           _isInStairs = true;
           _provavelEscada = false;
@@ -436,26 +423,27 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           statePub.publish(_enable);
         }
 
+        //corrige a inclinacao do robo
         tractionDir = +_KP*zAngle*2.5;
         tractionEsq = -_KP*zAngle*2.5;
         cout << " | MedY: " << sidesInfo[_FRONT].medY;
       
 
       }else{
-        if(sidesInfo[_RIGHT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){
-            cout << "PERDEU TUDO" << endl;
-            closeToTrack = false;
-            frontToTrack = false;
-            return;
+        if(sidesInfo[_RIGHT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){ //se nao esiver identidicando mais nada
+          cout << "PERDEU TUDO" << endl;
+          closeToTrack = false;
+          frontToTrack = false;
+          return;
 
         }else if(_MIN_DIST_SIDE_ESCADA-0.1 > sidesInfo[_RIGHT].medX || sidesInfo[_RIGHT].medX > _MAX_DIST_SIDE_ESCADA + 0.1 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
-            //se estiver muito ruim...
-            tractionDir = _V0 - _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
-            tractionEsq = _V0 + _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
-            cout << " | se endireitando";
+          //se estiver muito distante
+          tractionDir = _V0 - _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+          tractionEsq = _V0 + _KP*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
+          cout << " | se endireitando";
 
         }else{
-          
+          //esta perto mas precisa alinhar
           cout << " | Corrigindo zAngle" << " | zAngle: " << zAngle;
           cout << " | MedY: " << sidesInfo[_FRONT].medY;
           tractionDir = (_V0 + _KP*zAngle*1.5)/2;
