@@ -25,7 +25,7 @@ _TRACK_DETECTION_ROW = 150
 _TRACK_DETECTION_MAX_PIXELS = 25
 
 #defines how close the fire has to be to center of the image to be considered fire
-_ERROR_UPPER_LIMIT = 250
+_ERROR_UPPER_LIMIT = 150
 
 #-------------------GLOBAL VARIABLES----------------# 
 #enabled = True
@@ -105,7 +105,7 @@ def get_tilt_angle(frame):
     #the collumns are analysed from the botton to the top, checking where the first black pixel appear
     #the botton limit and the top limit are defined bellow
     upper_limit = (int)((2*rows)/3) 
-    botton_limit = (int)(rows - 1) - 40
+    botton_limit = (int)(rows - 1) - 20
     
     #variables used on the main loop
     current_col = 0      
@@ -125,13 +125,22 @@ def get_tilt_angle(frame):
             continue
         x -= 1
         while(x > upper_limit): #to the upperlimit
-            if not np.all(frame[x, current_col] == frame[x, current_col][0]) or frame[x, current_col][0] == 0: #check if pixel is black
+            B = frame[x, current_col][0]
+            G = frame[x, current_col][1]
+            R = frame[x, current_col][2]
+            if R == G == B == 0 or (abs((R - G) + (R - B)) > 10): #check if pixel is black
+                
+                if not np.all(frame[x, current_col] == frame[x, current_col][0]):
+                    print frame[x, current_col]
+
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
-                # frame[x, current_col][0] = 0     #paint the pixel if it's necessary
-                # frame[x, current_col][1] = 0
-                # frame[x, current_col][2] = 255
+                frame[x, current_col][0] = 0     #paint the pixel if it's necessary
+                frame[x, current_col][1] = 0
+                frame[x, current_col][2] = 255
                 pixels_found += 1
+
+                
                 break
             x -= 1
 
@@ -173,7 +182,7 @@ def ur5_callback(data):
         return
 
     #Calculates RGB threshold to find fire
-    mask=cv2.inRange(frame,(0,175,210),(64,255,255))
+    mask=cv2.inRange(frame,(0,175,210),(100,255,255))
     
     # Find contours:
     contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -197,21 +206,27 @@ def ur5_callback(data):
 
         #calculates the error from how far the fire center it's from center of the frame
         error = frame.shape[1]/2 - x
-        if(abs(error) > _ERROR_UPPER_LIMIT): #if the fire it's to far, ignores
+        if(abs(error) > _ERROR_UPPER_LIMIT and not state & (1 << defs.SETTING_UP_HOKUYO)): #if the fire it's to far, ignores
             error = _FIRE_NOT_FOUND
         else:
-            kp = 1
-            if(error > 100):
-                kp = 10
-            elif(error > 10):
-                kp = 3
-            elif(error > 3):
-                kp = 2
-            else:
-                kp = 1
+            # kp = 1
+            # if(error > 100):
+            #     kp = 10
+            # elif(error > 10):
+            #     kp = 3
+            # elif(error > 3):
+            #     kp = 2
+            # else:
+            #     kp = 1
 
-            #divides the error to a constant kp
-            error = error/kp
+            # #divides the error to a constant kp
+            # error = error/kp
+            # if(not state & (1 << defs.ROBOT_CLOCKWISE)):
+            #     error = -error
+            if(error > 15):
+                error = 15
+            elif(error < -15):
+                error = -15
             
 
     #check if there is a track on the camera sight
