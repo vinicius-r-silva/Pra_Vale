@@ -72,6 +72,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){
     
+    enable.data |= (1 << IN_LADDER);
+
     erro = _zAngle *_KP_OBSTACLE;
 
     cout << "E: NaEscada\t ZAngle: " << _zAngle << "Erro:" << erro;
@@ -221,6 +223,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   cout << " | zAngle: " << _zAngle << endl;
   
   speedPub.publish(msg);
+  statePub.publish(_enable);
 }
 
 
@@ -416,7 +419,6 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           _isInStairs = true;
           _provavelEscada = false;
           _enable.data &= ~(1<< FOUND_STAIR);
-          statePub.publish(_enable);
         }
 
         tractionDir = +_KP*_zAngle*2.5;
@@ -461,6 +463,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
   msg.data.push_back(tractionEsq);
 
   speedPub.publish(msg);
+  statePub.publish(_enable);
 }
 
 

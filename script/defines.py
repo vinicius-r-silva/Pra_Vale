@@ -17,6 +17,7 @@ FOUND_STAIR         = 14
 LEAVING_FIRE        = 15
 STRAIGHT_PATH       = 16
 END_STAIR           = 17
+IN_STAIR            = 18
 
 
 #const for minimum angle difference betwwen the current angle and the desired angle
