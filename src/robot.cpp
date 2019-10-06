@@ -31,12 +31,18 @@ void Robot::processMap(SidesInfo *sidesInfo){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
   float erro;
-
+  
+  /*
   if(_state == IN_LADDER){
     static int i = 0;
     i++;
     if(i > 15)
       _state = LADDER_DOWN;
+  }*/
+
+  if(_state == IN_LADDER && _enable.data & (1 << END_STAIR)){
+    cout << "awrsefxdgrfhcgjvhkgjhfhgdgsfdxgfchgvjh\n";
+    _state = LADDER_DOWN;
   }
 
   if(!_isInStairs && _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)){
@@ -73,11 +79,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     cout << "E: SubirEscada\t yAngle: " << yAngle;
 
-  }else if(_state == IN_LADDER || _state == LADDER_DOWN){
+  }else if(_state == IN_LADDER){
     
     erro = zAngle *_KP_OBSTACLE;
 
     cout << "E: NaEscada\t ZAngle: " << zAngle << "Erro:" << erro;
+  }else if(_state == LADDER_DOWN){
+
+    erro = zAngle * _KP_OBSTACLE;
+
+    cout << "E: Descendooooooooooooooooooooooo";
 
   //desvia do obstaculo na frente    
   }else if(!straitPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){

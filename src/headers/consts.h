@@ -45,7 +45,8 @@
 #define HOKUYO_READING       13
 #define FOUND_STAIR          14
 #define LEAVING_FIRE         15
-#define STRAIT_PATH        16
+#define STRAIT_PATH          16
+#define END_STAIR        	 17
 
 //controle do robo
 #define _V0 3.0 //velocidade do robo
