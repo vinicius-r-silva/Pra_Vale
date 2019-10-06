@@ -18,7 +18,6 @@ from std_msgs.msg import Int32MultiArray
 #const send to the arm node when no fire is detected
 _FIRE_NOT_FOUND = 1000
 
-  
 #consts used on the detection if thre is a track at the cam
 #define the row use on the detection
 _TRACK_DETECTION_ROW = 150
@@ -26,7 +25,7 @@ _TRACK_DETECTION_ROW = 150
 _TRACK_DETECTION_MAX_PIXELS = 25
 
 #defines how close the fire has to be to center of the image to be considered fire
-_ERROR_UPPER_LIMIT = 300
+_ERROR_UPPER_LIMIT = 250
 
 #-------------------GLOBAL VARIABLES----------------# 
 #enabled = True
@@ -38,7 +37,8 @@ arm_tilt = rospy.Publisher('/pra_vale/arm_tilt', Float32, queue_size=10)
 #desired z (height) position of the arm
 desired_z = 20
 
-state = 1 << defs._NOTHING
+#state of the robot
+state = 1 << defs.NOTHING
 
 
 #----------------------FUNCTIONS----------------------# 
@@ -46,6 +46,7 @@ state = 1 << defs._NOTHING
 def state_callback(data):
     global state
     state = data.data
+
 
 
 #given two array of values, find the best line that best fit the arrays
@@ -68,11 +69,14 @@ def leastSquare (x_list, y_list):
     return tplFinal1
 
 
+#detect if there is track in front of the camera
+#used when is necessary to get the camera tilt angle
 def there_is_track(frame):
     row = _TRACK_DETECTION_ROW
     black_pixels_qtd = 0
     col = 0
 
+    #check if determined row has a suficient pixels that differs from black
     while col < frame.shape[1]:
         if np.all(frame[row, col] == [0,0,0]):
             black_pixels_qtd += 1
@@ -81,24 +85,31 @@ def there_is_track(frame):
 
         col += 1
     
+    #for debug draw a blue line where the pixels where verified
     cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
 
     #print("black pixels: " + str(black_pixels_qtd))
     return True
 
 
+
 #given a frame from the track, get the tilt angle of the camera
 #find the firsts black pixels from the botton
 def get_tilt_angle(frame):
     #consts
-    qtd = 200
-    rows = frame.shape[0]
-    cols = frame.shape[1]
-    current_col = 0
-    pixels_found = 0
-    step = (int)(cols/qtd)
-    upper_limit = (int)((2*rows)/3)
+    qtd = 200               #number of columns to analyse
+    rows = frame.shape[0]   #number of rows of the frame
+    cols = frame.shape[1]   #number of columns of the frame
+    step = (int)(cols/qtd)  #step wich the the column number is incresed on the main loop
+    
+    #the collumns are analysed from the botton to the top, checking where the first black pixel appear
+    #the botton limit and the top limit are defined bellow
+    upper_limit = (int)((2*rows)/3) 
     botton_limit = (int)(rows - 1) - 40
+    
+    #variables used on the main loop
+    current_col = 0      
+    pixels_found = 0
 
     #main loop
     #check the first black pixels from the botton of the image
@@ -114,7 +125,7 @@ def get_tilt_angle(frame):
             continue
         x -= 1
         while(x > upper_limit): #to the upperlimit
-            if np.all(frame[x, current_col] == 0): #check if pixel is black
+            if not np.all(frame[x, current_col] == frame[x, current_col][0]) or frame[x, current_col][0] == 0: #check if pixel is black
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
                 # frame[x, current_col][0] = 0     #paint the pixel if it's necessary
@@ -128,7 +139,7 @@ def get_tilt_angle(frame):
         current_col += step
 
     #if wasn't found enough pixels, cancel the search
-    if(pixels_found < (qtd / 10)):
+    if(pixels_found < (qtd / 5)):
         return [-1,-1]
         
     #otherwise, calculates the leastSquare
@@ -137,8 +148,11 @@ def get_tilt_angle(frame):
     #print the line found    
     cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
 
+    #calculates the angle of the line made from the leastSquare function
+    print(coef[1])
     angle = atan2(coef[0]*cols, cols)
     return [angle, coef[1]]
+
 
 
 
@@ -147,17 +161,14 @@ def get_tilt_angle(frame):
 def ur5_callback(data):
     global arm_move
     global arm_tilt
-    # global enabled
-    # if(not enabled):
-    #     return
 
     #get the image
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
-#| (1 << defs._FOUND_FIRE_FRONT) | (1 << defs._FOUND_FIRE_TOUCH) | (1 << defs._NOTHING))
-    if(state & ((1 << defs._ARM_CHANGING_POSE) | (1 << defs._FOUND_FIRE_FRONT) | (1 << defs._FOUND_FIRE_TOUCH) | (1 << defs._NOTHING))):
-        cv2.imshow("Camera",frame)
+    #check if it's necessary process the image
+    if(state & ((1 << defs.ARM_CHANGING_POSE) | (1 << defs.FOUND_FIRE_FRONT) | (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.NOTHING))):
+        cv2.imshow("Camera",frame) #if it isn't necessary, show the image and exit
         cv2.waitKey(1)
         return
 
@@ -166,7 +177,6 @@ def ur5_callback(data):
     
     # Find contours:
     contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    
     
     #Check size of object
     error = _FIRE_NOT_FOUND
@@ -185,8 +195,9 @@ def ur5_callback(data):
         cv2.line(frame, (frame.shape[1]/2,0), (frame.shape[1]/2, frame.shape[0]), (255,0,0), 1)
         cv2.line(frame, ((int)(x),0), ((int)(x), frame.shape[0]), (0,255,0), 1)
 
+        #calculates the error from how far the fire center it's from center of the frame
         error = frame.shape[1]/2 - x
-        if(abs(error) > _ERROR_UPPER_LIMIT):
+        if(abs(error) > _ERROR_UPPER_LIMIT): #if the fire it's to far, ignores
             error = _FIRE_NOT_FOUND
         else:
             kp = 1
@@ -199,15 +210,14 @@ def ur5_callback(data):
             else:
                 kp = 1
 
-            #multiplies the erro to a constant kp
+            #divides the error to a constant kp
             error = error/kp
             
 
     #check if there is a track on the camera sight
     if there_is_track(frame): #if there is a track, get the tilt angle from it
-        #get the tilt angle of the camera
         angle, b = get_tilt_angle(frame)
-        #print((angle,b))
+        #print((angle,b))     
     else:                     #ortherwise, just return -1
         angle = -1
         b = -1
@@ -218,12 +228,11 @@ def ur5_callback(data):
     #calculates how much the arm has to move in the z axis
     #keeps the camera in the same height as the the track rolls
     z = 0
-    if((state & (1 << defs._FOUND_FIRE_FRONT) or state & (1 << defs._FOUND_FIRE_TOUCH)) and b != -1):
+    if((state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)) and b != -1):
         z = (b - desired_z)/5
 
     #publishes to the arm node
     arm_move.publish(data = [error, 0, z])
-
 
     #print(error)
     #cv2.imshow("Threshold",mask)
@@ -231,13 +240,12 @@ def ur5_callback(data):
     cv2.waitKey(1)
 
 
-# def findFire_enabled(data):
-#     global enabled
-#     enabled = data.data
-#     print("5cam is: " + str(enabled))
+
+#get robot state
 def state_set(data):
     global state
     state = data.data
+
 
 
 def listener():

@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from math import pi
-from math import pow
-from math import acos
-from math import sqrt
-from math import atan2
-from getkey import getkey, keys
+from getkey import getkey
 from std_msgs.msg import Int32MultiArray
 
 
@@ -41,7 +36,7 @@ def listener():
                 y = step
             if key == 'd':
                 y = -step
-                
+            
             if key == 'e':
                 z = step
             if key == 'q':

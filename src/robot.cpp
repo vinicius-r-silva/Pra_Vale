@@ -428,7 +428,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           cout << " | escada";
           _isInStairs = true;
           _provavelEscada = false;
-          _enable.data &= ~(1<< _FOUND_STAIR);
+          _enable.data &= ~(1<< FOUND_STAIR);
           statePub.publish(_enable);
         }
 

@@ -1,27 +1,22 @@
 #defined states
-_NOTHING           = 0
-_ENABLE_VELODYME   = 1
-_ARM_CHANGING_POSE = 2
-_FOLLOW_TRACK      = 3
-_FOUND_FIRE_FRONT  = 4
-_FOUND_FIRE_LEFT   = 5
-_FOUND_FIRE_RIGHT  = 6
-_FOUND_FIRE_TOUCH  = 7
-_SETTING_UP_HOKUYO = 8
-_INITIAL_SETUP     = 9
-_ROBOT_ROTATION    = 10
-_ROBOT_DIR_RIGHT   = 11
-_HOKUYO_READING    = 12
-_FOUND_STAIR       = 13
-_LEAVING_FIRE      = 14
+#the details to each state is detailed on the state_handler
+NOTHING             = 0
+ENABLE_VELODYME     = 1
+ARM_CHANGING_POSE   = 2
+FOUND_FIRE_FRONT    = 4
+FOUND_FIRE_LEFT     = 5
+FOUND_FIRE_RIGHT    = 6
+FOUND_FIRE_TOUCH    = 7
+SETTING_UP_HOKUYO   = 8
+INITIAL_SETUP       = 9
+ROBOT_ROTATION      = 10
+ROBOT_CLOCKWISE     = 11
+ROBOT_ANTICLOCKWISE = 12
+HOKUYO_READING      = 13
+FOUND_STAIR         = 14
+LEAVING_FIRE        = 15
 
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
-_MAX_JOINT_ANGLE_DIFF = 0.1
+MAX_JOINT_ANGLE_DIFF = 0.1
 
-
-_TRACK_ON_RIGHT = 1
-_TRACK_ON_FRONT = 2
-_TRACK_ON_LEFT  = 3
-_CLOCKWISE      = 4
-_ANTI_CLOCKWISE = 5

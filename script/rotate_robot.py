@@ -6,15 +6,25 @@ import defines as defs
 from std_msgs.msg import Int32
 from std_msgs.msg import Float32MultiArray
 
-actual_z_angle = 0
-desired_z_angle = 0
-state = defs._NOTHING
 
-half_pi = pi/2
-
+#-----------------------CONSTS----------------------#   
+#used in the robot_on_left/right vector
 _FRONT_ANGLE = 0
 _FOLLOW_ANGLE = 1
 
+#when the robot it's not rotating, the desired angle is equal to _NO_ANGLE
+_NO_ANGLE = -10
+
+#used multiple times, saves times from dividing every time
+half_pi = pi/2
+
+
+#-------------------GLOBAL VARIABLES----------------#    
+actual_z_angle = 0   
+desired_z_angle = 0
+state = defs.NOTHING 
+
+#robot_on_right e robot_on_left defines wich angles the robot has to move
 robot_on_right = [0,0]
 robot_on_left = [0,0]
 
@@ -24,9 +34,9 @@ robot_on_left[_FOLLOW_ANGLE] = 0
 robot_on_right[_FRONT_ANGLE] = -half_pi
 robot_on_right[_FOLLOW_ANGLE] = half_pi
 
-rotation_direction = defs._CLOCKWISE
+#defines the rotation direction of the robot
+rotation_direction = defs.ROBOT_CLOCKWISE
 
-_NO_ANGLE = -10
 
 #callback function called when a node requires a state change
 def set_state(data):
@@ -41,17 +51,17 @@ def set_state(data):
         track_on_right = True
 
 
-    if(state & (1 << defs._ROBOT_ROTATION) and desired_z_angle == _NO_ANGLE):
-        if (state & 1 << defs._ROBOT_DIR_RIGHT):
-            if(state & (1 << defs._FOUND_FIRE_RIGHT)):       
-                rotation_direction = defs._CLOCKWISE  
+    if(state & (1 << defs.ROBOT_ROTATION) and desired_z_angle == _NO_ANGLE):
+        if (state & 1 << defs.ROBOT_CLOCKWISE):
+            if(state & (1 << defs.FOUND_FIRE_RIGHT)):       
+                rotation_direction = defs.ROBOT_CLOCKWISE
                 if(track_on_right):
                     desired_z_angle = robot_on_left[_FRONT_ANGLE]
                 else:
                     desired_z_angle = robot_on_right[_FRONT_ANGLE]
 
-            elif(state & (1 << defs._FOUND_FIRE_TOUCH)):
-                rotation_direction = defs._ANTI_CLOCKWISE
+            elif(state & (1 << defs.FOUND_FIRE_TOUCH)):
+                rotation_direction = defs.ROBOT_ANTICLOCKWISE
                 if(track_on_right):
                     desired_z_angle = robot_on_left[_FOLLOW_ANGLE]
                 else:
@@ -72,15 +82,15 @@ def imu_callback(data):
         return
 
     rosi_speed = [0,0,0,0]
-    if(rotation_direction == defs._CLOCKWISE):
+    if(rotation_direction == defs.ROBOT_CLOCKWISE):
         rosi_speed = [-2,-2,2,2]
     else:
         rosi_speed = [2,2,-2,-2]
     
-    if (abs(actual_z_angle - desired_z_angle) < defs._MAX_JOINT_ANGLE_DIFF):
+    if (abs(actual_z_angle - desired_z_angle) < defs.MAX_JOINT_ANGLE_DIFF):
         rosi_speed = [0,0,0,0]
         desired_z_angle = _NO_ANGLE
-        state &= ~(1 << defs._ROBOT_ROTATION) 
+        state &= ~(1 << defs.ROBOT_ROTATION) 
         state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
         state_publisher.publish(data = state)
     

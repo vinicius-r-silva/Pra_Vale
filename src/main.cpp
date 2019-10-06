@@ -8,7 +8,7 @@ std_msgs::Int32 enable;
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 
 
-  if(!(enable.data & (1 << _ENABLE_VELODYME)) || enable.data & (1 << _ARM_CHANGING_POSE))
+  if(!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE))
     return;
 
 
@@ -20,7 +20,7 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   if(rob->getRodar())
     rob->rodarFunction(vis->getSidesInfo());
 
-  else if((enable.data & (1 << _FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs())
+  else if((enable.data & (1 << FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs())
     rob->aligneEscada(vis->getSidesInfo());
   else{
     vis->setAvoidingObs(rob->getAvoidingObs());
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
   
   std::cout << "Velodyne running" << std::endl;
   
-  enable.data = 1 << _ENABLE_VELODYME;
+  enable.data = 1 << ENABLE_VELODYME;
 
   vis = new Visualization();
   rob = new Robot();

@@ -17,7 +17,7 @@ rospack.list()
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
-state = defs._NOTHING
+state = defs.NOTHING
 
 global scaleList, stair
 
@@ -40,6 +40,9 @@ def set_state(data):
 # loop over the images to find the template in
 def kin_callback(data):
 	global state, scaleList, stair
+
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
+		return
 
 	bridge=CvBridge()
 	image = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
@@ -97,7 +100,7 @@ def kin_callback(data):
 		end = (maxLoc[0] + tW, maxLoc[1] + tH + image.shape[0]/2)
 		
 		#print(float(maxLoc[0] + tW/2)/image.shape[1]/2, float(maxLoc[1] + tH/2 + image.shape[0]/2)/image.shape[1]/2)
-		state |= 1 << defs._FOUND_STAIR
+		state |= 1 << defs.FOUND_STAIR
 		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
 		state_publisher.publish(data = state)
 

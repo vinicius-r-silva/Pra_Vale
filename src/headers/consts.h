@@ -30,20 +30,21 @@
 #define _MIN_GRAY_S 100 //minimo de luminosiade para ser processado
 
 //Estados
-#define _NOTHING            0
-#define _ENABLE_VELODYME    1
-#define _ARM_CHANGING_POSE  2
-#define _FOUND_FIRE_FRONT   4
-#define _FOUND_FIRE_LEFT    5
-#define _FOUND_FIRE_RIGHT   6
-#define _FOUND_FIRE_TOUCH   7
-#define _SETTING_UP_HOKUYO  8
-#define _INITIAL_SETUP      9
-#define _ROBOT_ROTATION     10
-#define _ROBOT_DIR_RIGHT    11
-#define _HOKUYO_READING     12
-#define _FOUND_STAIR        13
-#define _LEAVING_FIRE       14
+#define NOTHING              0
+#define ENABLE_VELODYME      1
+#define ARM_CHANGING_POSE    2
+#define FOUND_FIRE_FRONT     4
+#define FOUND_FIRE_LEFT      5
+#define FOUND_FIRE_RIGHT     6
+#define FOUND_FIRE_TOUCH     7
+#define SETTING_UP_HOKUYO    8
+#define INITIAL_SETUP        9
+#define ROBOT_ROTATION       10
+#define ROBOT_CLOCKWISE      11
+#define ROBOT_ANTICLOCKWISE  12
+#define HOKUYO_READING       13
+#define FOUND_STAIR          14
+#define LEAVING_FIRE         15
 
 //controle do robo
 #define _V0 3.0 //velocidade do robo

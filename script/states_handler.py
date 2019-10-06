@@ -8,7 +8,7 @@ from std_msgs.msg import Int32
 
 
 #global variable
-state =  (1 << defs._INITIAL_SETUP) | (1 << defs._ARM_CHANGING_POSE) | (1 << defs._ROBOT_DIR_RIGHT)
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE)
 
 
 
@@ -17,53 +17,60 @@ def print_state():
     string = ""
 
     #enable velodyne detection path planning
-    if (state & (1 << defs._ENABLE_VELODYME)):
-        string += ("  _ENABLE_VELODYME")
+    if (state & (1 << defs.ENABLE_VELODYME)):
+        string += ("  ENABLE_VELODYME")
 
     #moves the robot arm when the position desired is far away
-    if (state & (1 << defs._ARM_CHANGING_POSE)):
-        string += ("  _ARM_CHANGING_POSE")
-
-    #keeps the robot arm aligned to the track
-    if (state & (1 << defs._FOLLOW_TRACK)):
-        string += ("  _FOLLOW_TRACK")
+    if (state & (1 << defs.ARM_CHANGING_POSE)):
+        string += ("  ARM_CHANGING_POSE")
 
     #signalize that fire was found in front of the robot
-    if (state & (1 << defs._FOUND_FIRE_FRONT)):
-        string += ("  _FOUND_FIRE_FRONT")
+    if (state & (1 << defs.FOUND_FIRE_FRONT)):
+        string += ("  FOUND_FIRE_FRONT")
     
     #signalize that fire was found in the right of the robot
-    if (state & (1 << defs._FOUND_FIRE_RIGHT)):
-        string += ("  _FOUND_FIRE_RIGHT")
+    if (state & (1 << defs.FOUND_FIRE_RIGHT)):
+        string += ("  FOUND_FIRE_RIGHT")
     
     #when the arm is touching the fire
-    if (state & (1 << defs._FOUND_FIRE_TOUCH)):
-        string += ("  _FOUND_FIRE_TOUCH")  
+    if (state & (1 << defs.FOUND_FIRE_TOUCH)):
+        string += ("  FOUND_FIRE_TOUCH")  
     
     #detects the fire easel with hokuyo
-    if (state & (1 << defs._SETTING_UP_HOKUYO)):
-        string += ("  _SETTING_UP_HOKUYO")
+    if (state & (1 << defs.SETTING_UP_HOKUYO)):
+        string += ("  SETTING_UP_HOKUYO")
 
-    if (state & (1 << defs._INITIAL_SETUP)):
-        string += ("  _INITIAL_SETUP")
+    #used in the start of the simulation
+    if (state & (1 << defs.INITIAL_SETUP)):
+        string += ("  INITIAL_SETUP")
 
-    if (state & (1 << defs._ROBOT_ROTATION)):
-        string += ("  _ROBOT_ROTATION")
+    #when the robot is rotatating along it's own z axis
+    if (state & (1 << defs.ROBOT_ROTATION)):
+        string += ("  ROBOT_ROTATION")
 
-    if (state & (1 << defs._HOKUYO_READING)):
-        string += ("  _HOKUYO_READING")
+    #used to enable the HOKUYO processing
+    if (state & (1 << defs.HOKUYO_READING)):
+        string += ("  HOKUYO_READING")
 
-    if (state & (1 << defs._ROBOT_DIR_RIGHT)):
-        string += ("  _ROBOT_DIR_RIGHT")
+    #when the robot is following the track with CLOKWISE direction
+    if (state & (1 << defs.ROBOT_CLOCKWISE)):
+        string += ("  ROBOT_CLOKWISE")
 
-    if (state & (1 << defs._LEAVING_FIRE)):
-        string += ("  _LEAVING_FIRE")
+    #when the robot is following the track with CLOKWISE direction
+    if (state & (1 << defs.ROBOT_ANTICLOCKWISE)):
+        string += ("  ROBOT_ANTICLOKWISE")
 
-    if (state & (1 << defs._NOTHING)):
-        string += ("  _NOTHING")
+    #when the robot just finished touching a roll on fire
+    if (state & (1 << defs.LEAVING_FIRE)):
+        string += ("  LEAVING_FIRE")
 
-    if (state & (1 << defs._FOUND_STAIR)):
-        string += ("  _FOUND_STAIR")
+    #when the robot is doing NOTHING
+    if (state & (1 << defs.NOTHING)):
+        string += ("  NOTHING")
+
+    #when the stairs where found
+    if (state & (1 << defs.FOUND_STAIR)):
+        string += ("  FOUND_STAIR")
     
     print(string)
 
@@ -74,7 +81,7 @@ def set_state(data):
     global state
     state = data.data
 
-    #print the state change
+    #print the state change (debug)
     # print("\n\n\nstate changed: \n\n")
     # print_state()
     # print("\n\n\n")
@@ -87,10 +94,10 @@ if __name__ == '__main__':
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
-    print_state()
+    print_state() #print the intial state
     node_sleep_rate = rospy.Rate(10)
 
-    while not rospy.is_shutdown():
+    while not rospy.is_shutdown(): #always keep publishing the state
         print_state()
         pub.publish(data = state)
         node_sleep_rate.sleep()

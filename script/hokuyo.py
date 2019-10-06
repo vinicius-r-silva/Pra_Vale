@@ -3,21 +3,20 @@
 
 import rospy
 import defines as defs
-from std_msgs.msg import Bool
 from std_msgs.msg import Int32
 from std_msgs.msg import Int32MultiArray
 from rosi_defy.msg import HokuyoReading
 import numpy as np
 import cv2
 
-_IMG_SIZE = 750
-_MAX_RANGE = 50
+#consts
+_IMG_SIZE = 750  #the size of the frame generated from the HOKUYO reading
 _RADIOS_FIRE = 9
 
 _HOKUYO_READING_MAX = 10
 
 last_fire_coord = [-1,-1]
-state = defs._NOTHING
+state = defs.NOTHING
 is_following_fire = False
 
 distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32MultiArray, queue_size = 1)
@@ -136,7 +135,7 @@ def hokuyo_callback(data):
     global state
     global last_fire_coord
     global distance_publisher   
-    if(not (state & 1 << defs._HOKUYO_READING)):
+    if(not (state & 1 << defs.HOKUYO_READING)):
         if(last_fire_coord[0] != -1):
             last_fire_coord[0] = -1
             last_fire_coord[1] = -1
