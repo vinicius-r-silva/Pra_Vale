@@ -24,8 +24,8 @@ class Robot {
         std_msgs::Int32 _enable;
         double yAngle;
         double zAngle;
-        double saveAngle;
         double saveAngleZ;
+        double saveAngle;
         float distToTrack;
         bool sentido;
         bool _isInStairs;
