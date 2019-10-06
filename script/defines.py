@@ -15,8 +15,9 @@ ROBOT_ANTICLOCKWISE = 12
 HOKUYO_READING      = 13
 FOUND_STAIR         = 14
 LEAVING_FIRE        = 15
-STRAIGHT_PATH       = 16
+NARROW_PATH         = 16
+IN_STAIR            = 18
 
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
-MAX_JOINT_ANGLE_DIFF = 0.1
+MAX_JOINT_ANGLE_DIFF = 0.1  

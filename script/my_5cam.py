@@ -128,16 +128,12 @@ def get_tilt_angle(frame):
             B = frame[x, current_col][0]
             G = frame[x, current_col][1]
             R = frame[x, current_col][2]
-            if R == G == B == 0 or (abs((R - G) + (R - B)) > 10): #check if pixel is black
-                
-                if not np.all(frame[x, current_col] == frame[x, current_col][0]):
-                    print frame[x, current_col]
-
+            if R == G == B == 0 or (abs(((int)(R) - (int)(G)) + (int)((R) - (int)(B))) > 10): #check if pixel is black
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
-                frame[x, current_col][0] = 0     #paint the pixel if it's necessary
-                frame[x, current_col][1] = 0
-                frame[x, current_col][2] = 255
+                # frame[x, current_col][0] = 0     #paint the pixel if it's necessary
+                # frame[x, current_col][1] = 0
+                # frame[x, current_col][2] = 255
                 pixels_found += 1
 
                 
@@ -206,7 +202,7 @@ def ur5_callback(data):
 
         #calculates the error from how far the fire center it's from center of the frame
         error = frame.shape[1]/2 - x
-        if(abs(error) > _ERROR_UPPER_LIMIT and not state & (1 << defs.SETTING_UP_HOKUYO)): #if the fire it's to far, ignores
+        if(abs(error) > _ERROR_UPPER_LIMIT and not state & (1 << defs.SETTING_UP_HOKUYO | 1 << defs.ROBOT_CLOCKWISE)): #if the fire it's to far, ignores
             error = _FIRE_NOT_FOUND
         else:
             # kp = 1
@@ -223,10 +219,10 @@ def ur5_callback(data):
             # error = error/kp
             # if(not state & (1 << defs.ROBOT_CLOCKWISE)):
             #     error = -error
-            if(error > 15):
-                error = 15
-            elif(error < -15):
-                error = -15
+            if(error > 10):
+                error = 10
+            elif(error < -10):
+                error = -10
             
 
     #check if there is a track on the camera sight
