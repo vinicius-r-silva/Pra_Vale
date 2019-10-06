@@ -121,7 +121,7 @@ def cinematicaInversa():
     # print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
-        print("erro: posicao fora do alcance do braco robotico")
+        #print("erro: posicao fora do alcance do braco robotico")
 
         #change to the last valid position
         x = last_x
@@ -197,7 +197,7 @@ def cinematicaInversa():
         return joint_angles
     
     except:
-        print("erro: posicao fora do alcance do braco robotico")
+        #print("erro: posicao fora do alcance do braco robotico")
 
         #change to the last valid position
         x = last_x
@@ -235,9 +235,12 @@ def arm_move(data):
     global state
     global rosi_speed_publisher
     global leaving_fire_cont
+
+    #if the arm is changing position or the robot is rotating, the arm it's not supose to change its position
     if((state & (1 << defs.ARM_CHANGING_POSE)) or (state & (1 << defs.ROBOT_ROTATION))):
         return
         
+    #globals
     global x
     global y
     global z
@@ -250,14 +253,19 @@ def arm_move(data):
     y_move = data.data[1]
     z_move = data.data[2]
 
+    #if the robot it's on right side of the track, the x and y axis are swaped
     if(not state & (1 << defs.ROBOT_CLOCKWISE)):
         temp = x_move
         x_move = y_move
         y_move = temp
 
-    print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
+    #to debug only
+    #print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
     
+    #update arm position if there isn't a fire
     if((x_move == _FIRE_NOT_FOUND or y_move == _FIRE_NOT_FOUND) and not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
+        #if the arm just finished leaving the fire location
+        #return the arm normal position of the arm
         if(fire_found):
             fire_found = False
             state |= 1 << defs.ARM_CHANGING_POSE
@@ -266,11 +274,14 @@ def arm_move(data):
             x = _FIRE_NOT_FOUND_X_VALUE
             y = _FIRE_NOT_FOUND_Y_VALUE
             z = _FIRE_NOT_FOUND_Z_VALUE
+
+        #otherwise, just move the arm to the required position
         else:
             x += x_move
             y += y_move
             z += z_move
 
+        #if the is still leaving the fire, keep the LEAVING_FIRE state up
         if (state & (1 << defs.LEAVING_FIRE)):
             if(leaving_fire_cont > 10):
                 state &= ~(1 << defs.LEAVING_FIRE)
@@ -278,11 +289,9 @@ def arm_move(data):
             else:
                 leaving_fire_cont += 1
 
+    #if the arm is detecting a fire, but didn't touch it yet
     elif(not state & (1 << defs.LEAVING_FIRE)):
-        # x += x_move
-        # z += z_move
-        # y += y_move
-
+        #if the arm just detected the fire, change it's position 
         if(not fire_found):
             fire_found = True
             state |= 1 << defs.ENABLE_VELODYME | 1 << defs.SETTING_UP_HOKUYO | 1 << defs.ARM_CHANGING_POSE
@@ -291,12 +300,6 @@ def arm_move(data):
             rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
             x = _FIRE_FOUND_X_VALUE
             y = _FIRE_FOUND_Y_VALUE
-            # if(state & (1 << defs.ROBOT_CLOCKWISE)):
-            #     x = _FIRE_FOUND_X_VALUE
-            #     y = _FIRE_FOUND_Y_VALUE
-            # else:
-            #     x = _FIRE_FOUND_Y_VALUE
-            #     y = _FIRE_FOUND_X_VALUE
 
             z = _FIRE_FOUND_Z_VALUE
             cinematicaInversa()
@@ -466,7 +469,7 @@ def hokuyo_distance_callback(data):
         x_move += (int)(x_dist) + _HOKUYO_DISPLACEMENT
 
 
-    print ("\nhokuyo distance: " + str (hokuyo_distance))
+    #print ("\nhokuyo distance: " + str (hokuyo_distance))
 
 
     if(not state & (1 << defs.ENABLE_VELODYME | 1 << defs.ROBOT_ROTATION) and state & (1 << defs.FOUND_FIRE_RIGHT)):
@@ -549,7 +552,7 @@ def hokuyo_distance_callback(data):
     pos = cinematicaInversa()
     arm_publisher.publish(joint_variable = pos)
 
-    print("xtemp: " + str(x_temp) + ", ytemp: " + str(y_temp) + ",  xmove: " + str(x_move) + ",  ymove: " + str(y_move))
+    #print("xtemp: " + str(x_temp) + ", ytemp: " + str(y_temp) + ",  xmove: " + str(x_move) + ",  ymove: " + str(y_move))
 
 
 
@@ -605,20 +608,6 @@ def listener():
 
 #main
 print("arm launched")
-
-# for cont0 in range(30):
-#     for cont1 in range(2000):
-#         for cont2 in range(2000):
-#             x = cont1 - 1000
-#             y = cont2 - 1000
-#             z = cont0 + 925
-#             pos = cinematicaInversa()
-#             # if(pos[0] != -1000):
-#             #     print("\n\n##############################################\n")
-#             #     print("x: " + str(x) + ",  y: " + str(y) + ",  z: " + str(900))
-#             #     print("\n##############################################\n\n")
-        
-#     print(cont0)
 
 listener()
 
