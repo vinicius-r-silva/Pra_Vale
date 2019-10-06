@@ -7,6 +7,16 @@ import rospy
 import cv2
 import rospkg
 
+from sensor_msgs.msg import Image
+from std_msgs.msg import Int32
+
+
+DEBUGGING=True
+NOTA_MAX= 120
+CUT_SCALE=[0.5, 0.1]
+
+
+state = defs.NOTHING
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
@@ -14,22 +24,12 @@ rospack = rospkg.RosPack()
 rospack.list() 
 
 
-from sensor_msgs.msg import Image
-from std_msgs.msg import Int32
-
-state = defs.NOTHING
-
-global scaleList, stair
-
 #Load the template, convert it to grayscale, and detect edges
-
 # get the file path for pra_vale
 stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/print.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
-stair = cv2.Canny(stair, 50, 200)
 
-scaleList=np.linspace(1.0, 0.2, 15).tolist()
-
+scaleList=np.linspace(1.5, 0.1, 15).tolist()
 
 
 #callback function called when a node requires a state change
@@ -37,9 +37,16 @@ def set_state(data):
 	global state
 	state = data.data
 
+
+
+
 # loop over the images to find the template in
 def kin_callback(data):
-	global state, scaleList, stair
+	#Constants
+	global DEBUGGING, NOTA_MAX, CUT_SCALE
+
+	#Variables
+	global scaleList, state, stair
 
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
 		return
@@ -48,7 +55,7 @@ def kin_callback(data):
 	image = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
 
-	crop=image[image.shape[0]/2:image.shape[0],:int(image.shape[1]*0.75)]
+	crop=image[int(image.shape[0]*CUT_SCALE[0]):image.shape[0], int(image.shape[1]*CUT_SCALE[1]):int(image.shape[1]*(1-CUT_SCALE[1]))]
 	r,g,b=cv2.split(crop)
 
 	mask=(cv2.add(cv2.subtract(r,b),cv2.subtract(b,r))[:]<25)
@@ -56,9 +63,12 @@ def kin_callback(data):
 
 
 	crop=cv2.bitwise_and(crop,crop,mask=mask.astype(np.uint8))
-	#cv2.imshow("Hist",crop)
-	#cv2.moveWindow("Hist",800,1200)
-	#cv2.waitKey(10)
+	
+	if DEBUGGING:
+		cv2.imshow("escada_Hist",crop)
+		cv2.moveWindow("escada_Hist",1920,1200)
+		cv2.waitKey(10)
+	
 	gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
 	found = None
 
@@ -76,18 +86,16 @@ def kin_callback(data):
 			print("resized fail", scale)
 			break
 
-		# detect edges in the resized, grayscale image and apply template
-		# matching to find the template in the image
-		edged = cv2.Canny(gray, 50, 200)
-		#cv2.imshow("edge",edged)
-		#cv2.waitKey(10)
-		result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
+		
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+		maxVal/=1000000
 
 		
 		# if we have found a new maximum correlation value, then ipdate
 		# the bookkeeping variable
-		if (found is None or maxVal > found[0]) and maxVal > 7500000:
+		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
+			print(maxVal)
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
 
@@ -96,8 +104,8 @@ def kin_callback(data):
 		# of the bounding box based on the resized ratio
 		(chance, maxLoc) = found
 		#print chance
-		start = (maxLoc[0]   , maxLoc[1] + image.shape[0]/2)
-		end = (maxLoc[0] + tW, maxLoc[1] + tH + image.shape[0]/2)
+		start = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1])     , maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]))
+		end   = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1]) + tW, maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]) + tH)
 		
 		#print(float(maxLoc[0] + tW/2)/image.shape[1]/2, float(maxLoc[1] + tH/2 + image.shape[0]/2)/image.shape[1]/2)
 		state |= 1 << defs.FOUND_STAIR
@@ -106,7 +114,13 @@ def kin_callback(data):
 
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
-	cv2.imshow("Detection",image)
+	else:
+		state &= ~(1 << defs.FOUND_STAIR)
+		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+		state_publisher.publish(data = state)
+
+	cv2.imshow("escada_Detection",image)
+	cv2.moveWindow("escada_Detection",1920,0)
 	cv2.waitKey(1)
 def listener():
 	rospy.init_node('findStair', anonymous=True)

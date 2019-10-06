@@ -26,7 +26,6 @@ class Robot {
         //Parâmetros utlizados em cálculos
         double _yAngle; //Recebe o ângulo y do robô determinado pelo IMU
         double _zAngle; //Recebe o ângulo z do robô determinado pelo IMU
-        double _saveAngle; //Recebe um ângulo para realizar o giro de 180°
         float _distToTrack; //Recebe a distância que o robô deve ficar da esteira conforme a posição dele
         bool _sentido;   //Recebe se o robô segue a esteira no sentido horário ou anti-horário
         bool _isInStairs; //Determina se o robô está na escada
@@ -34,6 +33,7 @@ class Robot {
         bool _avoidingObs; // Determina se o robô está desviando de um obstáculo
         bool _straitPath; // Determina se o robô reconheceu um caminho estreito 
         bool _provavelEscada; //Determina se há uma escada por perto para mudar o comportamento do robô
+
 
     public:
         Robot(); //Construtor da classe
@@ -46,6 +46,9 @@ class Robot {
         bool getAvoidingObs();
         bool getProvavelEscada();
         bool getIsInStairs();
+        bool getSentido();
+        bool getStraitPath();
         bool getRodar();
+        void setStatePub(std_msgs::Int32 enable);
 };
 #endif

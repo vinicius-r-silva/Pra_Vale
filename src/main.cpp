@@ -29,6 +29,24 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
     vis->setAvoidingObs(rob->getAvoidingObs());
     rob->processMap(vis->getSidesInfo());
   }
+
+  //mudando os estados
+  if(rob->getSentido() == _HORARIO){
+    enable.data |= (1 << ROBOT_CLOCKWISE);
+    enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);
+  }else{
+    enable.data |= (1 << ROBOT_ANTICLOCKWISE);
+    enable.data &= ~(1 << ROBOT_CLOCKWISE);
+  }
+  
+  if(rob->getStraitPath())
+    enable.data |= (1 << STRAIT_PATH);
+  else
+    enable.data &= ~(1 << STRAIT_PATH);
+
+  
+  rob->setStatePub(enable);
+  
 }
 
 //Callback do estado em que o robô se encontra
@@ -51,7 +69,6 @@ int main(int argc, char **argv){
   vis = new Visualization();
   rob = new Robot();
   
-  //vis->createRectangles();
 
   //inicia o Ros  
   ros::init(argc, argv, "velodyne");
