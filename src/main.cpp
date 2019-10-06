@@ -5,9 +5,9 @@ Visualization *vis;
 Robot *rob;
 std_msgs::Int32 enable;
 
+
+//Callback do Velodyne
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-
-
   if(!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE))
     return;
 
@@ -17,12 +17,15 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   vis->printRect();
  
   
-  if(rob->getRodar())
+  if(rob->getRodar()){
     rob->rodarFunction(vis->getSidesInfo());
 
-  else if((enable.data & (1 << FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs())
+  }else if((enable.data & (1 << FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs()){
+    std::cout << (int) rob->getProvavelEscada() << (int) (enable.data & (1 << FOUND_STAIR)) << std::endl;
+  
     rob->aligneEscada(vis->getSidesInfo());
-  else{
+
+  }else{
     vis->setAvoidingObs(rob->getAvoidingObs());
     rob->processMap(vis->getSidesInfo());
   }
@@ -46,10 +49,12 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   
 }
 
+//Callback do estado em que o robô se encontra
 void statesCallback(const std_msgs::Int32Ptr & _enable){
   enable.data = _enable->data;
 }
 
+//Callback para pegar os ângulos do IMU
 void anglesCallback(const std_msgs::Float32MultiArray::ConstPtr angles){
     rob->setAngles(angles->data.at(1), angles->data.at(2));
 }

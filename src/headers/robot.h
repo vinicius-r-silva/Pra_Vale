@@ -4,6 +4,7 @@
 #include "consts.h"
 #include "sidesinfo.h"
 
+//Classe que contém os atributos e métodos para o funcionamento do robô pelo Velodyne
 class Robot {
     private:
         //Publicadores para enviar a informação dos vetores abaixo
@@ -15,40 +16,39 @@ class Robot {
         std_msgs::Float32MultiArray tractionCommandList;    
         std_msgs::Float32MultiArray wheelsCommandList;
 
-        //Máquina de estado
-        enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN, FRONT_OBS, FOLLOW_LEFT,
-            FOLLOW_RIGHT, REC_LEFT, REC_RIGHT, CLS_LEFT, CLS_RIGHT};
+        //Recebe o estado do robô
+        std_msgs::Int32 _enable; 
+
+        //Máquina de estado interna da classe para movimentação pela escada
+        enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN};
         int _state;
 
         //Parâmetros utlizados em cálculos
-        std_msgs::Int32 _enable;
-        double yAngle;
-        double zAngle;
-        double saveAngle;
-        double saveAngleZ;
-        float distToTrack;
-        bool sentido;
-        bool _isInStairs;
-        bool rodar;
-        bool avoidingObs;
-        bool inObs;
-        bool straitPath;
-        bool _provavelEscada;
+        double _yAngle; //Recebe o ângulo y do robô determinado pelo IMU
+        double _zAngle; //Recebe o ângulo z do robô determinado pelo IMU
+        float _distToTrack; //Recebe a distância que o robô deve ficar da esteira conforme a posição dele
+        bool _sentido;   //Recebe se o robô segue a esteira no sentido horário ou anti-horário
+        bool _isInStairs; //Determina se o robô está na escada
+        bool _rodar; //Determina se o robô deve girar
+        bool _avoidingObs; // Determina se o robô está desviando de um obstáculo
+        bool _straitPath; // Determina se o robô reconheceu um caminho estreito 
+        bool _provavelEscada; //Determina se há uma escada por perto para mudar o comportamento do robô
+
 
     public:
-        Robot();
-        void processMap(SidesInfo *sidesInfo);
-        void climbStairs();
-        void rodarFunction(SidesInfo *sidesInfo);
+        Robot(); //Construtor da classe
+        void processMap(SidesInfo *sidesInfo); //Algoritmo para processar o mapa e setar as velocidades do robô
+        void climbStairs(); //Algoritmo para subir as escadas
+        void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void setAngles(double yAngle, double zAngle);
-        bool getRodar();
         void setPublishers(std_msgs::Int32 enable, ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);
-        bool getAvoidingObs();
         void aligneEscada(SidesInfo *sidesInfo);
+        bool getAvoidingObs();
         bool getProvavelEscada();
         bool getIsInStairs();
         bool getSentido();
         bool getStraitPath();
+        bool getRodar();
         void setStatePub(std_msgs::Int32 enable);
 };
 #endif
