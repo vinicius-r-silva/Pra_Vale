@@ -158,7 +158,7 @@ def get_tilt_angle(frame):
     cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
 
     #calculates the angle of the line made from the leastSquare function
-    print(coef[1])
+    #print(coef[1])
     angle = atan2(coef[0]*cols, cols)
     return [angle, coef[1]]
 
