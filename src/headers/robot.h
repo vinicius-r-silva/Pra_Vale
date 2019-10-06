@@ -48,6 +48,7 @@ class Robot {
         bool getProvavelEscada();
         bool getIsInStairs();
         bool getSentido();
+        bool getStraitPath();
         void setStatePub(std_msgs::Int32 enable);
 };
 #endif

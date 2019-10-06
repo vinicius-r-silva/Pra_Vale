@@ -44,6 +44,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     straitPath = true;
     distToTrack = NICE_DIST_TRACK - 0.3;
     cout << "StraitPath\t";
+
   
   }
 
@@ -653,6 +654,10 @@ bool Robot::getSentido(){
   return sentido;
 }
 
+bool Robot::getStraitPath(){
+  return straitPath;
+}
+
 void Robot::setStatePub(std_msgs::Int32 _enable){
-  statePub.publish(_enable);  
+  statePub.publish(_enable);
 }
