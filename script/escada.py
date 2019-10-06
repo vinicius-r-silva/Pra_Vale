@@ -12,7 +12,7 @@ from std_msgs.msg import Int32
 
 
 DEBUGGING=True
-NOTA_MAX= 75
+NOTA_MAX= 120
 CUT_SCALE=[0.5, 0.1]
 
 
@@ -28,9 +28,8 @@ rospack.list()
 # get the file path for pra_vale
 stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/print.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
-#stair = cv2.Canny(stair, 50, 200)
 
-scaleList=np.linspace(1.0, 0.2, 15).tolist()
+scaleList=np.linspace(1.5, 0.1, 15).tolist()
 
 
 #callback function called when a node requires a state change
@@ -38,8 +37,6 @@ def set_state(data):
 	global state
 	state = data.data
 
-def sideCallback(data):
-	global side
 
 
 
@@ -58,7 +55,7 @@ def kin_callback(data):
 	image = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
 
-	crop=image[int(image.shape[0]*CUT_SCALE[0]):image.shape[0],int(image.shape[1]*CUT_SCALE[1]):int(image.shape[1]*0.75)]
+	crop=image[int(image.shape[0]*CUT_SCALE[0]):image.shape[0], int(image.shape[1]*CUT_SCALE[1]):int(image.shape[1]*(1-CUT_SCALE[1]))]
 	r,g,b=cv2.split(crop)
 
 	mask=(cv2.add(cv2.subtract(r,b),cv2.subtract(b,r))[:]<25)
@@ -89,17 +86,8 @@ def kin_callback(data):
 			print("resized fail", scale)
 			break
 
-		# detect edges in the resized, grayscale image and apply template
-		# matching to find the template in the image
 		
-		#edged = cv2.Canny(gray, 50, 200)
-		edged=gray
-
-		#if DEBUGGING:
-		#	cv2.imshow("escada_Edge",edged)
-		#	cv2.waitKey(10)
-		
-		result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
 		maxVal/=1000000
 
@@ -138,7 +126,6 @@ def listener():
 	rospy.init_node('findStair', anonymous=True)
 
 	rospy.Subscriber("/sensor/kinect_rgb", Image, kin_callback)
-	rospy.Subscriber("/pra_vale/estados", Int32, set_state)
 	rospy.Subscriber("/pra_vale/estados", Int32, set_state)
 	
 	rospy.spin()
