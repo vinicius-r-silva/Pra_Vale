@@ -47,5 +47,7 @@ class Robot {
         void aligneEscada(SidesInfo *sidesInfo);
         bool getProvavelEscada();
         bool getIsInStairs();
+        bool getSentido();
+        void setStatePub(std_msgs::Int32 enable);
 };
 #endif

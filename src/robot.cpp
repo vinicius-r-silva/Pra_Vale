@@ -10,7 +10,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    sentido = _HORARIO;
+    sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     rodar = false;
@@ -251,7 +251,8 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     cout << "ANTI_HORARIO";
 
     if(!frontToTrack && !closeToTrack){
-      
+      _provavelEscada = true;
+
       cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_LEFT].medX;
       
       if(sidesInfo[_FRONT].medY < 1.1){
@@ -361,7 +362,8 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     cout << "HORARIO";
 
     if(!frontToTrack && !closeToTrack){
-      
+      _provavelEscada = true;
+
       cout << " | Endireitando" << " | zAngle: " << zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_RIGHT].medX;
       
       if(sidesInfo[_FRONT].medY < 1.1){
@@ -390,6 +392,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
       }
 
     }else if(frontToTrack && !closeToTrack){ //esta de frente mas precisa alinhar
+      _provavelEscada = false;
       cout << " | seguindo a esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
 
     
@@ -644,4 +647,12 @@ bool Robot::getProvavelEscada(){
 
 bool Robot::getIsInStairs(){
   return _isInStairs;
+}
+
+bool Robot::getSentido(){
+  return sentido;
+}
+
+void Robot::setStatePub(std_msgs::Int32 _enable){
+  statePub.publish(_enable);  
 }

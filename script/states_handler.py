@@ -71,6 +71,10 @@ def print_state():
     #when the stairs where found
     if (state & (1 << defs.FOUND_STAIR)):
         string += ("  FOUND_STAIR")
+
+    #when the stairs where found
+    if (state & (1 << defs.STRAIGHT_PATH)):
+        string += ("  STRAIGHT_PATH")
     
     print(string)
 
@@ -82,9 +86,8 @@ def set_state(data):
     state = data.data
 
     #print the state change (debug)
-    print("\n\n\nstate changed: \n\n")
+    print("state changed: ")
     print_state()
-    print("\n\n\n")
 
 
 
