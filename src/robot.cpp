@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _state = WALKING;
     _sentido = _HORARIO;
-    _isInStairs = true;
+    _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
@@ -24,7 +24,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(_rodar)
     return;
 
-  int stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
+  float stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
   float traction = 0;
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
@@ -96,7 +96,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << " | DFY: " << sidesInfo[_FRONT].medY;
 
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.20 && _sentido == _HORARIO){
+  }else if(sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -128,7 +128,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.20 && _sentido == _ANTI_HORARIO){
+  }else if(sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -570,8 +570,7 @@ bool Robot::getRodar(){
     return _rodar;
 }
 
-void Robot::setPublishers(std_msgs::Int32 enable, ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub){
-    _enable.data = enable.data;
+void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub){
     this->speedPub = speedPub;
     this->wheelPub = wheelPub;
     this->statePub = statePub;
@@ -596,6 +595,11 @@ bool Robot::getSentido(){
 bool Robot::getStraitPath(){
   return _straitPath;
 }
+
+void Robot::setEnable(std_msgs::Int32 enable){
+  _enable.data = enable.data;
+}
+
 
 void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
   statePub.publish(_enable);

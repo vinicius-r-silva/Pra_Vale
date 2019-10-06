@@ -41,7 +41,8 @@ class Robot {
         void climbStairs(); //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void setAngles(double yAngle, double zAngle);
-        void setPublishers(std_msgs::Int32 enable, ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);
+        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);
+        void setEnable(std_msgs::Int32 enable);
         void aligneEscada(SidesInfo *sidesInfo);
         bool getAvoidingObs();
         bool getProvavelEscada();

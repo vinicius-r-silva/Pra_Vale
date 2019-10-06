@@ -52,6 +52,7 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
 //Callback do estado em que o robô se encontra
 void statesCallback(const std_msgs::Int32Ptr & _enable){
   enable.data = _enable->data;
+  rob->setEnable(enable);
 }
 
 //Callback para pegar os ângulos do IMU
@@ -87,7 +88,7 @@ int main(int argc, char **argv){
   ros::Publisher statePub = n.advertise<std_msgs::Int32>("/pra_vale/set_state",1);
   
   
-  rob->setPublishers(enable,speedPub, wheelPub, statePub);
+  rob->setPublishers(speedPub, wheelPub, statePub);
   
   ros::spin();
   
