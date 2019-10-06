@@ -4,14 +4,14 @@ using namespace std;
 
 #define _KP_REC 0.7
 #define NICE_DIST_TRACK 0.80
-#define FRONT_WHEELS 0.2
+#define FRONT_WHEELS 0.18
 #define REAR_WHEELS 0.3
 #define OKAY 0.06
 
 Robot::Robot(){
     _state = WALKING;
     _sentido = _HORARIO;
-    _isInStairs = false;
+    _isInStairs = true;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
@@ -25,7 +25,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(_rodar)
     return;
 
-  int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
+  int stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
   float traction = 0;
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
@@ -161,7 +161,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
-    traction = (float) (stairsDir * (_MAX_SPEED + erro));
+    traction = (float) (stairsDir * (3.5 + erro));
     if(traction > _MAX_SPEED)
       traction = _MAX_SPEED;
     else if(traction < -_MAX_SPEED)
@@ -172,7 +172,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     msg.data.push_back(traction);
     msg.data.push_back(traction);
 
-    traction = (float) (stairsDir * (_MAX_SPEED - erro));
+    traction = (float) (stairsDir * (3.5 - erro));
     if(traction > _MAX_SPEED)
       traction = _MAX_SPEED;
     else if(traction < -_MAX_SPEED)
@@ -462,7 +462,7 @@ void Robot::climbStairs(){
   msg.data.clear();
   float wheelFrontSpeed;
   float wheelRearSpeed;
-  bool _climbing;
+  static bool _climbing = false;
 
   if(abs(_yAngle) < OKAY){
 
@@ -488,15 +488,15 @@ void Robot::climbStairs(){
   }else if(abs(_yAngle) < FRONT_WHEELS){
     
     cout << " FRONT WHEELS IS ON\n";
-    wheelRearSpeed = _MAX_WHEEL_R_SPEED;
+    wheelRearSpeed = 0.5f * _MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   }else{
 
     cout << " ESTABILIZING\n";
-    wheelRearSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -1.0f * _MAX_WHEEL_R_SPEED;
+    wheelRearSpeed = (_yAngle > 0)? _MAX_WHEEL_R_SPEED : -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = (_yAngle > 0)? -_MAX_WHEEL_R_SPEED : _MAX_WHEEL_R_SPEED;
 
   }
 
