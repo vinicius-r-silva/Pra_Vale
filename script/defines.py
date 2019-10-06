@@ -20,6 +20,7 @@ END_STAIR           = 17
 IN_STAIR            = 18
 BEAM_FIND           = 19
 
+
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
 MAX_JOINT_ANGLE_DIFF = 0.1  

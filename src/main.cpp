@@ -21,8 +21,6 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
     rob->rodarFunction(vis->getSidesInfo());
 
   }else if((enable.data & (1 << FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs()){
-    std::cout << (int) rob->getProvavelEscada() << (int) (enable.data & (1 << FOUND_STAIR)) << std::endl;
-  
     rob->aligneEscada(vis->getSidesInfo());
 
   }else{
