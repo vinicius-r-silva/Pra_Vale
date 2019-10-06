@@ -76,6 +76,10 @@ def print_state():
     if (state & (1 << defs.STRAIGHT_PATH)):
         string += ("  STRAIGHT_PATH")
     
+    #when the stairs end
+    if (state & (1 << defs.END_STAIR)):
+        string += ("  END_STAIR")
+    
     print(string)
 
 

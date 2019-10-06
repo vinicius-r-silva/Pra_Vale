@@ -2,7 +2,6 @@
 from cv_bridge import CvBridge
 import defines as defs
 import numpy as np
-import imutils
 import rospy
 import cv2
 import rospkg
@@ -11,9 +10,8 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
 
-DEBUGGING=True
-NOTA_MAX= 120
-CUT_SCALE=[0.5, 0.1]
+CUT_SCALE = [0.5, 0.1]
+NOTA_MAX  = 120
 
 
 state = defs.NOTHING
@@ -38,12 +36,41 @@ def set_state(data):
 	state = data.data
 
 
+def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+	# initialize the dimensions of the image to be resized and
+	# grab the image size
+	dim = None
+	(h, w) = image.shape[:2]
 
+	# if both the width and height are None, then return the
+	# original image
+	if width is None and height is None:
+		return image
+
+	# check to see if the width is None
+	if width is None:
+		# calculate the ratio of the height and construct the
+		# dimensions
+		r = height / float(h)
+		dim = (int(w * r), height)
+
+	# otherwise, the height is None
+	else:
+		# calculate the ratio of the width and construct the
+		# dimensions
+		r = width / float(w)
+		dim = (width, int(h * r))
+
+	# resize the image
+	resized = cv2.resize(image, dim, interpolation = inter)
+
+	# return the resized image
+	return resized
 
 # loop over the images to find the template in
 def kin_callback(data):
 	#Constants
-	global DEBUGGING, NOTA_MAX, CUT_SCALE
+	global NOTA_MAX, CUT_SCALE
 
 	#Variables
 	global scaleList, state, stair
@@ -64,7 +91,7 @@ def kin_callback(data):
 
 	crop=cv2.bitwise_and(crop,crop,mask=mask.astype(np.uint8))
 	
-	if DEBUGGING:
+	if defs.DEBUGGING:
 		cv2.imshow("escada_Hist",crop)
 		cv2.moveWindow("escada_Hist",1920,1200)
 		cv2.waitKey(10)
@@ -77,7 +104,7 @@ def kin_callback(data):
 		#print scale
 		# resize the image according to the scale, and keep track
 		# of the ratio of the resizing
-		template = imutils.resize(stair, width=int(stair.shape[1] * scale))
+		template = resize(stair, width=int(stair.shape[1] * scale))
 	
 		
 		# if the resized image is smaller than the template, then break
@@ -118,10 +145,10 @@ def kin_callback(data):
 		state &= ~(1 << defs.FOUND_STAIR)
 		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
 		state_publisher.publish(data = state)
-
-	cv2.imshow("escada_Detection",image)
-	cv2.moveWindow("escada_Detection",1920,0)
-	cv2.waitKey(1)
+	if defs.DEBUGGING:
+		cv2.imshow("escada_Detection",image)
+		cv2.moveWindow("escada_Detection",1920,0)
+		cv2.waitKey(1)
 def listener():
 	rospy.init_node('findStair', anonymous=True)
 
