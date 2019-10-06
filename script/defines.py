@@ -18,6 +18,7 @@ LEAVING_FIRE        = 15
 NARROW_PATH         = 16
 END_STAIR           = 17
 IN_STAIR            = 18
+BEAM_FIND           = 19
 
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
