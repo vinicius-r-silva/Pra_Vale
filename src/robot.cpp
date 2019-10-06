@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _state = WALKING;
     sentido = _HORARIO;
-    _isInStairs = true;
+    _isInStairs = false;
     _provavelEscada = false;
     rodar = false;
     avoidingObs = false;
@@ -24,7 +24,6 @@ Robot::Robot(){
 void Robot::processMap(SidesInfo *sidesInfo){
   if(rodar)
     return;
-
 
   int stairsDir = (_state == LADDER_DOWN) ? -1 : 1;
   float traction = 0;
@@ -39,7 +38,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _state = LADDER_DOWN;
   }
 
-  if(_HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)){
+  if(!_isInStairs && _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)){
 
     straitPath = true;
     distToTrack = NICE_DIST_TRACK - 0.3;
@@ -118,8 +117,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     erro = zAngle * _KP_OBSTACLE;
 
     if(straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
-    straitPath = false;
-    distToTrack = NICE_DIST_TRACK;
+      straitPath = false;
+      distToTrack = NICE_DIST_TRACK;
     }
 
     cout << "E: SegueDir | Erro: " << erro;
@@ -177,6 +176,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     else if(traction < -_MAX_SPEED)
       traction = -_MAX_SPEED; 
     
+    cout << " | VelD: " << traction;
+
     msg.data.push_back(traction);
     msg.data.push_back(traction);
 
@@ -189,6 +190,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     msg.data.push_back(traction);
     msg.data.push_back(traction);
 
+    cout << " | VelE: " << traction;
+
   }else{
     traction = (float) (_V0 + _KP*erro);
     if(traction > _MAX_SPEED)
@@ -199,17 +202,21 @@ void Robot::processMap(SidesInfo *sidesInfo){
     msg.data.push_back(traction);
     msg.data.push_back(traction);
 
+    cout << " | VelD: " << traction;
+
     traction = (float) (_V0 - _KP*erro);
     if(traction > _MAX_SPEED)
       traction = _MAX_SPEED;
     else if(traction < -_MAX_SPEED)
       traction = -_MAX_SPEED; 
+
+    cout << " | VelE: " << traction;
     
     msg.data.push_back(traction);
     msg.data.push_back(traction);
   }
 
-  //cout << " | zAngle: " << zAngle << " | VEsq: " << tractionEsq.joint_var << " | VDir: " << tractionDir.joint_var << endl;
+  cout << " | zAngle: " << zAngle << endl;
   
   // msg.data.clear();
 
@@ -472,8 +479,6 @@ void Robot::climbStairs(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
   bool _climbing;
-
-
 
   if(abs(yAngle) < OKAY){
 
