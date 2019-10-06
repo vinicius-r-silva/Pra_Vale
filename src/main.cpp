@@ -28,6 +28,16 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   }
 
 
+  if(rob->getSentido() == _HORARIO){
+    enable.data |= (1 << ROBOT_CLOCKWISE);
+    enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);
+  }else{
+    enable.data |= (1 << ROBOT_ANTICLOCKWISE);
+    enable.data &= ~(1 << ROBOT_CLOCKWISE);
+  }
+  
+  rob->setStatePub(enable);
+  
 }
 
 void statesCallback(const std_msgs::Int32Ptr & _enable){
