@@ -25,11 +25,14 @@ _FIRE_NOT_FOUND = 1000
 
 #consts for the initial pose for each case
 _FIRE_TOUCH_X_VALUE =  450
-_FIRE_TOUCH_Y_VALUE = -0
+_FIRE_TOUCH_Y_VALUE =  0
 _FIRE_TOUCH_Z_VALUE =  410
 _FIRE_FOUND_X_VALUE =  450
-_FIRE_FOUND_Y_VALUE = -0
+_FIRE_FOUND_Y_VALUE =  0
 _FIRE_FOUND_Z_VALUE =  800
+_NARROW_PATH_X_VALUE =  400
+_NARROW_PATH_Y_VALUE =  80
+_NARROW_PATH_Z_VALUE =  900
 _FIRE_NOT_FOUND_X_VALUE =  320
 _FIRE_NOT_FOUND_Y_VALUE =  -70
 _FIRE_NOT_FOUND_Z_VALUE =  925
@@ -100,6 +103,8 @@ camera_tilt = 0.0
 
 leaving_fire_cont = 0
 
+narrow_path = False
+
 
 #return UR5 arm joints angles given the desired position
 def cinematicaInversa():
@@ -118,7 +123,7 @@ def cinematicaInversa():
     global state
     global joint_angles
 
-    # print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
+    #print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
         #print("erro: posicao fora do alcance do braco robotico")
@@ -193,7 +198,7 @@ def cinematicaInversa():
 
         # print the joint angles for debuging
         # print(joint_angles)
-        #clearprint("x: " + str(x) + ",  y: " + str(y) + ",  z: " + str(z))
+        #print("x: " + str(x) + ",  y: " + str(y) + ",  z: " + str(z))
         return joint_angles
     
     except:
@@ -232,21 +237,22 @@ def arm_pos(data):
 #receive incremental x,y,z position and sets in the simulation
 #the ur5 camera publishes the x distance between the arm and the fire
 def arm_move(data):
-    global state
-    global rosi_speed_publisher
-    global leaving_fire_cont
-
-    #if the arm is changing position or the robot is rotating, the arm it's not supose to change its position
-    if((state & (1 << defs.ARM_CHANGING_POSE)) or (state & (1 << defs.ROBOT_ROTATION))):
-        return
-        
     #globals
     global x
     global y
     global z
+    global state
     global fire_found
+    global narrow_path
     global arm_publisher
     global state_publisher
+    global rosi_speed_publisher
+    global leaving_fire_cont
+
+
+    #if the arm is changing position or the robot is rotating, the arm it's not supose to change its position
+    if((state & (1 << defs.ARM_CHANGING_POSE)) or (state & (1 << defs.ROBOT_ROTATION))):
+        return        
     #print(data) #debug
 
     x_move = data.data[0]
@@ -271,9 +277,14 @@ def arm_move(data):
             state |= 1 << defs.ARM_CHANGING_POSE
             state_publisher.publish(data = state)
 
-            x = _FIRE_NOT_FOUND_X_VALUE
-            y = _FIRE_NOT_FOUND_Y_VALUE
-            z = _FIRE_NOT_FOUND_Z_VALUE
+            if(narrow_path):
+                x = _NARROW_PATH_X_VALUE
+                y = _NARROW_PATH_Y_VALUE
+                z = _NARROW_PATH_Z_VALUE
+            else:
+                x = _FIRE_NOT_FOUND_X_VALUE
+                y = _FIRE_NOT_FOUND_Y_VALUE
+                z = _FIRE_NOT_FOUND_Z_VALUE
 
         #otherwise, just move the arm to the required position
         else:
@@ -396,16 +407,13 @@ def arm_tilt(data):
     global get_tilt_y_from_imu
     if((state & 1 << defs.ARM_CHANGING_POSE)): #or (state & 1 << defs.ROBOT_ROTATION)):
         return
-        
-    # get_tilt_y_from_imu = True
-    # return
 
     if(data.data == -1 or state & (1 << defs.FOUND_FIRE_FRONT) or state & (1 << defs.FOUND_FIRE_TOUCH)):
         get_tilt_y_from_imu = True
     else:
         if(get_tilt_y_from_imu == True):
             get_tilt_y_from_imu = False
-            camera_tilt = 0
+            camera_tilt = 0.0
         
         camera_tilt += data.data #- 0.1
 
@@ -531,9 +539,15 @@ def hokuyo_distance_callback(data):
 
 
         elif(state & (1 << defs.LEAVING_FIRE) and hokuyo_distance >= 25):
-            x = _FIRE_NOT_FOUND_X_VALUE
-            y = _FIRE_NOT_FOUND_Y_VALUE
-            z = _FIRE_NOT_FOUND_Z_VALUE
+            if(narrow_path):
+                x = _NARROW_PATH_X_VALUE
+                y = _NARROW_PATH_Y_VALUE
+                z = _NARROW_PATH_Z_VALUE
+            else:
+                x = _FIRE_NOT_FOUND_X_VALUE
+                y = _FIRE_NOT_FOUND_Y_VALUE
+                z = _FIRE_NOT_FOUND_Z_VALUE
+
             pos = cinematicaInversa()
             arm_publisher.publish(joint_variable = pos)
 
@@ -558,8 +572,13 @@ def hokuyo_distance_callback(data):
 
 
 def state_callback(data):
+    global x
+    global y
+    global z
     global state
+    global narrow_path
     global arm_publisher
+    global state_publisher
     global rosi_speed_publisher
     state = data.data
     #print ("state: " + str(state))
@@ -572,6 +591,27 @@ def state_callback(data):
 
         speed = [0,0,0,0]
         rosi_speed_publisher.publish(data = speed)
+    
+
+    #if the arm is it in
+    if ((state & (1 << defs.NARROW_PATH | 1 << defs.IN_STAIR)) and not narrow_path):
+        narrow_path = True
+        x = _NARROW_PATH_X_VALUE
+        y = _NARROW_PATH_Y_VALUE
+        z = _NARROW_PATH_Z_VALUE
+        pos = cinematicaInversa()
+        arm_publisher.publish(joint_variable = pos)
+
+        state |= 1 << defs.ARM_CHANGING_POSE
+        state_publisher.publish(data = state)
+
+    elif(not state & (1 << defs.NARROW_PATH | 1 << defs.IN_STAIR) and narrow_path):
+        narrow_path = False
+        x = _FIRE_NOT_FOUND_X_VALUE
+        y = _FIRE_NOT_FOUND_Y_VALUE
+        z = _FIRE_NOT_FOUND_Z_VALUE
+        pos = cinematicaInversa()
+        arm_publisher.publish(joint_variable = pos)
 
 
 
@@ -591,6 +631,7 @@ def listener():
     x = _FIRE_NOT_FOUND_X_VALUE
     y = _FIRE_NOT_FOUND_Y_VALUE
     z = _FIRE_NOT_FOUND_Z_VALUE
+    pos = cinematicaInversa()
     
     #receives the current position of the arm
     #used when it's necessa
@@ -608,6 +649,15 @@ def listener():
 
 #main
 print("arm launched")
+
+# for cont1 in range(2000):
+#     x = 320
+#     y = 1000 -cont1
+#     z = 925
+
+#     pos = cinematicaInversa()
+
+
 
 listener()
 

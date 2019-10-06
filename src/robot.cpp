@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _state = WALKING;
     _sentido = _HORARIO;
-    _isInStairs = true;
+    _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
@@ -29,14 +29,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
   float erro;
-  
-  /*
-  if(_state == IN_LADDER){
-    static int i = 0;
-    i++;
-    if(i > 15)
-      _state = LADDER_DOWN;
-  }*/
 
   if(_state == IN_LADDER && _enable.data & (1 << END_STAIR)){
     cout << "awrsefxdgrfhcgjvhkgjhfhgdgsfdxgfchgvjh\n";
@@ -72,7 +64,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){
     
-    enable.data |= (1 << IN_LADDER);
+    _enable.data |= (1 << IN_LADDER);
 
     erro = _zAngle *_KP_OBSTACLE;
 
@@ -108,9 +100,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = false;
   //Aproxima da esteira quando ela está a direita
-  }else if(_sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.10){
+  }else if(sidesInfo[_RIGHT].medX!= 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.10){
 
-    erro = (sidesInfo[_RIGHT].medX != 10) ? (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC : -0.1;
+    erro = (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
 
     cout << "E: AproxDir | erro: " << erro << " | DDX: " << sidesInfo[_RIGHT].medX;
 
@@ -140,9 +132,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << " | AE: " << sidesInfo[_LEFT].area;
     cout << " | DEX: " << sidesInfo[_LEFT].medX;
   //Aproxima da esteira quando ela está a esquerda
-  }else if(_sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.10){
+  }else if(sidesInfo[_LEFT].medX != 10 && _sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.10){
 
-    erro = (sidesInfo[_LEFT].medX != 10) ? (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC : -0.1;
+    erro = (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC;
 
     cout << "E: AproxEsq | Erro: " << erro << " | DDX:" << sidesInfo[_LEFT].medX;
 
