@@ -95,7 +95,8 @@ def set_state(data):
 
     #print the state change (debug)
     #print("state changed: ")
-    print_state()
+    if(defs.DEBUGGING):
+        print_state()
 
 
 
