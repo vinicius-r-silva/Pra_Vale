@@ -31,7 +31,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   float erro;
 
   if(_state == IN_LADDER && _enable.data & (1 << END_STAIR)){
-    cout << "awrsefxdgrfhcgjvhkgjhfhgdgsfdxgfchgvjh\n";
     _state = LADDER_DOWN;
   }
 
@@ -42,12 +41,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _distToTrack = NICE_DIST_TRACK - 0.25;
     cout << "StraitPath\t";
 
-  
   }
 
-//  cout << " | isInStairs: " << _isInStairs;
   if(_isInStairs && !(_state == IN_LADDER || _state == LADDER_DOWN)){
     _state = LADDER_UP;  
+  }
+
+  if(_state == LADDER_DOWN && abs(_yAngle) < OKAY && _enable.data & (1 << FOUND_STAIR)){
+    _rodar = true;
+    _enable.data &= ~(1 << FOUND_STAIR);
+    _state = WALKING;
   }
 
   //Implementacao da maquina de estado
@@ -73,7 +76,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle * _KP_OBSTACLE;
 
-    cout << "E: Descendooooooooooooooooooooooo";
+    cout << "E: DescendoEscada";
 
   //desvia do obstaculo na frente    
   }else if(!_straitPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
@@ -166,7 +169,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
-    traction = (float) (stairsDir * (3.5 + erro));
+    traction = (float) (stairsDir * 3.5 + erro);
     if(traction > _MAX_SPEED)
       traction = _MAX_SPEED;
     else if(traction < -_MAX_SPEED)
@@ -177,7 +180,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     msg.data.push_back(traction);
     msg.data.push_back(traction);
 
-    traction = (float) (stairsDir * (3.5 - erro));
+    traction = (float) (stairsDir * 3.5 - erro);
     if(traction > _MAX_SPEED)
       traction = _MAX_SPEED;
     else if(traction < -_MAX_SPEED)
