@@ -109,7 +109,7 @@ def kin_callback(data):
 	cv2.imshow("Detection",image)
 	cv2.waitKey(1)
 def listener():
-	rospy.init_node('findFire', anonymous=True)
+	rospy.init_node('findStair', anonymous=True)
 
 	rospy.Subscriber("/sensor/kinect_rgb", Image, kin_callback)
 	rospy.Subscriber("/pra_vale/estados", Int32, set_state)
