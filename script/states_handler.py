@@ -82,9 +82,9 @@ def set_state(data):
     state = data.data
 
     #print the state change (debug)
-    # print("\n\n\nstate changed: \n\n")
-    # print_state()
-    # print("\n\n\n")
+    print("\n\n\nstate changed: \n\n")
+    print_state()
+    print("\n\n\n")
 
 
 
@@ -98,6 +98,6 @@ if __name__ == '__main__':
     node_sleep_rate = rospy.Rate(10)
 
     while not rospy.is_shutdown(): #always keep publishing the state
-        print_state()
+        #print_state()
         pub.publish(data = state)
         node_sleep_rate.sleep()
