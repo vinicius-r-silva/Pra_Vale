@@ -23,9 +23,9 @@ Visualization::Visualization(){
 }
 
 void Visualization::createRectangles(){
-    float minusX = (avoidingObs) ? 0.25 : 1.0;
+    float minusX = (avoidingObs) ? 0.3 : 1.0;
     float minusY = (avoidingObs) ? 0.6 : 1.0;
-    float sizeFX = (avoidingObs) ? 1.2 : 1.0;
+    //float sizeFX = (avoidingObs) ? 1.2 : 1.0;
 
 
     //retangulo da frente
