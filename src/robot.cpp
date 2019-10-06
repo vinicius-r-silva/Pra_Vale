@@ -16,9 +16,7 @@ Robot::Robot(){
     rodar = false;
     avoidingObs = false;
     inObs = false;
-    saveAngle = 10;
     straitPath = false;
-
     distToTrack = NICE_DIST_TRACK;
 }
 
@@ -535,93 +533,53 @@ void Robot::climbStairs(){
 
 }
 
-void Robot::rodarFunction(SidesInfo* sidesInfo){
-  float dif;
+void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair da escada
+ 
+  if(zAngle < 0) //deixa o angulo padronizado
+    zAngle += M_PI*2;
 
-  //pra_vale::RosiMovement tractionDir;
-  //pra_vale::RosiMovement tractionEsq;
 
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
 
-  if(zAngle < 0)
-    zAngle += M_PI*2;
-    
-  if(saveAngle == 10)
-    saveAngle = zAngle;
+  cout << "Girando";
 
-  if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){
-    // tractionDir.joint_var = -3;
-    // tractionEsq.joint_var = -3;
-    msg.data.push_back(-3);
-    msg.data.push_back(-3);
-    msg.data.push_back(-3);
-    msg.data.push_back(-3);
+
+  if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){ //afasta o robo
+    cout << " | Afastando o robo";
+    msg.data.push_back(-_V0);
+    msg.data.push_back(-_V0);
+    msg.data.push_back(-_V0);
+    msg.data.push_back(-_V0);
   
-  }else if(sentido == _HORARIO){
-        // tractionDir.joint_var = -3;
-    // tractionEsq.joint_var = 0;
-    msg.data.push_back(-3);
-    msg.data.push_back(-3);
+  }else if(sentido == _HORARIO){ //roda no sentido HORARIO
+    msg.data.push_back(-_V0);
+    msg.data.push_back(-_V0);
     msg.data.push_back(0);
     msg.data.push_back(0);
 
-    if(saveAngle >= 0 && saveAngle < M_PI && zAngle > M_PI)
-        dif = saveAngle + M_PI*2 - zAngle;
 
-    else
-      dif = saveAngle - zAngle;
-  
-  }else{
-    // tractionDir.joint_var = 0;
-    // tractionEsq.joint_var = -3;
+  }else{ //roda no sentido ANTI-HORARIO
     msg.data.push_back(0);
     msg.data.push_back(0);
-    msg.data.push_back(-3);
-    msg.data.push_back(-3);
+    msg.data.push_back(-_V0);
+    msg.data.push_back(-_V0);
 
-    if(zAngle >= 0 && zAngle < M_PI && saveAngle > M_PI)
-        dif =  M_PI*2 - saveAngle + zAngle;
-      
-    else
-      dif = saveAngle - zAngle;
   }
 
-  if(dif < 0)
-    dif *=-1;
 
-  if(dif > 3){
+  if(zAngle > M_PI - 0.2 && zAngle < M_PI + 0.2){
     rodar = false; //para de rodar
     sentido = !sentido; //troca o sentido
-    saveAngle = 10; //da um reset no angulo
-  } 
+  }
 
-  //cout <<"MedY: " << sidesInfo[_FRONT].medY << " | girando" << " | zAngle: " << zAngle << " | saveAngle: " << saveAngle  << " | dif: " << dif <<" | velE: " << tractionEsq.joint_var << " | velD: " << tractionDir.joint_var << endl;
-
-  // //Direita:
-  // tractionDir. = 1;
-  // tractionList.movement_array.push_back(tractionDir);
-  // tractionDir. = 2;
-  // tractionList.movement_array.push_back(tractionDir);
+  cout << " | VelE: " << msg.data[3] << " | VelD: " << msg.data[0] << endl;
   
-  // //Esquerda:
-  // tractionEsq. = 3;
-  // tractionList.movement_array.push_back(tractionEsq);
-  // tractionEsq. = 4;
-  // tractionList.movement_array.push_back(tractionEsq);
-
-
   speedPub.publish(msg);
-  
-  //limpa o vetor
-  // tractionList.movement_array.pop_back();
-  // tractionList.movement_array.pop_back();
-  // tractionList.movement_array.pop_back();
-  // tractionList.movement_array.pop_back();  
-
+  msg.data.clear();
 }
 
-void Robot::setAngles(double y, double z){
+void Robot::setAngles(double y, double z){ //recebe os angulos do IMU
     yAngle = y;
     zAngle = z;
 }
@@ -657,6 +615,6 @@ bool Robot::getStraitPath(){
   return straitPath;
 }
 
-void Robot::setStatePub(std_msgs::Int32 _enable){
+void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
   statePub.publish(_enable);
 }
