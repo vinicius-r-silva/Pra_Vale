@@ -9,6 +9,7 @@ class Robot {
         //Publicadores para enviar a informação dos vetores abaixo
         ros::Publisher speedPub;
         ros::Publisher wheelPub;
+        ros::Publisher statePub;
 
         //Vetores para receberem informações de velocidade dos robos
         std_msgs::Float32MultiArray tractionCommandList;    
@@ -20,6 +21,7 @@ class Robot {
         int _state;
 
         //Parâmetros utlizados em cálculos
+        std_msgs::Int32 _enable;
         double yAngle;
         double zAngle;
         double saveAngle;
@@ -40,9 +42,10 @@ class Robot {
         void rodarFunction(SidesInfo *sidesInfo);
         void setAngles(double yAngle, double zAngle);
         bool getRodar();
-        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub);
+        void setPublishers(std_msgs::Int32 enable, ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);
         bool getAvoidingObs();
         void aligneEscada(SidesInfo *sidesInfo);
         bool getProvavelEscada();
+        bool getIsInStairs();
 };
 #endif

@@ -29,7 +29,7 @@
 #define _MAX_DIST_NEG -2 //distancia maxima negativa que sera processada
 #define _MIN_GRAY_S 100 //minimo de luminosiade para ser processado
 
-//Analise do velodyne:
+//Estados
 #define _NOTHING            0
 #define _ENABLE_VELODYME    1
 #define _ARM_CHANGING_POSE  2
@@ -55,8 +55,8 @@
 #define _MIN_SAFE_DIST_SPIN 1.0 //distancia minima da frente para girar
 #define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
 #define _MIN_DIST_ESCADA 1.2 //distancia minima para mandar o robo subir
-#define _MAX_DIST_SIDE_ESCADA 0.78 //distancia maxima do robo para esteira na hora da escada
-#define _MIN_DIST_SIDE_ESCADA 0.58 //distancia minima da esteira para subir a escada
+#define _MAX_DIST_SIDE_ESCADA 0.85 //distancia maxima do robo para esteira na hora da escada
+#define _MIN_DIST_SIDE_ESCADA 0.65 //distancia minima da esteira para subir a escada
 #define _MAX_ERRO_ESCADA 0.05
 #define _HORARIO true 
 #define _ANTI_HORARIO false

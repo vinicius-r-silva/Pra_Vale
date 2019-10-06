@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 from cv_bridge import CvBridge
-from pathlib import Path
 import defines as defs
 import numpy as np
 import imutils
 import rospy
 import cv2
+import rospkg
+
+
+# get an instance of RosPack with the default search paths
+rospack = rospkg.RosPack()
+# list all packages, equivalent to rospack list
+rospack.list() 
+
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
@@ -16,7 +23,8 @@ global scaleList, stair
 
 #Load the template, convert it to grayscale, and detect edges
 
-stair = cv2.imread(Path.home()+'catkin_ws/src/pra_vale/resources/print.png')
+# get the file path for pra_vale
+stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/print.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
 stair = cv2.Canny(stair, 50, 200)
 
