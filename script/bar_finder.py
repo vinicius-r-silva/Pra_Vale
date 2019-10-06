@@ -9,8 +9,7 @@ import rospkg
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
-
-CUT_SCALE = [0.5, 0.1]
+#consts
 NOTA_MAX  = 120
 
 
@@ -24,8 +23,8 @@ rospack.list()
 
 #Load the template, convert it to grayscale, and detect edges
 # get the file path for pra_vale
-stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/escada.png')
-stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
+beam = cv2.imread(rospack.get_path('pra_vale') + '/resources/beam.png')
+beam = cv2.cvtColor(beam, cv2.COLOR_BGR2GRAY)
 
 scaleList=np.linspace(1.5, 0.1, 15).tolist()
 
@@ -67,13 +66,12 @@ def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 	# return the resized image
 	return resized
 
-# loop over the images to find the template in
-def kin_callback(data):
+def beam_callback(data):
 	#Constants
 	global NOTA_MAX, CUT_SCALE
 
 	#Variables
-	global scaleList, state, stair
+	global scaleList, state, beam
 
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
 		return
@@ -82,21 +80,20 @@ def kin_callback(data):
 	image = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
 
-	crop=image[int(image.shape[0]*CUT_SCALE[0]):image.shape[0], int(image.shape[1]*CUT_SCALE[1]):int(image.shape[1]*(1-CUT_SCALE[1]))]
-	r,g,b=cv2.split(crop)
+	r,g,b=cv2.split(image)
 
 	mask=(cv2.add(cv2.subtract(r,b),cv2.subtract(b,r))[:]<25)
-	mask=np.logical_and(mask,r[:]>70)
+	mask=np.logical_and(mask,r[:]>200)
 
 
-	crop=cv2.bitwise_and(crop,crop,mask=mask.astype(np.uint8))
+	hist=cv2.bitwise_and(image,image,mask=mask.astype(np.uint8))
 	
 	if defs.DEBUGGING:
-		cv2.imshow("escada_Hist",crop)
-		cv2.moveWindow("escada_Hist",1920,1200)
+		cv2.imshow("beam_Hist",hist)
+		cv2.moveWindow("beam_Hist",1920,1200)
 		cv2.waitKey(10)
 	
-	gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+	gray = cv2.cvtColor(hist, cv2.COLOR_BGR2GRAY)
 	found = None
 
 	# loop over the scales of the image
@@ -104,7 +101,7 @@ def kin_callback(data):
 		#print scale
 		# resize the image according to the scale, and keep track
 		# of the ratio of the resizing
-		template = resize(stair, width=int(stair.shape[1] * scale))
+		template = resize(beam, width=int(beam.shape[1] * scale))
 	
 		
 		# if the resized image is smaller than the template, then break
@@ -121,8 +118,9 @@ def kin_callback(data):
 		
 		# if we have found a new maximum correlation value, then ipdate
 		# the bookkeeping variable
+		print maxVal
 		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
-			print(maxVal)
+			#print(maxVal)
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
 
@@ -131,33 +129,34 @@ def kin_callback(data):
 		# of the bounding box based on the resized ratio
 		(chance, maxLoc) = found
 		#print chance
-		start = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1])     , maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]))
-		end   = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1]) + tW, maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]) + tH)
+		start = (maxLoc[0]     , maxLoc[1])
+		end   = (maxLoc[0] + tW, maxLoc[1] + tH)
 		
 		#print(float(maxLoc[0] + tW/2)/image.shape[1]/2, float(maxLoc[1] + tH/2 + image.shape[0]/2)/image.shape[1]/2)
-		state |= 1 << defs.FOUND_STAIR
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+		#state |= 1 << defs.FOUND_STAIR
+		#state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+		#state_publisher.publish(data = state)
 
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
-	else:
-		state &= ~(1 << defs.FOUND_STAIR)
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+	#else:
+		#state &= ~(1 << defs.FOUND_STAIR)
+		#state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+		#state_publisher.publish(data = state)
 	if defs.DEBUGGING:
 		cv2.imshow("escada_Detection",image)
 		cv2.moveWindow("escada_Detection",1920,0)
 		cv2.waitKey(1)
-def listener():
-	rospy.init_node('findStair', anonymous=True)
 
-	rospy.Subscriber("/sensor/kinect_rgb", Image, kin_callback)
-	rospy.Subscriber("/pra_vale/estados", Int32, set_state)
+
+def listener():
+	rospy.init_node('hokuyo', anonymous=True)
+
+	rospy.Subscriber("/sensor/ur5toolCam", Image, beam_callback)
 	
 	rospy.spin()
 
-#main
 
-print("Escada launched")
+#main
+print("hokuyo launched")
 listener()
