@@ -441,6 +441,9 @@ def arm_current_position(data):
             state = state & ~(1 << defs.ARM_CHANGING_POSE)
         state_publisher.publish(data = state)
 
+    if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.data == 0)):
+        state &= ~(1 << defs.CLIMB_STAIR)
+
             
 
 def hokuyo_distance_callback(data):
@@ -615,12 +618,6 @@ def state_callback(data):
 
     if (state & (1 << defs.CLIMB_STAIR)):
         arm_publisher.publish(joint_variable = [0,0,0,0,0,0])
-    elif (state & (1 << defs.CLIMB_STAIR) and np.all(joint_angles == 0)):
-        x = _FIRE_NOT_FOUND_X_VALUE
-        y = _FIRE_NOT_FOUND_Y_VALUE
-        z = _FIRE_NOT_FOUND_Z_VALUE
-        pos = cinematicaInversa()
-        arm_publisher.publish(joint_variable = pos)
 
 
 

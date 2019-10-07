@@ -84,6 +84,10 @@ def print_state():
     if (state & (1 << defs.END_STAIR)):
         string += ("  END_STAIR")
     
+    #when the stairs end
+    if (state & (1 << defs.CLIMB_STAIR)):
+        string += ("  CLIMB_STAIR")
+    
     print(string)
 
 
