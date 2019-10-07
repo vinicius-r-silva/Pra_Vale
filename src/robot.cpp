@@ -5,8 +5,8 @@ using namespace std;
 #define _KP_REC 0.7
 #define NICE_DIST_TRACK 0.80
 #define FRONT_WHEELS 0.15
-#define REAR_WHEELS 0.25
-#define OKAY 0.07
+#define REAR_WHEELS 0.37
+#define OKAY 0.08
 
 Robot::Robot(){
     _state = WALKING;
@@ -500,7 +500,7 @@ void Robot::climbStairs(){
   if(abs(_yAngle) < OKAY){
 
     cout << " IT'S OKAY\n";
-    wheelRearSpeed = 0.0f;
+    wheelRearSpeed = (_climbing) ? _MAX_WHEEL_R_SPEED : 0.0;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
   
     if(_climbing){
@@ -633,20 +633,3 @@ void Robot::setEnable(std_msgs::Int32 enable){
 void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
   statePub.publish(_enable);
 }
-
-void Robot::adjustingWheels(){ 
-  std_msgs::Float32MultiArray msg;
-  msg.data.clear();
-
-  float frontWheel;
-  float rearWheel;
-
-  static float yAngle = _yAngle;
-  static bool wheelsAdjusted = false;
-
-  if(wheelsAdjusted)
-    return;
-  
-
-}
-
