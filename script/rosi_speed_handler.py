@@ -11,8 +11,11 @@ traction_speeds = [0, 0, 0, 0]
 traction_speeed_pub = rospy.Publisher('/rosi/command_traction_speed', RosiMovementArray, queue_size=1)
 arm_speeed_pub = rospy.Publisher('/rosi/command_arms_speed', RosiMovementArray, queue_size=1)
 
+traction_command_list = 0
+arm_command_list = 0
 
 def tracion_speed_callback(data):
+    global traction_command_list
     global traction_speeed_pub
     global traction_speeds
     traction_speeds = data.data
@@ -40,10 +43,11 @@ def tracion_speed_callback(data):
     traction_command.joint_var = traction_speeds[3]
     traction_command_list.movement_array.append(traction_command)
 
-    traction_speeed_pub.publish(traction_command_list)
+    #traction_speeed_pub.publish(traction_command_list)
 
 
 def arm_speed_callback(data):
+    global arm_command_list
     global arm_speeed_pub
     global arm_speeds
     arm_speeds = data.data
@@ -71,7 +75,6 @@ def arm_speed_callback(data):
     arm_command.joint_var = arm_speeds[3]
     arm_command_list.movement_array.append(arm_command)
 
-    arm_speeed_pub.publish(arm_command_list)
 
 
 
@@ -83,4 +86,15 @@ if __name__ == '__main__':
 
     print("rosi_speed launched")
 
-    rospy.spin()
+    
+    node_sleep_rate = rospy.Rate(100)
+
+    while not rospy.is_shutdown(): #always keep publishing the state
+        #print_state()
+        if(traction_command_list != 0):
+            traction_speeed_pub.publish(traction_command_list)
+        if(arm_command_list != 0):
+            arm_speeed_pub.publish(arm_command_list)
+
+        node_sleep_rate.sleep()
+    #rospy.spin()
