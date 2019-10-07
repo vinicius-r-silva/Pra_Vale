@@ -1,6 +1,6 @@
 <launch>
 
-	<node name="Velodyne" pkg="pra_vale" type="velodyne" respawn="true"/>
+	<node name="Velodyne" pkg="pra_vale" type="velodyne" output="screen"/>
 	<node name="Camera" pkg="pra_vale" type="my_5cam.py" output="screen"/>
 	<node name="Arm" pkg="pra_vale" type="arm.py" output="screen"/>
 	<node name="imu_handler" pkg="pra_vale" type="imu_handler.py" output="screen"/>
@@ -9,7 +9,7 @@
 	<node name="hokuyo" pkg="pra_vale" type="hokuyo.py" output="screen"/>
 	<node name="robot_roation" pkg="pra_vale" type="rotate_robot.py" output="screen"/>
 	<node name="findStair" pkg="pra_vale" type="escada.py" output="screen"/>
-
+	<node name="findEnd" pkg="pra_vale" type="escada_end.py" output="screen"/>
 
 	<rosparam command="load" file="$(find pra_vale)/config/simulation_parameters.yaml" />
 
