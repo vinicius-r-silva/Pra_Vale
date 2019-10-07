@@ -46,5 +46,6 @@ class Robot {
         void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
         bool getAvoidingObs(); //retorna se tem um obstaculo ou nao
         void setStatePub(std_msgs::Int32 enable); //publica o estado
+        void adjustingWheels(); //Ajusta as correias das rodas
 };
 #endif
