@@ -47,5 +47,6 @@ class Robot {
         bool getAvoidingObs(); //retorna se tem um obstaculo ou nao
         bool getNothing(); //retorna se tem algum objeto perto
         void setStatePub(std_msgs::Int32 enable); //publica o estado
+        void adjustingWheels(); //Ajusta as correias das rodas
 };
 #endif

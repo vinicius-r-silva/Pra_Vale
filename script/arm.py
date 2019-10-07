@@ -18,6 +18,7 @@ from geometry_msgs.msg import TwistStamped
 from rosi_defy.msg import RosiMovementArray
 from rosi_defy.msg import ManipulatorJoints  
 import defines as defs
+import numpy as np
 
 #-----------------------CONSTS----------------------#   
 #const received form the ur5_Cam when no fire is detected
@@ -251,7 +252,7 @@ def arm_move(data):
 
 
     #if the arm is changing position or the robot is rotating, the arm it's not supose to change its position
-    if((state & (1 << defs.ARM_CHANGING_POSE)) or (state & (1 << defs.ROBOT_ROTATION))):
+    if((state & (1 << defs.ARM_CHANGING_POSE | 1 << defs.ROBOT_ROTATION | 1 << defs.CLIMB_STAIR))):
         return        
     #print(data) #debug
 
@@ -360,7 +361,7 @@ def arm_move(data):
 #callback from the IMU sensor, make the ur5 arm follow the track automatically
 def arm_imu(data):
     global state
-    if(state & 1 << defs.ARM_CHANGING_POSE):
+    if(state & (1 << defs.ARM_CHANGING_POSE | 1 << defs.CLIMB_STAIR)):
         return
   
     global tilt_x
@@ -405,7 +406,7 @@ def arm_tilt(data):
     global state
     global camera_tilt 
     global get_tilt_y_from_imu
-    if((state & 1 << defs.ARM_CHANGING_POSE)): #or (state & 1 << defs.ROBOT_ROTATION)):
+    if((state & (1 << defs.ARM_CHANGING_POSE | 1 << defs.CLIMB_STAIR))): #or (state & 1 << defs.ROBOT_ROTATION)):
         return
 
     if(data.data == -1 or state & (1 << defs.FOUND_FIRE_FRONT) or state & (1 << defs.FOUND_FIRE_TOUCH)):
@@ -440,6 +441,9 @@ def arm_current_position(data):
         else:
             state = state & ~(1 << defs.ARM_CHANGING_POSE)
         state_publisher.publish(data = state)
+
+    if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.joint_variable == 0)):
+        state &= ~(1 << defs.CLIMB_STAIR)
 
             
 
@@ -612,6 +616,9 @@ def state_callback(data):
         z = _FIRE_NOT_FOUND_Z_VALUE
         pos = cinematicaInversa()
         arm_publisher.publish(joint_variable = pos)
+
+    if (state & (1 << defs.CLIMB_STAIR)):
+        arm_publisher.publish(joint_variable = [0,0,0,0,0,0])
 
 
 

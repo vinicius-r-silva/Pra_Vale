@@ -6,7 +6,7 @@ using namespace std;
 #define NICE_DIST_TRACK 0.80
 #define FRONT_WHEELS 0.15
 #define REAR_WHEELS 0.25
-#define OKAY 0.06
+#define OKAY 0.07
 
 Robot::Robot(){
     _state = WALKING;
@@ -28,7 +28,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(_sentido == _ANTI_HORARIO){
     _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
     _enable.data &= ~(1 << ROBOT_CLOCKWISE);
-
   }else{
     _enable.data |= (1 << ROBOT_CLOCKWISE);
     _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);    
@@ -89,14 +88,13 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _enable.data |= (1 << CLIMB_STAIR);
 
-    erro = _zAngle *_KP_OBSTACLE;
+    erro = _zAngle * _KP_OBSTACLE;
 
     cout << "E: SubirEscada\t yAngle: " << _yAngle;
   
   //está na escada ou descendo dela
-  }else if(_state == IN_LADDER){
-    
-    _enable.data |= (1 << IN_LADDER);
+  }else if(_state == IN_LADDER){  
+    _enable.data |= (1 << IN_STAIR);
 
     erro = _zAngle *_KP_OBSTACLE;
 
@@ -512,6 +510,7 @@ void Robot::climbStairs(){
         wheelFrontSpeed = 0.0;
         wheelRearSpeed = 0.0;
         _enable.data &= ~(1 << CLIMB_STAIR);
+
       }
     } 
 
@@ -632,5 +631,21 @@ void Robot::setEnable(std_msgs::Int32 enable){
 
 void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
   statePub.publish(_enable);
+}
+
+void Robot::adjustingWheels(){ 
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
+
+  float frontWheel;
+  float rearWheel;
+
+  static float yAngle = _yAngle;
+  static bool wheelsAdjusted = false;
+
+  if(wheelsAdjusted)
+    return;
+  
+
 }
 
