@@ -21,6 +21,7 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   //confere se o robo deve rodar
   
   vis->setAvoidingObs(rob->getAvoidingObs());
+  vis->setNothing(rob->getNothing());
   rob->processMap(vis->getSidesInfo());
 
 }

@@ -77,4 +77,4 @@
 
 //processamento da imagem
 #define _MIN_AREA 25
-#define _MIN_AREA_REC 15 //area minima para utilizar o metodo de recuDir ou recuEsq
+#define _MIN_AREA_REC 10 //area minima para utilizar o metodo de recuDir ou recuEsq

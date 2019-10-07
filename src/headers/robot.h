@@ -33,7 +33,7 @@ class Robot {
         bool _avoidingObs; // Determina se o robô está desviando de um obstáculo
         bool _straitPath; // Determina se o robô reconheceu um caminho estreito 
         bool _provavelEscada; //Determina se há uma escada por perto para mudar o comportamento do robô
-
+        bool _nothing;
 
     public:
         Robot(); //Construtor da classe
@@ -45,6 +45,7 @@ class Robot {
         void setEnable(std_msgs::Int32 enable); //atualiza o estado do robo
         void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
         bool getAvoidingObs(); //retorna se tem um obstaculo ou nao
+        bool getNothing(); //retorna se tem algum objeto perto
         void setStatePub(std_msgs::Int32 enable); //publica o estado
 };
 #endif

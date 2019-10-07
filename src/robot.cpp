@@ -10,17 +10,20 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
+    _nothing = false;
     _straitPath = false;
 
     _distToTrack = NICE_DIST_TRACK;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
+
+  _nothing = false;
 
   if(_sentido == _ANTI_HORARIO){
     _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
@@ -190,6 +193,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     
     erro = 0.0;
 
+    if(sidesInfo[_FRONT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC && sidesInfo[_RIGHT].area < _MIN_AREA_REC)
+      
     cout << "E: NormalEt";
   
   }
@@ -615,6 +620,11 @@ bool Robot::getAvoidingObs(){
   return _avoidingObs;
 }
 
+bool Robot::getNothing(){
+  return _nothing;
+}
+
+
 void Robot::setEnable(std_msgs::Int32 enable){
   _enable.data = enable.data;
 }
@@ -623,3 +633,4 @@ void Robot::setEnable(std_msgs::Int32 enable){
 void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
   statePub.publish(_enable);
 }
+
