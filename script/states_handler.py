@@ -16,6 +16,9 @@ def print_state():
     global state
     string = ""
 
+    if(state == 1 << defs.ROBOT_CLOCKWISE or state == 1 << defs.ROBOT_ANTICLOCKWISE):
+        state |= 1 << defs.ENABLE_VELODYME
+
     #enable velodyne detection path planning
     if (state & (1 << defs.ENABLE_VELODYME)):
         string += ("  ENABLE_VELODYME")
