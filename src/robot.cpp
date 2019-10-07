@@ -10,7 +10,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    _sentido = _HORARIO;
+    _sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -21,8 +21,29 @@ Robot::Robot(){
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
-  if(_rodar)
+
+  if(_sentido == _ANTI_HORARIO){
+    _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
+    _enable.data &= ~(1 << ROBOT_CLOCKWISE);
+
+  }else{
+    _enable.data |= (1 << ROBOT_CLOCKWISE);
+    _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);    
+  }
+
+
+  if(_rodar){
+    _avoidingObs = false;
+    rodarFunction(sidesInfo);
     return;
+  }
+
+  if((_enable.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
+    _avoidingObs = false;    
+    aligneEscada(sidesInfo);
+    return;
+  }
+    
 
   float stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
   float traction = 0;
@@ -39,6 +60,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))){
 
     _straitPath = true;
+    _enable.data |= (1 << STRAIT_PATH);
     _distToTrack = NICE_DIST_TRACK - 0.25;
     cout << "StraitPath\t";
 
@@ -120,6 +142,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     if(_straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
       _straitPath = false;
+      _enable.data &= ~(1 << STRAIT_PATH);
       _distToTrack = NICE_DIST_TRACK;
     }
 
@@ -153,6 +176,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     if(_straitPath && _ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
     _straitPath = false;
+    _enable.data &= ~(1 << STRAIT_PATH);
     _distToTrack = NICE_DIST_TRACK;
     }
 
@@ -312,7 +336,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
           cout << " | escada";
           _isInStairs = true;
-          _provavelEscada = false; 
+          _provavelEscada = false;
         }
 
         tractionDir = +_KP*_zAngle*2.5;
@@ -413,7 +437,6 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           cout << " | escada";
           _isInStairs = true;
           _provavelEscada = false;
-          _enable.data &= ~(1<< FOUND_STAIR);
         }
 
         tractionDir = +_KP*_zAngle*2.5;
@@ -554,13 +577,24 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair 
 
   if(_zAngle > M_PI - 0.2 && _zAngle < M_PI + 0.2){
     _rodar = false; //para de rodar
-    _sentido = !_sentido; //troca o sentido
+    
+    if(_sentido == _ANTI_HORARIO){
+      _sentido = _HORARIO;
+      _enable.data |= (1 << ROBOT_CLOCKWISE);
+      _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);
+    }else{
+      _sentido = _ANTI_HORARIO;
+      _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
+      _enable.data &= ~(1 << ROBOT_CLOCKWISE);
+    }
+
   }
 
   cout << " | VelE: " << msg.data[3] << " | VelD: " << msg.data[0] << endl;
 
   _avoidingObs = false;
   speedPub.publish(msg);
+  statePub.publish(_enable);
   msg.data.clear();
   
 }
@@ -570,9 +604,6 @@ void Robot::setAngles(double y, double z){ //recebe os angulos do IMU
     _zAngle = z;
 }
 
-bool Robot::getRodar(){
-    return _rodar;
-}
 
 void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub){
     this->speedPub = speedPub;
@@ -582,22 +613,6 @@ void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros:
 
 bool Robot::getAvoidingObs(){
   return _avoidingObs;
-}
-
-bool Robot::getProvavelEscada(){
-  return _provavelEscada;
-}
-
-bool Robot::getIsInStairs(){
-  return _isInStairs;
-}
-
-bool Robot::getSentido(){
-  return _sentido;
-}
-
-bool Robot::getStraitPath(){
-  return _straitPath;
 }
 
 void Robot::setEnable(std_msgs::Int32 enable){

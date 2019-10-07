@@ -40,16 +40,11 @@ class Robot {
         void processMap(SidesInfo *sidesInfo); //Algoritmo para processar o mapa e setar as velocidades do robô
         void climbStairs(); //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
-        void setAngles(double yAngle, double zAngle);
-        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);
-        void setEnable(std_msgs::Int32 enable);
-        void aligneEscada(SidesInfo *sidesInfo);
-        bool getAvoidingObs();
-        bool getProvavelEscada();
-        bool getIsInStairs();
-        bool getSentido();
-        bool getStraitPath();
-        bool getRodar();
-        void setStatePub(std_msgs::Int32 enable);
+        void setAngles(double yAngle, double zAngle); //recebe os angulos do robo a partir do IMU
+        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub); //seta os ponteiros para publicar
+        void setEnable(std_msgs::Int32 enable); //atualiza o estado do robo
+        void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
+        bool getAvoidingObs(); //retorna se tem um obstaculo ou nao
+        void setStatePub(std_msgs::Int32 enable); //publica o estado
 };
 #endif

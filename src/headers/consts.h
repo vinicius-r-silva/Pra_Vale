@@ -63,10 +63,10 @@
 #define _MIN_DIST_ESCADA 1.2 //distancia minima para mandar o robo subir
 #define _MAX_DIST_SIDE_ESCADA 0.85 //distancia maxima do robo para esteira na hora da escada
 #define _MIN_DIST_SIDE_ESCADA 0.65 //distancia minima da esteira para subir a escada
-#define _MAX_ERRO_ESCADA 0.05
-#define _HORARIO true 
-#define _ANTI_HORARIO false
-#define _TRACK_ANGLE 0.0
+#define _MAX_ERRO_ESCADA 0.05 //erro no angulo maximo permitido na escada
+#define _HORARIO true //sentido de rotacao do robo
+#define _ANTI_HORARIO false //sentido de rotacao do robo
+
 
 //informacoes da struct
 #define _FRONT 0
@@ -77,4 +77,4 @@
 
 //processamento da imagem
 #define _MIN_AREA 25
-#define _MIN_AREA_REC 15
+#define _MIN_AREA_REC 15 //area minima para utilizar o metodo de recuDir ou recuEsq

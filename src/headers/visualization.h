@@ -37,15 +37,15 @@ class Visualization {
 
 
     public:
-        Visualization();
-        void createRectangles();
-        void setAvoidingObs(bool avoid);
-        void showImages();
-        void processImages(const sensor_msgs::PointCloud2::ConstPtr msg);
-        void printRect();
-        void getInfo();
-        bool isImportant(geometry_msgs::Point32 pointInput);
-        SidesInfo* getSidesInfo();
+        Visualization(); //
+        void createRectangles(); //cria os retangulos onde a imagem sera processada
+        void setAvoidingObs(bool avoid); //seta se tem um obstaculo ou nao
+        void showImages(); //mostra as imagens na tela
+        void processImages(const sensor_msgs::PointCloud2::ConstPtr msg); //processa a imagem, controlando o robo
+        void printRect(); //printa os retangulos na imagem
+        void getInfo(); //compila as informacoes importantes
+        bool isImportant(geometry_msgs::Point32 pointInput); //decide se a informacao do veloyne e valida
+        SidesInfo* getSidesInfo(); //retorna as informacoes dos lados
 
 };
 
