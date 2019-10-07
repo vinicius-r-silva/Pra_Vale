@@ -19,6 +19,7 @@ NARROW_PATH         = 16
 END_STAIR           = 17
 IN_STAIR            = 18
 BEAM_FIND           = 19
+CLIMB_STAIR         = 20
 
 
 #const for minimum angle difference betwwen the current angle and the desired angle
