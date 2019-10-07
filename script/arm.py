@@ -18,6 +18,7 @@ from geometry_msgs.msg import TwistStamped
 from rosi_defy.msg import RosiMovementArray
 from rosi_defy.msg import ManipulatorJoints  
 import defines as defs
+import numpy as np
 
 #-----------------------CONSTS----------------------#   
 #const received form the ur5_Cam when no fire is detected
@@ -441,7 +442,7 @@ def arm_current_position(data):
             state = state & ~(1 << defs.ARM_CHANGING_POSE)
         state_publisher.publish(data = state)
 
-    if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.data == 0)):
+    if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.joint_variable == 0)):
         state &= ~(1 << defs.CLIMB_STAIR)
 
             
