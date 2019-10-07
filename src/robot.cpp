@@ -10,7 +10,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    _sentido = _HORARIO;
+    _sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -21,13 +21,24 @@ Robot::Robot(){
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
+
+  if(_sentido == _ANTI_HORARIO){
+    _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
+    _enable.data &= ~(1 << ROBOT_CLOCKWISE);
+
+  }else{
+    _enable.data |= (1 << ROBOT_CLOCKWISE);
+    _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);    
+  }
+
+
   if(_rodar){
     _avoidingObs = false;
     rodarFunction(sidesInfo);
     return;
   }
 
-  if(_enable.data & (1 << FOUND_STAIR) || _provavelEscada && _isInStairs){
+  if((_enable.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
     _avoidingObs = false;    
     aligneEscada(sidesInfo);
     return;
@@ -320,7 +331,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
           cout << " | escada";
           _isInStairs = true;
-          _provavelEscada = false; 
+          _provavelEscada = false;
         }
 
         tractionDir = +_KP*_zAngle*2.5;
@@ -421,7 +432,6 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           cout << " | escada";
           _isInStairs = true;
           _provavelEscada = false;
-          _enable.data &= ~(1<< FOUND_STAIR);
         }
 
         tractionDir = +_KP*_zAngle*2.5;
