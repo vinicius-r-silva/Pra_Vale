@@ -8,8 +8,8 @@ std_msgs::Int32 enable;
 
 //Callback do Velodyne
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
-  if(!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE))
-    return;
+  // if(!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE))
+  //   return;
 
 
   vis->createRectangles(); 
