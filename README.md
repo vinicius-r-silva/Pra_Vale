@@ -158,6 +158,7 @@ Before cloning the team's repository from git, it is necessary to check if some 
 
 The following commands install or update the OpenCV libraries in your computer to enable python and C++ files
 
+if your pip is configurated to python 3.6, use pip2
 ```
 pip install opencv-python
 pip install opencv-contrib-python
@@ -166,6 +167,10 @@ sudo apt-get install libopencv-dev
 The following command install the keyboard library necessary in the arm_joy and arm_joint scripts
 ```
 sudo pip install keyboard
+```
+Tthe last dependence
+```
+sudo pip install scipy
 ```
 
 # 6. Cloning Pra Vale submission

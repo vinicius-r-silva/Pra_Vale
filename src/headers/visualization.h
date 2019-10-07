@@ -34,6 +34,7 @@ class Visualization {
         //Informações para os retângulos
         SidesInfo *sidesInfo;
         bool avoidingObs;
+        bool nothing;
 
 
     public:
@@ -44,6 +45,7 @@ class Visualization {
         void processImages(const sensor_msgs::PointCloud2::ConstPtr msg); //processa a imagem, controlando o robo
         void printRect(); //printa os retangulos na imagem
         void getInfo(); //compila as informacoes importantes
+        void setNothing(bool _nothing); //se nao pegou nada ao analisar a imagem
         bool isImportant(geometry_msgs::Point32 pointInput); //decide se a informacao do veloyne e valida
         SidesInfo* getSidesInfo(); //retorna as informacoes dos lados
 

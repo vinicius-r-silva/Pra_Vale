@@ -15,12 +15,15 @@ Robot::Robot(){
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
+    _nothing = false;
     _straitPath = false;
 
     _distToTrack = NICE_DIST_TRACK;
 }
 
 void Robot::processMap(SidesInfo *sidesInfo){
+
+  _nothing = false;
 
   if(_sentido == _ANTI_HORARIO){
     _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
@@ -187,6 +190,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else{
     
     erro = 0.0;
+
+    if(sidesInfo[_FRONT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC && sidesInfo[_RIGHT].area < _MIN_AREA_REC)
+      _nothing = true;
 
     cout << "E: NormalEt";
   
@@ -613,6 +619,11 @@ void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros:
 bool Robot::getAvoidingObs(){
   return _avoidingObs;
 }
+
+bool Robot::getNothing(){
+  return _nothing;
+}
+
 
 void Robot::setEnable(std_msgs::Int32 enable){
   _enable.data = enable.data;

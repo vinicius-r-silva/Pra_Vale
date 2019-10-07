@@ -22,11 +22,15 @@ Visualization::Visualization(){
     sidesInfo = (SidesInfo*) malloc(5 * sizeof(SidesInfo));
 
     avoidingObs = false;
+    nothing = false;
 }
 
 void Visualization::createRectangles(){
     float pSizeX = (avoidingObs) ? 0.3 : 1.0;
     float pSizeY = (avoidingObs) ? 0.6 : 1.0;
+    
+    pSizeX = (nothing) ? 1 : pSizeX;
+    pSizeY = (nothing) ? 1 : pSizeY;
     //float sizeFX = (avoidingObs) ? 1.2 : 1.0;
 
 
@@ -139,4 +143,8 @@ SidesInfo* Visualization::getSidesInfo(){
 
 void Visualization::setAvoidingObs(bool avoid){
     avoidingObs = avoid;
+}
+
+void Visualization::setNothing(bool _nothing){
+    nothing = _nothing;
 }
