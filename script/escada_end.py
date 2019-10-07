@@ -23,14 +23,6 @@ rospack = rospkg.RosPack()
 rospack.list() 
 
 
-#Load the template, convert it to grayscale, and detect edges
-# get the file path for pra_vale
-stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/print.png')
-stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
-
-scaleList=np.linspace(1.5, 0.1, 15).tolist()
-
-
 #callback function called when a node requires a state change
 def set_state(data):
 	global state

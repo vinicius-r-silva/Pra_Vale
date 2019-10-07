@@ -11,7 +11,8 @@ void SidesInfo::getInfo(cv::Mat *img, int LENGHT, int X, int Y, int SizeX, int S
 
   area = 0;
 
-  for (line = Y; line < Y + SizeY; line++){
+  //processa as informacoes do retangulo
+  for (line = Y; line < Y + SizeY; line++){ 
       for (column = X; column < X + SizeX; column++){
           if (map[line * LENGHT + column] == 255){
               sumX += column;
@@ -27,7 +28,5 @@ void SidesInfo::getInfo(cv::Mat *img, int LENGHT, int X, int Y, int SizeX, int S
   medY = (area < _MIN_AREA_REC) ? 10 : sumY/(area*_SCALE)  - _MAX_DIST;
   distance = (medX == 10 || medY == 10) ? 10 : 
   (float) sqrt(pow(medX, 2) + pow(medY, 2));
-
- //std::cout << "AREA: " << area << "  MEDX: " << medX << "  MEDY: " << medY << std::endl;
-      
+  
 }
