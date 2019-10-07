@@ -192,7 +192,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     erro = 0.0;
 
     if(sidesInfo[_FRONT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC && sidesInfo[_RIGHT].area < _MIN_AREA_REC)
-      
+      _nothing = true;
+
     cout << "E: NormalEt";
   
   }
