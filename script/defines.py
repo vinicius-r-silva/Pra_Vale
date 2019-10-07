@@ -25,4 +25,4 @@ MAX_JOINT_ANGLE_DIFF = 0.1
 
 #Debugging mode
 
-DEBUGGING = 0
+DEBUGGING = 1
