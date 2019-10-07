@@ -19,33 +19,10 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   vis->printRect();
  
   //confere se o robo deve rodar
-  if(rob->getRodar()){
-    rob->rodarFunction(vis->getSidesInfo());
-
-  }else if((enable.data & (1 << FOUND_STAIR) || rob->getProvavelEscada()) && !rob->getIsInStairs()){
-    rob->aligneEscada(vis->getSidesInfo());
-
-  }else{
-    vis->setAvoidingObs(rob->getAvoidingObs());
-    rob->processMap(vis->getSidesInfo());
-  }
-
-  //atualizando os estados
-  if(rob->getSentido() == _HORARIO){
-    enable.data |= (1 << ROBOT_CLOCKWISE);
-    enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);
-  }else{
-    enable.data |= (1 << ROBOT_ANTICLOCKWISE);
-    enable.data &= ~(1 << ROBOT_CLOCKWISE);
-  }
   
-  if(rob->getStraitPath())
-    enable.data |= (1 << STRAIT_PATH);
-  else
-    enable.data &= ~(1 << STRAIT_PATH);
-  
-  rob->setStatePub(enable);
-  
+  vis->setAvoidingObs(rob->getAvoidingObs());
+  rob->processMap(vis->getSidesInfo());
+
 }
 
 //Callback do estado em que o robô se encontra

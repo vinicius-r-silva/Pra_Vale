@@ -45,11 +45,6 @@ class Robot {
         void setEnable(std_msgs::Int32 enable); //atualiza o estado do robo
         void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
         bool getAvoidingObs(); //retorna se tem um obstaculo ou nao
-        bool getProvavelEscada(); //retorna se e provavel que tenha uma escada
-        bool getIsInStairs(); //retorna se ele estiver na escada
-        bool getSentido(); //retorna o sentido de rotacao do robo
-        bool getStraitPath(); //retorna se o robo esta entre um obstaculo e a esteira
-        bool getRodar(); //retorna se ele deve rodar ou nao
         void setStatePub(std_msgs::Int32 enable); //publica o estado
 };
 #endif
