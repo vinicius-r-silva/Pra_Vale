@@ -13,7 +13,7 @@ Robot::Robot(){
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = true;
+    _rodar = false;
     _avoidingObs = false;
     _nothing = false;
     _straitPath = false;
@@ -23,8 +23,11 @@ Robot::Robot(){
 
 void Robot::processMap(SidesInfo *sidesInfo){
 
+  cout.precision(4);
+
   _nothing = false;
 
+  //atualiza o estado do robo
   if(_sentido == _ANTI_HORARIO){
     _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
     _enable.data &= ~(1 << ROBOT_CLOCKWISE);
@@ -33,25 +36,33 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);    
   }
 
-
+  //roda o robo depois de descer a escada
   if(_rodar){
     _avoidingObs = false;
     rodarFunction(sidesInfo);
     return;
   }
 
+  //achou a escada
   if((_enable.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
     _avoidingObs = false;    
     aligneEscada(sidesInfo);
     return;
   }
-    
+  
+  //aumenta as dimensoes do retangulo caso nao tenha achado nada
+  if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_RIGHT].distance > 2){
+    cout << " | Nao detectou nd";
+    _nothing = true;
+  }
 
   float stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
-  float traction = 0;
+  float tractionDir = 0;
+  float tractionEsq = 0;
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
   float erro;
+
 
   if(_state == IN_LADDER && _enable.data & (1 << END_STAIR)){
     _state = LADDER_DOWN;
@@ -202,51 +213,50 @@ void Robot::processMap(SidesInfo *sidesInfo){
     erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
-    traction = (float) (stairsDir * 3.5 + erro);
-    if(traction > _MAX_SPEED)
-      traction = _MAX_SPEED;
-    else if(traction < -_MAX_SPEED)
-      traction = -_MAX_SPEED; 
+    tractionDir = (float) (stairsDir * 3.5 + erro);
+    if(tractionDir > _MAX_SPEED)
+      tractionDir = _MAX_SPEED;
+    else if(tractionDir < -_MAX_SPEED)
+      tractionDir = -_MAX_SPEED; 
     
-    cout << " | VelD: " << traction;
 
-    msg.data.push_back(traction);
-    msg.data.push_back(traction);
+    msg.data.push_back(tractionDir);
+    msg.data.push_back(tractionDir);
 
-    traction = (float) (stairsDir * 3.5 - erro);
-    if(traction > _MAX_SPEED)
-      traction = _MAX_SPEED;
-    else if(traction < -_MAX_SPEED)
-      traction = -_MAX_SPEED; 
+    tractionEsq = (float) (stairsDir * 3.5 - erro);
+    if(tractionEsq > _MAX_SPEED)
+      tractionEsq = _MAX_SPEED;
+    else if(tractionEsq < -_MAX_SPEED)
+      tractionEsq = -_MAX_SPEED; 
     
-    msg.data.push_back(traction);
-    msg.data.push_back(traction);
+    msg.data.push_back(tractionEsq);
+    msg.data.push_back(tractionEsq);
 
-    cout << " | VelE: " << traction;
 
   }else{
-    traction = (float) (_V0 + _KP*erro);
-    if(traction > _MAX_SPEED)
-      traction = _MAX_SPEED;
-    else if(traction < -_MAX_SPEED)
-      traction = -_MAX_SPEED; 
+    tractionDir = (float) (_V0 + _KP*erro);
+    if(tractionDir > _MAX_SPEED)
+      tractionDir = _MAX_SPEED;
+    else if(tractionDir < -_MAX_SPEED)
+      tractionDir = -_MAX_SPEED; 
 
-    msg.data.push_back(traction);
-    msg.data.push_back(traction);
+    msg.data.push_back(tractionDir);
+    msg.data.push_back(tractionDir);
 
-    cout << " | VelD: " << traction;
 
-    traction = (float) (_V0 - _KP*erro);
-    if(traction > _MAX_SPEED)
-      traction = _MAX_SPEED;
-    else if(traction < -_MAX_SPEED)
-      traction = -_MAX_SPEED; 
+    tractionEsq = (float) (_V0 - _KP*erro);
+    if(tractionEsq > _MAX_SPEED)
+      tractionEsq = _MAX_SPEED;
+    else if(tractionEsq < -_MAX_SPEED)
+      tractionEsq = -_MAX_SPEED; 
 
-    cout << " | VelE: " << traction;
     
-    msg.data.push_back(traction);
-    msg.data.push_back(traction);
+    msg.data.push_back(tractionEsq);
+    msg.data.push_back(tractionEsq);
   }
+
+
+  cout << " | VelE: " << tractionEsq << " | VelD: " << tractionDir;
 
   cout << " | zAngle: " << _zAngle << endl;
   
