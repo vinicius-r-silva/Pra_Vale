@@ -13,7 +13,7 @@ Robot::Robot(){
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = false;
+    _rodar = true;
     _avoidingObs = false;
     _nothing = false;
     _straitPath = false;
@@ -546,7 +546,7 @@ void Robot::climbStairs(){
 }
 
 void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair da escada
- 
+
   if(_zAngle < 0) //deixa o angulo padronizado
     _zAngle += M_PI*2;
 
@@ -554,8 +554,7 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair 
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
 
-  cout << "Girando";
-
+  cout << "Girando" << " | Zangle: " << _zAngle;
 
   if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN){ //afasta o robo
     cout << " | Afastando o robo";
@@ -567,13 +566,13 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair 
   }else if(_sentido == _HORARIO){ //roda no sentido HORARIO
     msg.data.push_back(-_V0);
     msg.data.push_back(-_V0);
-    msg.data.push_back(0);
-    msg.data.push_back(0);
+    msg.data.push_back(_V0);
+    msg.data.push_back(_V0);
 
 
   }else{ //roda no sentido ANTI-HORARIO
-    msg.data.push_back(0);
-    msg.data.push_back(0);
+    msg.data.push_back(_V0);
+    msg.data.push_back(_V0);
     msg.data.push_back(-_V0);
     msg.data.push_back(-_V0);
 
