@@ -13,7 +13,7 @@ Robot::Robot(){
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = true;
+    _rodar = false;
     _avoidingObs = false;
     _nothing = false;
     _straitPath = false;
