@@ -267,7 +267,7 @@ def arm_move(data):
         y_move = temp
 
     #to debug only
-    #print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
+    print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
     
     #update arm position if there isn't a fire
     if((x_move == _FIRE_NOT_FOUND or y_move == _FIRE_NOT_FOUND) and not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
@@ -298,6 +298,12 @@ def arm_move(data):
             if(leaving_fire_cont > 10):
                 state &= ~(1 << defs.LEAVING_FIRE)
                 state_publisher.publish(data = state)
+                if(state & (1 << defs.BEAM_FIND)):
+                    beam = rospy.Publisher('/pra_vale/beam_finder', Int32, queue_size=10)
+                    beam.publish(data=0)
+                    beam.publish(data=0)
+                    beam.publish(data=0)
+                    beam.publish(data=0)
             else:
                 leaving_fire_cont += 1
 
@@ -314,7 +320,6 @@ def arm_move(data):
             y = _FIRE_FOUND_Y_VALUE
 
             z = _FIRE_FOUND_Z_VALUE
-            cinematicaInversa()
         else:
             if(not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
                 x += x_move

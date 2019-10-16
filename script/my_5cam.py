@@ -34,6 +34,10 @@ _ERROR_UPPER_LIMIT = 150
 arm_move = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 arm_tilt = rospy.Publisher('/pra_vale/arm_tilt', Float32, queue_size=10)
 
+#publish robot state changes to others ROS packages
+state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+
+
 #desired z (height) position of the arm
 desired_z = 20
 
@@ -164,6 +168,7 @@ def get_tilt_angle(frame):
 #ur5Cam Callback
 #find fire in the given image and calculates the x,y coordinates of the fire
 def ur5_callback(data):
+    global state
     global arm_move
     global arm_tilt
 
@@ -242,8 +247,15 @@ def ur5_callback(data):
     if((state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)) and b != -1):
         z = (b - desired_z)/5
 
+
+    if (state & 1 << defs.LEAVING_FIRE and error == _FIRE_NOT_FOUND):
+        state &= ~(1 << defs.LEAVING_FIRE)
+        state_publisher.publish(data = state)
+
+
     #publishes to the arm node
-    arm_move.publish(data = [error, 0, z])
+    if((~state & (1 << defs.BEAM_FIND)) or (state & (1 << defs.BEAM_FIND) and error != _FIRE_NOT_FOUND)):
+        arm_move.publish(data = [error, 0, z])
 
     #print(error)
     #cv2.imshow("Threshold",mask)
