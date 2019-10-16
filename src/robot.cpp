@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _begin = true;
     _state = WALKING;
-    _sentido = _HORARIO;
+    _sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -29,11 +29,20 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   //atualiza o estado do robo
   if(_sentido == _ANTI_HORARIO){
-    _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
-    _enable.data &= ~(1 << ROBOT_CLOCKWISE);
+
+    _enable.data = ROBOT_ANTICLOCKWISE;
+    statePub.publish(_enable);
+
+    _enable.data = -ROBOT_CLOCKWISE;
+    statePub.publish(_enable);
+
   }else{
-    _enable.data |= (1 << ROBOT_CLOCKWISE);
-    _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);    
+
+    _enable.data = ROBOT_CLOCKWISE;
+    statePub.publish(_enable);
+
+    _enable.data = -ROBOT_ANTICLOCKWISE;
+    statePub.publish(_enable);    
   }
 
   //roda o robo depois de descer a escada
@@ -44,7 +53,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
   //achou a escada
-  if((_enable.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
+  if((_states.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
     _avoidingObs = false;    
     aligneEscada(sidesInfo);
     return;
@@ -67,16 +76,18 @@ void Robot::processMap(SidesInfo *sidesInfo){
   float erro;
 
 
-  if(_state == IN_LADDER && _enable.data & (1 << END_STAIR)){
+  if(_state == IN_LADDER && _states.data & (1 << END_STAIR)){
     _state = LADDER_DOWN;
-    _enable.data &= ~(1 << END_STAIR); 
+    _enable.data = -END_STAIR; 
+    statePub.publish(_enable);
   }
 
   if(!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
     || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))){
 
     _straitPath = true;
-    _enable.data |= (1 << STRAIT_PATH);
+    _enable.data = STRAIT_PATH;
+    statePub.publish(_enable);
     _distToTrack = NICE_DIST_TRACK - 0.25;
     cout << "StraitPath\t";
 
@@ -86,9 +97,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _state = LADDER_UP;  
   }
 
-  if(_state == LADDER_DOWN && abs(_yAngle) < OKAY && _enable.data & (1 << FOUND_STAIR)){
+  if(_state == LADDER_DOWN && fabs(_yAngle) < OKAY && _states.data & (1 << FOUND_STAIR)){
     _rodar = true;
-    _enable.data &= ~(1 << FOUND_STAIR);
+    _enable.data =-FOUND_STAIR;
+    statePub.publish(_enable);
     _state = WALKING;
     _isInStairs = false;
   }
@@ -100,7 +112,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     climbStairs();
 
-    _enable.data |= (1 << CLIMB_STAIR);
+    _enable.data = CLIMB_STAIR;
+    statePub.publish(_enable);
 
     erro = _zAngle * _KP_OBSTACLE;
 
@@ -108,7 +121,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){  
-    _enable.data |= (1 << IN_STAIR);
+
+    _enable.data = IN_STAIR;
+    statePub.publish(_enable);
 
     erro = _zAngle *_KP_OBSTACLE;
 
@@ -191,7 +206,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     if(_straitPath && _ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
     _straitPath = false;
-    _enable.data &= ~(1 << STRAIT_PATH);
+    _enable.data = -STRAIT_PATH;
+    statePub.publish(_enable);
     _distToTrack = NICE_DIST_TRACK;
     }
 
@@ -291,7 +307,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   cout << " | zAngle: " << _zAngle << endl;
   
   speedPub.publish(msg);
-  statePub.publish(_enable);
 }
 
 
@@ -380,7 +395,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
           cout << " | escada";
           _isInStairs = true;
-          _provavelEscada = false;
+          _provavelEscada = true;
         }
 
         tractionDir = +_KP*_zAngle*2.5;
@@ -535,34 +550,43 @@ void Robot::climbStairs(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
   static bool _climbing = false;
-  static float hystCoef = 1.0;
 
-  if(abs(_yAngle) < OKAY){
+  if(fabs(_yAngle) < OKAY){
 
     cout << " IT'S OKAY\n";
     wheelRearSpeed = (_climbing) ? _MAX_WHEEL_R_SPEED : 0.0;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
   
     if(_climbing){
-      static int i = 0;
-      i++;
-      if(i > 3){
-        _state = IN_LADDER;
-        wheelFrontSpeed = 0.0;
-        wheelRearSpeed = 0.0;
-        _enable.data &= ~(1 << CLIMB_STAIR);
 
-      }
+      _state = IN_LADDER;
+      wheelFrontSpeed = 0.0;
+      wheelRearSpeed = 0.0;
+      _enable.data = -CLIMB_STAIR;
+      statePub.publish(_enable);
+
+      _enable.data = IN_STAIR;
+      statePub.publish(_enable);
+
+      // static int i = 0;
+      // i++;
+      // if(i > 3){
+      //   _state = IN_LADDER;
+      //   wheelFrontSpeed = 0.0;
+      //   wheelRearSpeed = 0.0;
+      //   _enable.data &= ~(1 << CLIMB_STAIR);
+      //   _enable.data |= (1 << IN_STAIR);
+      // }
     } 
 
-  }else if(abs(_yAngle) > REAR_WHEELS * hystCoef){
+  }else if(fabs(_yAngle) > REAR_WHEELS){
 
     cout << " REAR WHEELS IS ON\n";
     wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
-  }else if(abs(_yAngle) < FRONT_WHEELS){
+  }else if(fabs(_yAngle) < FRONT_WHEELS){
     
     cout << " FRONT WHEELS IS ON\n";
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
@@ -624,12 +648,22 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair 
     
     if(_sentido == _ANTI_HORARIO){
       _sentido = _HORARIO;
-      _enable.data |= (1 << ROBOT_CLOCKWISE);
-      _enable.data &= ~(1 << ROBOT_ANTICLOCKWISE);
+      
+      _enable.data = ROBOT_CLOCKWISE;
+      statePub.publish(_enable);
+
+      _enable.data = -ROBOT_ANTICLOCKWISE;
+      statePub.publish(_enable);
+
     }else{
       _sentido = _ANTI_HORARIO;
-      _enable.data |= (1 << ROBOT_ANTICLOCKWISE);
-      _enable.data &= ~(1 << ROBOT_CLOCKWISE);
+      
+      _enable.data = ROBOT_ANTICLOCKWISE;
+      statePub.publish(_enable);
+
+      _enable.data = ROBOT_CLOCKWISE;
+      statePub.publish(_enable);
+
     }
 
   }
@@ -664,11 +698,11 @@ bool Robot::getNothing(){
 }
 
 
-void Robot::setEnable(std_msgs::Int32 enable){
-  _enable.data = enable.data;
+void Robot::setEnable(std_msgs::Int32 states){
+  _states.data = states.data;
 }
 
 
-void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
-  statePub.publish(_enable);
-}
+// void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
+//   statePub.publish(_enable);
+// }

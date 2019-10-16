@@ -11,7 +11,7 @@ from std_msgs.msg import Int32
 
 
 CUT_SCALE = [0.5, 0.1]
-NOTA_MAX  = 120
+NOTA_MAX  = 80
 
 
 state = defs.NOTHING
@@ -27,7 +27,7 @@ rospack.list()
 stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/escada.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
 
-scaleList=np.linspace(1.5, 0.1, 15).tolist()
+scaleList=np.linspace(1.6, 0.5, 15).tolist()
 
 
 #callback function called when a node requires a state change
@@ -75,7 +75,7 @@ def kin_callback(data):
 	#Variables
 	global scaleList, state, stair
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.IN_STAIR)):
 		return
 
 	bridge=CvBridge()
@@ -114,10 +114,9 @@ def kin_callback(data):
 			break
 
 		
-		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
-		maxVal/=1000000
-
+		maxVal*=100
 		
 		# if we have found a new maximum correlation value, then ipdate
 		# the bookkeeping variable
