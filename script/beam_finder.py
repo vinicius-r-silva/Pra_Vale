@@ -39,8 +39,8 @@ def close(data):
 	state = data.data
 
 
-	print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
-	print("-------")
+	#print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
+	#print("-------")
 
 	if((state >> defs.LEAVING_FIRE & 1)==1 and touched==1):
 		rospy.signal_shutdown("Finished job")
@@ -165,7 +165,7 @@ def beam_callback(data):
 
 
 def listener():
-	rospy.init_node('hokuyo', anonymous=True)
+	rospy.init_node('beam', anonymous=True)
 
 	rospy.Subscriber("/sensor/ur5toolCam", Image, beam_callback)
 	rospy.Subscriber("/pra_vale/estados", Int32, close)
@@ -176,5 +176,5 @@ def listener():
 #main
 error=42
 
-print("hokuyo launched")
+print("Beam launched")
 listener()
