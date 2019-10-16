@@ -16,6 +16,9 @@ def print_state():
     global state
     string = ""
 
+    if(state == 1 << defs.ROBOT_CLOCKWISE or state == 1 << defs.ROBOT_ANTICLOCKWISE):
+        state |= 1 << defs.ENABLE_VELODYME
+
     #enable velodyne detection path planning
     if (state & (1 << defs.ENABLE_VELODYME)):
         string += ("  ENABLE_VELODYME")
@@ -87,6 +90,9 @@ def print_state():
     #when the stairs end
     if (state & (1 << defs.BEAM_FIND)):
         string += ("  BEAM_FIND")
+        
+    if (state & (1 << defs.CLIMB_STAIR)):
+        string += ("  CLIMB_STAIR")
     
     print(string)
 
@@ -113,6 +119,20 @@ def set_state(data):
         print_state()
 
 
+#callback function called when a node requires a state change
+def def_state(data):
+    global state
+    state_to_change = abs(data.data)
+    if(data.data > 0):
+        state |= 1 << state_to_change
+    else:
+        state &= ~(1 << state_to_change)
+
+    #print the state change (debug)
+    #print("state changed: ")
+    if(defs.DEBUGGING):
+        print_state()
+
 
 def bean_state(data):
     global state
@@ -128,7 +148,11 @@ def bean_state(data):
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
+<<<<<<< HEAD
     rospy.Subscriber("/pra_vale/beam_finder", Int32, bean_state)
+=======
+    rospy.Subscriber("/pra_vale/def_state", Int32, def_state)
+>>>>>>> 86fc1aa052b5252f695cc411f44231c251ad6325
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
     print_state() #print the intial state

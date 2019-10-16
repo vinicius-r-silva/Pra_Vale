@@ -22,11 +22,16 @@ Visualization::Visualization(){
     sidesInfo = (SidesInfo*) malloc(5 * sizeof(SidesInfo));
 
     avoidingObs = false;
+    nothing = false;
 }
 
 void Visualization::createRectangles(){
     float pSizeX = (avoidingObs) ? 0.3 : 1.0;
     float pSizeY = (avoidingObs) ? 0.6 : 1.0;
+    
+
+    pSizeX = (nothing) ? _MAX_DIST/2 : pSizeX;
+    pSizeY = (nothing) ? _MAX_DIST/2 : pSizeY;
     //float sizeFX = (avoidingObs) ? 1.2 : 1.0;
 
 
@@ -34,7 +39,7 @@ void Visualization::createRectangles(){
     const int FRONT_SIZE_X = 1.0*_SCALE;
     const int FRONT_SIZE_Y = 1.5*_SCALE;
     const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
-    const int FRONT_Y = (_MAX_DIST+0.75)*_SCALE;
+    const int FRONT_Y = (_MAX_DIST+0.65)*_SCALE;
 
     //printa o retangulo da frente
     frontRect = new Rect(FRONT_X, FRONT_Y, FRONT_SIZE_X, FRONT_SIZE_Y);
@@ -139,4 +144,8 @@ SidesInfo* Visualization::getSidesInfo(){
 
 void Visualization::setAvoidingObs(bool avoid){
     avoidingObs = avoid;
+}
+
+void Visualization::setNothing(bool _nothing){
+    nothing = _nothing;
 }

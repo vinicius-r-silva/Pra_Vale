@@ -48,6 +48,8 @@
 #define STRAIT_PATH          16
 #define END_STAIR        	 17
 #define IN_STAIR             18
+#define BEAM_FIND            19
+#define CLIMB_STAIR          20
 
 //controle do robo
 #define _V0 3.0 //velocidade do robo
@@ -56,7 +58,7 @@
 #define _MAX_SPEED 4.2 //velocidade maxima do robo em rad/s
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 1.5 //distancia ideal para seguir a parede
-#define _MIN_SAFE_DIST_SPIN 1.0 //distancia minima da frente para girar
+#define _MIN_SAFE_DIST_SPIN 0.75 //distancia minima da frente para girar
 #define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
 #define _MIN_DIST_ESCADA 1.2 //distancia minima para mandar o robo subir
 #define _MAX_DIST_SIDE_ESCADA 0.85 //distancia maxima do robo para esteira na hora da escada
@@ -75,4 +77,4 @@
 
 //processamento da imagem
 #define _MIN_AREA 25
-#define _MIN_AREA_REC 15 //area minima para utilizar o metodo de recuDir ou recuEsq
+#define _MIN_AREA_REC 10 //area minima para utilizar o metodo de recuDir ou recuEsq
