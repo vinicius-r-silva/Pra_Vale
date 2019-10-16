@@ -54,7 +54,7 @@ _IMU_TILT_ERROR = 0.1
 arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
 
 #publish robot state changes to others ROS packages
-state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
 
 #publishes ROSI speed
 rosi_speed_publisher = rospy.Publisher("/pra_vale/rosi_speed", Float32MultiArray, queue_size = 1)
@@ -275,8 +275,9 @@ def arm_move(data):
         #return the arm normal position of the arm
         if(fire_found):
             fire_found = False
-            state |= 1 << defs.ARM_CHANGING_POSE
-            state_publisher.publish(data = state)
+            # state |= 1 << defs.ARM_CHANGING_POSE
+            # state_publisher.publish(data = state)
+            state_publisher.publish(data = defs.ARM_CHANGING_POSE)
 
             if(narrow_path):
                 x = _NARROW_PATH_X_VALUE
@@ -296,8 +297,9 @@ def arm_move(data):
         #if the is still leaving the fire, keep the LEAVING_FIRE state up
         if (state & (1 << defs.LEAVING_FIRE)):
             if(leaving_fire_cont > 10):
-                state &= ~(1 << defs.LEAVING_FIRE)
-                state_publisher.publish(data = state)
+                # state &= ~(1 << defs.LEAVING_FIRE)
+                # state_publisher.publish(data = state)
+                state_publisher.publish(data = -defs.LEAVING_FIRE)
             else:
                 leaving_fire_cont += 1
 
@@ -306,8 +308,11 @@ def arm_move(data):
         #if the arm just detected the fire, change it's position 
         if(not fire_found):
             fire_found = True
-            state |= 1 << defs.ENABLE_VELODYME | 1 << defs.SETTING_UP_HOKUYO | 1 << defs.ARM_CHANGING_POSE
-            state_publisher.publish(data = state)
+            # state |= 1 << defs.ENABLE_VELODYME | 1 << defs.SETTING_UP_HOKUYO | 1 << defs.ARM_CHANGING_POSE
+            # state_publisher.publish(data = state)
+            state_publisher.publish(data = defs.ENABLE_VELODYME)
+            state_publisher.publish(data = defs.SETTING_UP_HOKUYO)
+            state_publisher.publish(data = defs.ARM_CHANGING_POSE)
 
             rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
             x = _FIRE_FOUND_X_VALUE
@@ -325,32 +330,37 @@ def arm_move(data):
 
             if(state & (1 << defs.SETTING_UP_HOKUYO)):
                 if(x_move == 0 and y_move == 0):
-                    state |= 1 << defs.HOKUYO_READING
-                    state_publisher.publish(data = state)
+                    # state |= 1 << defs.HOKUYO_READING
+                    # state_publisher.publish(data = state)
+                    state_publisher.publish(data = defs.HOKUYO_READING)
                     rosi_speed_publisher.publish(data = ([0,0,0,0]))
 
                 elif(x_move < 0 or y_move > 0):
-                    state &= ~(1 << defs.ENABLE_VELODYME)
-                    state |= 1 << defs.SETTING_UP_HOKUYO
-                    state_publisher.publish(data = state)
+                    # state &= ~(1 << defs.ENABLE_VELODYME)
+                    # state |= 1 << defs.SETTING_UP_HOKUYO
+                    # state_publisher.publish(data = state)
+                    state_publisher.publish(data = -defs.ENABLE_VELODYME)
+                    state_publisher.publish(data =  defs.SETTING_UP_HOKUYO)
                     rosi_speed_publisher.publish(data = ([-0.2,-0.2,-0.2,-0.2]))
                 
                 elif(x_move < 10 and y_move > -10):
-                    state &= ~(1 << defs.ENABLE_VELODYME)
-                    state |= 1 << defs.SETTING_UP_HOKUYO
-                    state_publisher.publish(data = state)
+                    # state &= ~(1 << defs.ENABLE_VELODYME)
+                    # state |= 1 << defs.SETTING_UP_HOKUYO
+                    # state_publisher.publish(data = state)
+                    state_publisher.publish(data = -defs.ENABLE_VELODYME)
+                    state_publisher.publish(data =  defs.SETTING_UP_HOKUYO)
                     rosi_speed_publisher.publish(data = ([0.2,0.2,0.2,0.2]))
 
 
             elif(x < 300 and (state & (1 << defs.FOUND_FIRE_RIGHT))):
                 z = _FIRE_FOUND_Z_VALUE
-                #pos = cinematicaInversa()
-
                 rosi_speed_publisher.publish(data = [0,0,0,0])
 
-                state &= ~(1 << defs.ENABLE_VELODYME)
-                state |= 1 << defs.ROBOT_ROTATION 
-                state_publisher.publish(data = state)
+                # state &= ~(1 << defs.ENABLE_VELODYME)
+                # state |= 1 << defs.ROBOT_ROTATION 
+                # state_publisher.publish(data = state)
+                state_publisher.publish(data = -defs.ENABLE_VELODYME)
+                state_publisher.publish(data =  defs.ROBOT_ROTATION)
 
     #get the joints angles
     pos = cinematicaInversa()
@@ -436,14 +446,21 @@ def arm_current_position(data):
         
 
         if(state & (1 << defs.INITIAL_SETUP)):
-            state &= ~(1 << defs.ARM_CHANGING_POSE) & ~(1 << defs.INITIAL_SETUP)
-            state |= (1 << defs.ENABLE_VELODYME)
+            # state &= ~(1 << defs.ARM_CHANGING_POSE) & ~(1 << defs.INITIAL_SETUP)
+            # state |= (1 << defs.ENABLE_VELODYME)
+            state_publisher.publish(data = -defs.ARM_CHANGING_POSE)
+            state_publisher.publish(data = -defs.INITIAL_SETUP)
+            state_publisher.publish(data =  defs.ENABLE_VELODYME)
         else:
-            state = state & ~(1 << defs.ARM_CHANGING_POSE)
-        state_publisher.publish(data = state)
+            # state = state & ~(1 << defs.ARM_CHANGING_POSE)
+            state_publisher.publish(data = -defs.ARM_CHANGING_POSE)
 
-    if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.joint_variable == 0)):
-        state &= ~(1 << defs.CLIMB_STAIR)
+
+        # state_publisher.publish(data = state)
+
+    # if(((~state) & (1 << defs.CLIMB_STAIR)) and np.all(data.joint_variable == 0)):
+    #     # state &= ~(1 << defs.CLIMB_STAIR)
+    #     state_publisher.publish(data = -defs.CLIMB_STAIR)
 
             
 
@@ -485,19 +502,29 @@ def hokuyo_distance_callback(data):
 
 
     if(not state & (1 << defs.ENABLE_VELODYME | 1 << defs.ROBOT_ROTATION) and state & (1 << defs.FOUND_FIRE_RIGHT)):
-        state &= ~(1 << defs.FOUND_FIRE_RIGHT)
-        state |= 1 << defs.FOUND_FIRE_FRONT
-        state_publisher.publish(data = state)
+        # state &= ~(1 << defs.FOUND_FIRE_RIGHT)
+        # state |= 1 << defs.FOUND_FIRE_FRONT
+        # state_publisher.publish(data = state)
+        state_publisher.publish(data = -defs.FOUND_FIRE_RIGHT)
+        state_publisher.publish(data =  defs.FOUND_FIRE_FRONT)
 
 
     elif (state & (1 << defs.SETTING_UP_HOKUYO)):
         if(hokuyo_distance > _TOUCH_FIRE_FRONT_DISTANCE):
-            state &= ~(1 << defs.SETTING_UP_HOKUYO) 
-            state |= (1 << defs.ENABLE_VELODYME) | (1 << defs.FOUND_FIRE_RIGHT) | (1 << defs.HOKUYO_READING)
+            # state &= ~(1 << defs.SETTING_UP_HOKUYO) 
+            # state |= (1 << defs.ENABLE_VELODYME) | (1 << defs.FOUND_FIRE_RIGHT) | (1 << defs.HOKUYO_READING)
+            state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
+            state_publisher.publish(data =  defs.ENABLE_VELODYME)
+            state_publisher.publish(data =  defs.FOUND_FIRE_RIGHT)
+            state_publisher.publish(data =  defs.HOKUYO_READING)
         else:
-            state &= ~(1 << defs.SETTING_UP_HOKUYO | 1 << defs.ENABLE_VELODYME) 
-            state |=  (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.HOKUYO_READING)
-        state_publisher.publish(data = state)
+            # state &= ~(1 << defs.SETTING_UP_HOKUYO | 1 << defs.ENABLE_VELODYME) 
+            # state |=  (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.HOKUYO_READING)
+            state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
+            state_publisher.publish(data = -defs.ENABLE_VELODYME)
+            state_publisher.publish(data =  defs.FOUND_FIRE_RIGHT)
+            state_publisher.publish(data =  defs.HOKUYO_READING)
+        # state_publisher.publish(data = state)
 
     elif (state & (1 << defs.FOUND_FIRE_FRONT) and hokuyo_distance > _TOUCH_FIRE_FRONT_DISTANCE):
         rosi_speed_publisher.publish(data = [2,2,2,2])
@@ -505,9 +532,12 @@ def hokuyo_distance_callback(data):
     elif(hokuyo_distance <= _TOUCH_FIRE_FRONT_DISTANCE and state & (1 << defs.FOUND_FIRE_FRONT)):
         rosi_speed_publisher.publish(data = [0,0,0,0])
 
-        state &= ~(1 << defs.FOUND_FIRE_FRONT)
-        state |= (1 << defs.ROBOT_ROTATION) | (1 << defs.FOUND_FIRE_TOUCH)
-        state_publisher.publish(data = state)
+        # state &= ~(1 << defs.FOUND_FIRE_FRONT)
+        # state |= (1 << defs.ROBOT_ROTATION) | (1 << defs.FOUND_FIRE_TOUCH)
+        # state_publisher.publish(data = state)
+        state_publisher.publish(data = -defs.FOUND_FIRE_FRONT)
+        state_publisher.publish(data =  defs.ROBOT_ROTATION)
+        state_publisher.publish(data =  defs.FOUND_FIRE_TOUCH)
     
     elif(state & (1 << defs.FOUND_FIRE_TOUCH) and not state & (1 << defs.ROBOT_ROTATION)):
         if(state & (1 << defs.ROBOT_CLOCKWISE) and (x_temp > 400 or x_temp < 300)):
@@ -532,8 +562,9 @@ def hokuyo_distance_callback(data):
 
         elif(torque_value >= 0.1 and not state & (1 << defs.LEAVING_FIRE)):
             leaving_fire_cont = 0
-            state |=  1 << defs.LEAVING_FIRE
-            state_publisher.publish(data = state)
+            # state |=  1 << defs.LEAVING_FIRE
+            # state_publisher.publish(data = state)
+            state_publisher.publish(data = defs.LEAVING_FIRE)
         
         elif(state & (1 << defs.LEAVING_FIRE) and hokuyo_distance < 25):
             if hokuyo_distance > 15:
@@ -555,9 +586,13 @@ def hokuyo_distance_callback(data):
             pos = cinematicaInversa()
             arm_publisher.publish(joint_variable = pos)
 
-            state &= ~(1 << defs.FOUND_FIRE_TOUCH | 1 << defs.HOKUYO_READING)
-            state |= 1 << defs.ENABLE_VELODYME  | 1 << defs.ARM_CHANGING_POSE
-            state_publisher.publish(data = state)
+            # state &= ~(1 << defs.FOUND_FIRE_TOUCH | 1 << defs.HOKUYO_READING)
+            # state |= 1 << defs.ENABLE_VELODYME  | 1 << defs.ARM_CHANGING_POSE
+            # state_publisher.publish(data = state)
+            state_publisher.publish(data = -defs.FOUND_FIRE_TOUCH)
+            state_publisher.publish(data = -defs.HOKUYO_READING)
+            state_publisher.publish(data =  defs.ENABLE_VELODYME)
+            state_publisher.publish(data =  defs.ARM_CHANGING_POSE)
             return
     
     if(state & 1 << defs.ROBOT_CLOCKWISE):
@@ -606,8 +641,9 @@ def state_callback(data):
         pos = cinematicaInversa()
         arm_publisher.publish(joint_variable = pos)
 
-        state |= 1 << defs.ARM_CHANGING_POSE
-        state_publisher.publish(data = state)
+        # state |= 1 << defs.ARM_CHANGING_POSE
+        # state_publisher.publish(data = state)
+        state_publisher.publish(data = defs.ARM_CHANGING_POSE)
 
     elif(not state & (1 << defs.NARROW_PATH | 1 << defs.IN_STAIR) and narrow_path):
         narrow_path = False
