@@ -11,7 +11,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
 #consts
-NOTA_MAX  = 28
+NOTA_MAX  = 80
 
 
 state = defs.NOTHING
@@ -27,10 +27,9 @@ rospack.list()
 beam = cv2.imread(rospack.get_path('pra_vale') + '/resources/beam.png')
 beam = cv2.cvtColor(beam, cv2.COLOR_BGR2GRAY)
 
-scaleList=np.linspace(1.5, 0.1, 15).tolist()
+scaleList=np.linspace(1.2, 0.5, 15).tolist()
 
 arm_move = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
-state_publisher = rospy.Publisher('/pra_vale/beam_finder', Int32, queue_size=10)
 
 touched=0
 
@@ -40,12 +39,10 @@ def close(data):
 	state = data.data
 
 
-	#print state & (1 << defs.BEAM_FIND)," | ",touched
-	#print("-------")
-	if(touched!=1):
-		touched -= 1
+	print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
+	print("-------")
 
-	if((state & (1 << defs.BEAM_FIND))==0 and touched==1):
+	if((state >> defs.LEAVING_FIRE & 1)==1 and touched==1):
 		rospy.signal_shutdown("Finished job")
 		print("FINSHED BEAM")
 		exit()
@@ -89,7 +86,7 @@ def beam_callback(data):
 	#Variables
 	global scaleList, state, beam, arm_move, touched, error, state_publisher
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.LEAVING_FIRE )):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.LEAVING_FIRE)):
 		return
 
 	bridge=CvBridge()
@@ -126,17 +123,17 @@ def beam_callback(data):
 			break
 
 		
-		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
 		
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
 		
-		maxVal/=10000000
+		maxVal*=100
 
 		
 		# if we have found a new maximum correlation value, then update
 		# the bookkeeping variable
-		#print(maxVal)
 		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
+			print(maxVal)
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
 
@@ -147,35 +144,24 @@ def beam_callback(data):
 		
 		start = (maxLoc[0]     , maxLoc[1])
 		end   = (maxLoc[0] + tW, maxLoc[1] + tH)
-		
-		state_publisher.publish(data = 1)
 
 		error = gray.shape[1]/2-(start[0]+end[0])/2
 		
-		print "Pre_Erro: ",error
 		if(error>20):
 			error = 20
 		elif(error<-20):
 			error = -20
 		error/=2
 		touched=1
-		#if(touched<1):
-		#	touched=20
-		
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
-	else:
-		if(touched<1):
-			touched=0
-	print "Erro: ",error
-	print "Touched: ", touched
 	if(touched==1):
 		arm_move.publish(data = [error,0,0])
 		
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Detection",image)
 		cv2.moveWindow("beam_Detection",1920,0)
-		cv2.waitKey(1)
+		cv2.waitKey(15)
 
 
 def listener():

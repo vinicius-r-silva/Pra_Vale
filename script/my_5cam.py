@@ -254,7 +254,7 @@ def ur5_callback(data):
 
 
     #publishes to the arm node
-    if((~state & (1 << defs.BEAM_FIND)) or (state & (1 << defs.BEAM_FIND) and error != _FIRE_NOT_FOUND)):
+    if(error != _FIRE_NOT_FOUND):
         arm_move.publish(data = [error, 0, z])
 
     #print(error)
