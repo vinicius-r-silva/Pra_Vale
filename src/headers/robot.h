@@ -18,6 +18,7 @@ class Robot {
         
         //Recebe o estado do robô
         std_msgs::Int32 _enable; 
+        std_msgs::Int32 _states;
 
         //Máquina de estado interna da classe para movimentação pela escada
         enum{WALKING, LADDER_UP, IN_LADDER, LADDER_DOWN};
