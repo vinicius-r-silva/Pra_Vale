@@ -86,11 +86,8 @@ def print_state():
     #when the stairs end
     if (state & (1 << defs.END_STAIR)):
         string += ("  END_STAIR")
-    
-    #when the stairs end
-    if (state & (1 << defs.BEAM_FIND)):
-        string += ("  BEAM_FIND")
 
+    #when you are climbing the stairs
     if (state & (1 << defs.CLIMB_STAIR)):
         string += ("  CLIMB_STAIR")
     
@@ -104,12 +101,7 @@ def set_state(data):
 
     print state, " ",data.data
 
-    if(state & (1 << defs.BEAM_FIND)):
-        state = data.data
-        state |= 1 << defs.BEAM_FIND
-    else:
-        state = data.data
-
+    state = data.data
 
     #print the state change (debug)
     if(defs.DEBUGGING):
@@ -131,21 +123,11 @@ def def_state(data):
         print_state()
 
 
-def bean_state(data):
-    global state
-    if data.data == 0:
-        state &= ~(1 << defs.BEAM_FIND)
-    else:
-        state |= 1 << defs.BEAM_FIND
-
-
-
 
 #main
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
-    rospy.Subscriber("/pra_vale/beam_finder", Int32, bean_state)
     rospy.Subscriber("/pra_vale/def_state", Int32, def_state)
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 

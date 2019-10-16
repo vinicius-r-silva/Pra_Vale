@@ -48,8 +48,7 @@
 #define STRAIT_PATH          16
 #define END_STAIR        	 17
 #define IN_STAIR             18
-#define BEAM_FIND            19
-#define CLIMB_STAIR          20
+#define CLIMB_STAIR          19
 
 //controle do robo
 #define _V0 3.0 //velocidade do robo

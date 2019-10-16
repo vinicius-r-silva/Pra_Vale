@@ -10,7 +10,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
