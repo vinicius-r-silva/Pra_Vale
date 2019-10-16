@@ -10,7 +10,7 @@ using namespace std;
 
 Robot::Robot(){
     _state = WALKING;
-    _sentido = _HORARIO;
+    _sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -350,11 +350,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
           cout << " | escada";
           _isInStairs = true;
-<<<<<<< HEAD
-          _provavelEscada = true; 
-=======
-          _provavelEscada = false;
->>>>>>> 86fc1aa052b5252f695cc411f44231c251ad6325
+          _provavelEscada = true;
         }
 
         tractionDir = +_KP*_zAngle*2.5;

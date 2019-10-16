@@ -101,9 +101,6 @@ def print_state():
 #callback function called when a node requires a state change
 def set_state(data):
     global state
-    
-    if(state == data.data):
-        return
 
     print state, " ",data.data
 
