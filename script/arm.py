@@ -267,7 +267,7 @@ def arm_move(data):
         y_move = temp
 
     #to debug only
-    #print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
+    print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
     
     #update arm position if there isn't a fire
     if((x_move == _FIRE_NOT_FOUND or y_move == _FIRE_NOT_FOUND) and not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
@@ -300,6 +300,7 @@ def arm_move(data):
                 # state &= ~(1 << defs.LEAVING_FIRE)
                 # state_publisher.publish(data = state)
                 state_publisher.publish(data = -defs.LEAVING_FIRE)
+
             else:
                 leaving_fire_cont += 1
 
@@ -319,7 +320,6 @@ def arm_move(data):
             y = _FIRE_FOUND_Y_VALUE
 
             z = _FIRE_FOUND_Z_VALUE
-            cinematicaInversa()
         else:
             if(not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
                 x += x_move

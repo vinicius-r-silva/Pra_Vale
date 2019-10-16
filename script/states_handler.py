@@ -86,8 +86,8 @@ def print_state():
     #when the stairs end
     if (state & (1 << defs.END_STAIR)):
         string += ("  END_STAIR")
-    
-    #when the stairs end
+
+    #when you are climbing the stairs
     if (state & (1 << defs.CLIMB_STAIR)):
         string += ("  CLIMB_STAIR")
     
@@ -98,6 +98,9 @@ def print_state():
 #callback function called when a node requires a state change
 def set_state(data):
     global state
+
+    print state, " ",data.data
+
     state = data.data
 
     #print the state change (debug)
@@ -119,6 +122,7 @@ def def_state(data):
     #print("state changed: ")
     if(defs.DEBUGGING):
         print_state()
+
 
 
 #main

@@ -11,30 +11,29 @@ from std_msgs.msg import Int32
 
 
 CUT_SCALE = [0.5, 0.1]
-NOTA_MAX  = 120
+NOTA_MAX  = 80
 
-
-state = defs.NOTHING
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
 # list all packages, equivalent to rospack list
 rospack.list() 
 
+state=defs.NOTHING
 
 #Load the template, convert it to grayscale, and detect edges
 # get the file path for pra_vale
 stair = cv2.imread(rospack.get_path('pra_vale') + '/resources/escada.png')
 stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
 
-scaleList=np.linspace(1.5, 0.1, 15).tolist()
+scaleList=np.linspace(1.6, 0.5, 15).tolist()
 
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
 
 #callback function called when a node requires a state change
 def set_state(data):
 	global state
 	state = data.data
-
 
 def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 	# initialize the dimensions of the image to be resized and
@@ -73,9 +72,9 @@ def kin_callback(data):
 	global NOTA_MAX, CUT_SCALE
 
 	#Variables
-	global scaleList, state, stair
+	global scaleList, state, stair, state_publisher
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.IN_STAIR)):
 		return
 
 	bridge=CvBridge()
@@ -114,10 +113,9 @@ def kin_callback(data):
 			break
 
 		
-		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
-		maxVal/=1000000
-
+		maxVal*=100
 		
 		# if we have found a new maximum correlation value, then ipdate
 		# the bookkeeping variable
@@ -134,17 +132,12 @@ def kin_callback(data):
 		start = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1])     , maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]))
 		end   = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1]) + tW, maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]) + tH)
 		
-		#print(float(maxLoc[0] + tW/2)/image.shape[1]/2, float(maxLoc[1] + tH/2 + image.shape[0]/2)/image.shape[1]/2)
-		state |= 1 << defs.FOUND_STAIR
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+		state_publisher.publish(data = defs.FOUND_STAIR)
 
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
 	else:
-		state &= ~(1 << defs.FOUND_STAIR)
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+		state_publisher.publish(data = (-1)*defs.FOUND_STAIR)
 	if defs.DEBUGGING:
 		cv2.imshow("escada_Detection",image)
 		cv2.moveWindow("escada_Detection",1920,0)

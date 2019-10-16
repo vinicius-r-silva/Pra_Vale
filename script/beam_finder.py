@@ -11,7 +11,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
 #consts
-NOTA_MAX  = 120
+NOTA_MAX  = 80
 
 
 state = defs.NOTHING
@@ -27,7 +27,7 @@ rospack.list()
 beam = cv2.imread(rospack.get_path('pra_vale') + '/resources/beam.png')
 beam = cv2.cvtColor(beam, cv2.COLOR_BGR2GRAY)
 
-scaleList=np.linspace(1.5, 0.1, 15).tolist()
+scaleList=np.linspace(1.2, 0.5, 15).tolist()
 
 arm_move = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 
@@ -37,7 +37,12 @@ touched=0
 def close(data):
 	global state,touched
 	state = data.data
-	if(~state & (1 << defs.BEAM_FIND) and touched):
+
+
+	print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
+	print("-------")
+
+	if((state >> defs.LEAVING_FIRE & 1)==1 and touched==1):
 		rospy.signal_shutdown("Finished job")
 		print("FINSHED BEAM")
 		exit()
@@ -79,9 +84,9 @@ def beam_callback(data):
 	global NOTA_MAX, CUT_SCALE
 
 	#Variables
-	global scaleList, state, beam, arm_move,touched
+	global scaleList, state, beam, arm_move, touched, error, state_publisher
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.LEAVING_FIRE)):
 		return
 
 	bridge=CvBridge()
@@ -91,7 +96,7 @@ def beam_callback(data):
 	r,g,b=cv2.split(image)
 
 	mask=(cv2.add(cv2.subtract(r,b),cv2.subtract(b,r))[:]<25)
-	mask=np.logical_and(mask,r[:]>200)
+	mask=np.logical_and(mask,r[:]>212)
 
 
 	hist=cv2.bitwise_and(image,image,mask=mask.astype(np.uint8))
@@ -99,7 +104,7 @@ def beam_callback(data):
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Hist",hist)
 		cv2.moveWindow("beam_Hist",1920,1200)
-		cv2.waitKey(10)
+		cv2.waitKey(1)
 	
 	gray = cv2.cvtColor(hist, cv2.COLOR_BGR2GRAY)
 	found = None
@@ -118,17 +123,17 @@ def beam_callback(data):
 			break
 
 		
-		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
 		
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
 		
-		maxVal/=1000000
+		maxVal*=100
 
 		
 		# if we have found a new maximum correlation value, then update
 		# the bookkeeping variable
 		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
-			#print(maxVal)
+			print(maxVal)
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
 
@@ -139,29 +144,24 @@ def beam_callback(data):
 		
 		start = (maxLoc[0]     , maxLoc[1])
 		end   = (maxLoc[0] + tW, maxLoc[1] + tH)
+
+		error = gray.shape[1]/2-(start[0]+end[0])/2
 		
-		state |= 1 << defs.FOUND_STAIR
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
-
-		error = ((start[0]+end[1])/2.0,(start[0]+end[1])/2.0)
-
-		if(error>10):
-			error = 10
-		elif(error<10):
-			error = -10
-
-		arm_move.publish(data = [error,0,0])
-
+		if(error>20):
+			error = 20
+		elif(error<-20):
+			error = -20
+		error/=2
 		touched=1
-		
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
-
+	if(touched==1):
+		arm_move.publish(data = [error,0,0])
+		
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Detection",image)
 		cv2.moveWindow("beam_Detection",1920,0)
-		cv2.waitKey(1)
+		cv2.waitKey(15)
 
 
 def listener():
@@ -174,5 +174,7 @@ def listener():
 
 
 #main
+error=42
+
 print("hokuyo launched")
 listener()
