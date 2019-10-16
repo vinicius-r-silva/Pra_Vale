@@ -24,8 +24,13 @@ Robot::Robot(){
 
 void Robot::processMap(SidesInfo *sidesInfo){
 
+  //define a precisao dos dados na hora de exibilos
   cout.precision(4);
+  
+  if(_straitPath)
+    cout << "AJFHASDASLDHASKL";
 
+  
 
   //atualiza o estado do robo
   if(_sentido == _ANTI_HORARIO){
@@ -58,8 +63,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
   
   //aumenta as dimensoes do retangulo caso nao tenha achado nada
-  cout << " | DistD: " << sidesInfo[_RIGHT].distance;
-  cout << " | DistE: " << sidesInfo[_LEFT].distance;
+  cout << " | DFY: " << sidesInfo[_FRONT].medY;
   cout << " | AF: " << sidesInfo[_FRONT].area;
 
   if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_LEFT].distance > 2 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
@@ -83,8 +87,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     statePub.publish(_enable);
   }
 
-  if(!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
-    || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))){
+  if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
+    || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)))){
 
     _straitPath = true;
     _enable.data = STRAIT_PATH;
@@ -171,15 +175,18 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle * _KP_OBSTACLE;
 
-    if(_straitPath && _HORARIO && sidesInfo[_LEFT].medX > 0.5){
+    if(_straitPath && _sentido == _HORARIO && sidesInfo[_LEFT].medX > 0.5){
       _straitPath = false;
-      _enable.data &= ~(1 << STRAIT_PATH);
+      _enable.data = -STRAIT_PATH;
+      statePub.publish(_enable);
       _distToTrack = NICE_DIST_TRACK;
     }
 
     cout << "E: SegueDir | Erro: " << erro;
     cout << " | AD: " << sidesInfo[_RIGHT].area;
     cout << " | DDX: " << sidesInfo[_RIGHT].medX;
+    cout << " | DEX: " << sidesInfo[_LEFT].medX;
+
 
 
   //Recupera o trajeto da esquerda
@@ -205,7 +212,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle *_KP_OBSTACLE;
 
-    if(_straitPath && _ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
+    if(_straitPath && _sentido ==_ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
     _straitPath = false;
     _enable.data = -STRAIT_PATH;
     statePub.publish(_enable);

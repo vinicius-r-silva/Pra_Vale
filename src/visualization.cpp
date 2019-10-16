@@ -19,7 +19,7 @@ Visualization::Visualization(){
 
     robotRect = new Rect(ROBOT_X, ROBOT_Y, ROBOT_SIZE_X, ROBOT_SIZE_Y);
 
-    sidesInfo = (SidesInfo*) malloc(5 * sizeof(SidesInfo));
+    sidesInfo = (SidesInfo*) malloc(6 * sizeof(SidesInfo));
 
     avoidingObs = false;
     nothing = false;
@@ -128,7 +128,14 @@ void Visualization::getInfo(){
     sidesInfo[_RIGHT].getInfo(imgProcessed, LENGHT, rightRect->x, rightRect->y, rightRect->width, rightRect->height);
     sidesInfo[_FRONT_LEFT].getInfo(imgProcessed, LENGHT, frontRect->x + frontRect->width/2, frontRect->y, frontRect->width/2, frontRect->height);
     sidesInfo[_FRONT_RIGHT].getInfo(imgProcessed, LENGHT, frontRect->x, frontRect->y, frontRect->width/2, frontRect->height);
+    sidesInfo[_FRONT_MIDLE].getInfo(imgProcessed, LENGHT, (_MAX_DIST - 0.2)*_SCALE, (_MAX_DIST + 0.65)*_SCALE, 0.4*_SCALE, frontRect->height);
 
+/*
+    sidesInfo[_FRONT].distance = (sidesInfo[_FRONT_LEFT].distance+sidesInfo[_FRONT_RIGHT].distance)/2;
+    sidesInfo[_FRONT].area = (sidesInfo[_FRONT_LEFT].area+sidesInfo[_FRONT_RIGHT].area);
+    sidesInfo[_FRONT].medX = (sidesInfo[_FRONT_LEFT].medX+sidesInfo[_FRONT_RIGHT].medX)/2;
+    sidesInfo[_FRONT].medY = (sidesInfo[_FRONT_LEFT].medY+sidesInfo[_FRONT_RIGHT].medY)/2;
+*/
 }
 
 //decide se os pontos do velodyne sao importantes ou nao
