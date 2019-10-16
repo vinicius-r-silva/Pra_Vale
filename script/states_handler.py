@@ -106,11 +106,26 @@ def set_state(data):
         print_state()
 
 
+#callback function called when a node requires a state change
+def def_state(data):
+    global state
+    state_to_change = abs(data.data)
+    if(data.data > 0):
+        state |= 1 << state_to_change
+    else:
+        state &= ~(1 << state_to_change)
+
+    #print the state change (debug)
+    #print("state changed: ")
+    if(defs.DEBUGGING):
+        print_state()
+
 
 #main
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
+    rospy.Subscriber("/pra_vale/def_state", Int32, def_state)
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
     print_state() #print the intial state
