@@ -90,7 +90,7 @@ def print_state():
     #when the stairs end
     if (state & (1 << defs.BEAM_FIND)):
         string += ("  BEAM_FIND")
-        
+
     if (state & (1 << defs.CLIMB_STAIR)):
         string += ("  CLIMB_STAIR")
     
@@ -148,11 +148,8 @@ def bean_state(data):
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
-<<<<<<< HEAD
     rospy.Subscriber("/pra_vale/beam_finder", Int32, bean_state)
-=======
     rospy.Subscriber("/pra_vale/def_state", Int32, def_state)
->>>>>>> 86fc1aa052b5252f695cc411f44231c251ad6325
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
     print_state() #print the intial state
