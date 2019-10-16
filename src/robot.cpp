@@ -18,6 +18,7 @@ Robot::Robot(){
     _avoidingObs = false;
     _nothing = true;
     _straitPath = false;
+    _climbing = false;
 
     _distToTrack = NICE_DIST_TRACK;
 }
@@ -96,18 +97,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _distToTrack = NICE_DIST_TRACK - 0.25;
     cout << "StraitPath\t";
 
-  }
+  } 
 
   if(_isInStairs && !(_state == IN_LADDER || _state == LADDER_DOWN)){
     _state = LADDER_UP;  
-  }
-
-  if(_state == LADDER_DOWN && fabs(_yAngle) < OKAY && _states.data & (1 << FOUND_STAIR)){
-    _rodar = true;
-    _enable.data =-FOUND_STAIR;
-    statePub.publish(_enable);
-    _state = WALKING;
-    _isInStairs = false;
   }
 
   //Implementacao da maquina de estado
@@ -136,6 +129,15 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else if(_state == LADDER_DOWN){
 
     erro = _zAngle * _KP_OBSTACLE;
+
+    if(fabs(_yAngle) > OKAY){
+      _climbing = true;
+      downStairs();
+    }else if(_climbing){
+      _rodar = true;
+      _state = WALKING;
+      _isInStairs = false;
+    }
 
     cout << "E: DescendoEscada";
 
@@ -559,7 +561,6 @@ void Robot::climbStairs(){
   msg.data.clear();
   float wheelFrontSpeed;
   float wheelRearSpeed;
-  static bool _climbing = false;
 
   if(fabs(_yAngle) < OKAY){
 
@@ -578,15 +579,8 @@ void Robot::climbStairs(){
       _enable.data = IN_STAIR;
       statePub.publish(_enable);
 
-      // static int i = 0;
-      // i++;
-      // if(i > 3){
-      //   _state = IN_LADDER;
-      //   wheelFrontSpeed = 0.0;
-      //   wheelRearSpeed = 0.0;
-      //   _enable.data &= ~(1 << CLIMB_STAIR);
-      //   _enable.data |= (1 << IN_STAIR);
-      // }
+      _climbing = false;
+
     } 
 
   }else if(fabs(_yAngle) > REAR_WHEELS){
@@ -617,6 +611,19 @@ void Robot::climbStairs(){
 
   wheelPub.publish(msg);
 
+}
+
+void Robot::downStairs(){
+  std_msgs::Float32MultiArray msg;
+  msg.data.clear();
+
+  float wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
+
+  for(int i = 0; i < 4; i++){
+    msg.data.push_back((i == 0 || i == 2) ? 0.0f : wheelRearSpeed);
+  }
+
+  wheelPub.publish(msg);
 }
 
 void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair da escada
@@ -712,7 +719,3 @@ void Robot::setEnable(std_msgs::Int32 states){
   _states.data = states.data;
 }
 
-
-// void Robot::setStatePub(std_msgs::Int32 _enable){ //publica o estado
-//   statePub.publish(_enable);
-// }

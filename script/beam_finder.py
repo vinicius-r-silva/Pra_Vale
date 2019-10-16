@@ -11,7 +11,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32
 
 #consts
-NOTA_MAX  = 80
+NOTA_MAX  = 79
 
 
 state = defs.NOTHING
@@ -39,12 +39,12 @@ def close(data):
 	state = data.data
 
 
-	print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
-	print("-------")
+	#print ((state >> defs.LEAVING_FIRE) & 1) ," | ",touched
+	#print("-------")
 
 	if((state >> defs.LEAVING_FIRE & 1)==1 and touched==1):
 		rospy.signal_shutdown("Finished job")
-		print("FINSHED BEAM")
+		print("FINISHED BEAM")
 		exit()
 
 
@@ -133,7 +133,7 @@ def beam_callback(data):
 		# if we have found a new maximum correlation value, then update
 		# the bookkeeping variable
 		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
-			print(maxVal)
+			#print(maxVal)
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
 
@@ -165,7 +165,7 @@ def beam_callback(data):
 
 
 def listener():
-	rospy.init_node('hokuyo', anonymous=True)
+	rospy.init_node('beam', anonymous=True)
 
 	rospy.Subscriber("/sensor/ur5toolCam", Image, beam_callback)
 	rospy.Subscriber("/pra_vale/estados", Int32, close)
@@ -176,5 +176,5 @@ def listener():
 #main
 error=42
 
-print("hokuyo launched")
+print("Beam launched")
 listener()
