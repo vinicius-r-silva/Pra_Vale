@@ -47,7 +47,7 @@ void Visualization::createRectangles(){
     //retangulo da lateral esquerda
     const int LEFT_SIZE_X = 2*_SCALE * pSizeX; 
     const int LEFT_SIZE_Y = 2.2*_SCALE * pSizeY;
-    const int LEFT_X = (_MAX_DIST+0.25)*_SCALE;
+    const int LEFT_X = (_MAX_DIST+0.30)*_SCALE;
     const int LEFT_Y = _MAX_DIST*_SCALE - LEFT_SIZE_Y/3;
 
     //printa o retangulo da esquerda
@@ -56,7 +56,7 @@ void Visualization::createRectangles(){
     //retangulo da lateral direita
     const int RIGHT_SIZE_X = 2*_SCALE * pSizeX;
     const int RIGHT_SIZE_Y = 2.2*_SCALE * pSizeY;
-    const int RIGHT_X = (_MAX_DIST-0.25)*_SCALE - RIGHT_SIZE_X;
+    const int RIGHT_X = (_MAX_DIST-0.30)*_SCALE - RIGHT_SIZE_X;
     const int RIGHT_Y = _MAX_DIST*_SCALE - RIGHT_SIZE_Y/3;
 
     //printa o retangulo da direita

@@ -34,13 +34,14 @@ class Robot {
         bool _avoidingObs; // Determina se o robô está desviando de um obstáculo
         bool _straitPath; // Determina se o robô reconheceu um caminho estreito 
         bool _provavelEscada; //Determina se há uma escada por perto para mudar o comportamento do robô
-        bool _nothing;
         bool _climbing;
 
         void climbStairs(); //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
         void downStairs(); //Algoritmo para descer das escadas
+        bool _nothing; //Confere se o velodyne nao detectou nada no alcance normal
+        bool _begin; //Determina se precisa analisar o caminho para descobrir o sentido ou nao
 
     public:
         Robot(); //Construtor da classe

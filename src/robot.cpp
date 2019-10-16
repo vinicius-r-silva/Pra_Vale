@@ -9,13 +9,14 @@ using namespace std;
 #define OKAY 0.08
 
 Robot::Robot(){
+    _begin = true;
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
-    _nothing = false;
+    _nothing = true;
     _straitPath = false;
     _climbing = false;
 
@@ -26,11 +27,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   cout.precision(4);
 
-  _nothing = false;
 
   //atualiza o estado do robo
   if(_sentido == _ANTI_HORARIO){
-
     _enable.data = ROBOT_ANTICLOCKWISE;
     statePub.publish(_enable);
 
@@ -38,7 +37,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
     statePub.publish(_enable);
 
   }else{
-
     _enable.data = ROBOT_CLOCKWISE;
     statePub.publish(_enable);
 
@@ -61,9 +59,15 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
   
   //aumenta as dimensoes do retangulo caso nao tenha achado nada
-  if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_RIGHT].distance > 2){
+  cout << " | DistD: " << sidesInfo[_RIGHT].distance;
+  cout << " | DistE: " << sidesInfo[_LEFT].distance;
+  cout << " | AF: " << sidesInfo[_FRONT].area;
+
+  if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_LEFT].distance > 2 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << " | Nao detectou nd";
     _nothing = true;
+  }else{
+    _nothing = false;
   }
 
   float stairsDir = (_state == LADDER_DOWN) ? -0.7 : 1;
@@ -158,7 +162,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = false;
   //Aproxima da esteira quando ela está a direita
-  }else if(sidesInfo[_RIGHT].medX!= 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.10){
+  }else if(sidesInfo[_RIGHT].medX != 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.10){
 
     erro = (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
 
@@ -221,13 +225,42 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else{
     
     erro = 0.0;
-
-    if(sidesInfo[_FRONT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC && sidesInfo[_RIGHT].area < _MIN_AREA_REC)
-      _nothing = true;
-
     cout << "E: NormalEt";
   
   }
+
+
+  //corrige o angulo inicial do robo
+  if(_begin){
+    if(_zAngle < 0)
+      _zAngle += M_PI*2;
+    
+    
+    if(sidesInfo[_FRONT].area > _MIN_AREA_REC/2)
+      _begin = false;
+
+    else if(_zAngle > M_PI && _zAngle < 2*M_PI-0.1){
+      erro = -5*_V0/_KP;
+      cout << "Alinhando posiIni";
+    }
+    else if(_zAngle < M_PI && _zAngle > 0.1){
+      erro = 5*_V0/_KP;
+      cout << "Alinhando posiIni";
+    }
+    
+    else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC){
+      cout << " | Setando para horario";
+      _begin = false;
+      _sentido = _HORARIO;
+    
+    }else if(sidesInfo[_RIGHT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
+      cout << " | Setando para anti-horario";      
+      _begin = false;
+      _sentido = _ANTI_HORARIO;
+    }
+  }
+
+
 
   if(_straitPath)
     erro *= 1.2;
