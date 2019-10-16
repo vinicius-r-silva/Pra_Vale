@@ -75,7 +75,7 @@ def kin_callback(data):
 	#Variables
 	global scaleList, state, stair
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.IN_STAIR)):
 		return
 
 	bridge=CvBridge()
@@ -114,7 +114,7 @@ def kin_callback(data):
 			break
 
 		
-		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF)
+		result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
 		(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
 		maxVal/=1000000
 

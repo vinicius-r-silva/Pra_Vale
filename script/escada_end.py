@@ -42,6 +42,9 @@ def kin_callback(data):
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
 		return
 
+	if(~state & (1 << defs.IN_STAIR)):
+		return
+
 	bridge=CvBridge()
 	image = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 

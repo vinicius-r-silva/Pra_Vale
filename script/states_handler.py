@@ -84,6 +84,10 @@ def print_state():
     if (state & (1 << defs.END_STAIR)):
         string += ("  END_STAIR")
     
+    #when the stairs end
+    if (state & (1 << defs.BEAM_FIND)):
+        string += ("  BEAM_FIND")
+    
     print(string)
 
 
@@ -91,12 +95,32 @@ def print_state():
 #callback function called when a node requires a state change
 def set_state(data):
     global state
-    state = data.data
+    
+    if(state == data.data):
+        return
+
+    print state, " ",data.data
+
+    if(state & (1 << defs.BEAM_FIND)):
+        state = data.data
+        state |= 1 << defs.BEAM_FIND
+    else:
+        state = data.data
+
 
     #print the state change (debug)
-    #print("state changed: ")
     if(defs.DEBUGGING):
         print_state()
+
+
+
+def bean_state(data):
+    global state
+    if data.data == 0:
+        state &= ~(1 << defs.BEAM_FIND)
+    else:
+        state |= 1 << defs.BEAM_FIND
+
 
 
 
@@ -104,6 +128,7 @@ def set_state(data):
 if __name__ == '__main__':
     rospy.init_node('state_handler', anonymous=True)
     rospy.Subscriber("/pra_vale/set_state", Int32, set_state)
+    rospy.Subscriber("/pra_vale/beam_finder", Int32, bean_state)
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
     print_state() #print the intial state

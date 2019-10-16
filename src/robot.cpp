@@ -320,7 +320,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
           cout << " | escada";
           _isInStairs = true;
-          _provavelEscada = false; 
+          _provavelEscada = true; 
         }
 
         tractionDir = +_KP*_zAngle*2.5;
