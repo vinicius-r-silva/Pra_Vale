@@ -11,7 +11,7 @@ using namespace std;
 Robot::Robot(){
     _begin = true;
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -29,7 +29,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   //atualiza o estado do robo
   if(_sentido == _ANTI_HORARIO){
-
     _enable.data = ROBOT_ANTICLOCKWISE;
     statePub.publish(_enable);
 
@@ -37,7 +36,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
     statePub.publish(_enable);
 
   }else{
-
     _enable.data = ROBOT_CLOCKWISE;
     statePub.publish(_enable);
 
@@ -60,8 +58,11 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
   
   //aumenta as dimensoes do retangulo caso nao tenha achado nada
-  cout << " | Dist: " << sidesInfo[_RIGHT].distance;
-  if(sidesInfo[_RIGHT].distance < 2 && sidesInfo[_LEFT].area < 2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){
+  cout << " | DistD: " << sidesInfo[_RIGHT].distance;
+  cout << " | DistE: " << sidesInfo[_LEFT].distance;
+  cout << " | AF: " << sidesInfo[_FRONT].area;
+
+  if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_LEFT].distance > 2 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << " | Nao detectou nd";
     _nothing = true;
   }else{
@@ -243,11 +244,13 @@ void Robot::processMap(SidesInfo *sidesInfo){
       cout << "Alinhando posiIni";
     }
     
-    else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC/2 && sidesInfo[_LEFT].area < _MIN_AREA_REC/2){
+    else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC){
+      cout << " | Setando para horario";
       _begin = false;
       _sentido = _HORARIO;
     
-    }else if(sidesInfo[_RIGHT].area < _MIN_AREA_REC/2 && sidesInfo[_LEFT].area > _MIN_AREA_REC/2){
+    }else if(sidesInfo[_RIGHT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
+      cout << " | Setando para anti-horario";      
       _begin = false;
       _sentido = _ANTI_HORARIO;
     }
