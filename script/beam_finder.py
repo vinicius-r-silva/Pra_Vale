@@ -31,11 +31,15 @@ scaleList=np.linspace(1.2, 0.5, 15).tolist()
 
 arm_move = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 
+#publish robot state changes to others ROS packages
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
+
 touched=0
 
 #callback function called when a node requires a state change
 def close(data):
 	global state,touched
+	global state_publisher
 	state = data.data
 
 
@@ -43,6 +47,7 @@ def close(data):
 	#print("-------")
 
 	if((state >> defs.LEAVING_FIRE & 1)==1 and touched==1):
+		state_publisher.publish(data = -defs.BEAM_FIND)
 		rospy.signal_shutdown("Finished job")
 		print("FINISHED BEAM")
 		exit()
@@ -155,8 +160,8 @@ def beam_callback(data):
 		touched=1
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
-	if(touched==1):
 		arm_move.publish(data = [error,0,0])
+		state_publisher.publish(data = defs.BEAM_FIND)
 		
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Detection",image)

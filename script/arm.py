@@ -270,42 +270,46 @@ def arm_move(data):
     print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
     
     #update arm position if there isn't a fire
-    if((x_move == _FIRE_NOT_FOUND or y_move == _FIRE_NOT_FOUND) and not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
-        #if the arm just finished leaving the fire location
-        #return the arm normal position of the arm
-        if(fire_found):
-            fire_found = False
-            # state |= 1 << defs.ARM_CHANGING_POSE
-            # state_publisher.publish(data = state)
-            state_publisher.publish(data = defs.ARM_CHANGING_POSE)
+    # if((x_move == _FIRE_NOT_FOUND or y_move == _FIRE_NOT_FOUND) and not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
+    #     print("aqui 1")
+    #     #if the arm just finished leaving the fire location
+    #     #return the arm normal position of the arm
+    #     if(fire_found):
+    #         fire_found = False
+    #         # state |= 1 << defs.ARM_CHANGING_POSE
+    #         # state_publisher.publish(data = state)
+    #         state_publisher.publish(data = defs.ARM_CHANGING_POSE)
 
-            if(narrow_path):
-                x = _NARROW_PATH_X_VALUE
-                y = _NARROW_PATH_Y_VALUE
-                z = _NARROW_PATH_Z_VALUE
-            else:
-                x = _FIRE_NOT_FOUND_X_VALUE
-                y = _FIRE_NOT_FOUND_Y_VALUE
-                z = _FIRE_NOT_FOUND_Z_VALUE
+    #         if(narrow_path):
+    #             x = _NARROW_PATH_X_VALUE
+    #             y = _NARROW_PATH_Y_VALUE
+    #             z = _NARROW_PATH_Z_VALUE
+    #         else:
+    #             x = _FIRE_NOT_FOUND_X_VALUE
+    #             y = _FIRE_NOT_FOUND_Y_VALUE
+    #             z = _FIRE_NOT_FOUND_Z_VALUE
 
-        #otherwise, just move the arm to the required position
-        else:
-            x += x_move
-            y += y_move
-            z += z_move
+    #     #otherwise, just move the arm to the required position
+    #     else:
+    #         x += x_move
+    #         y += y_move
+    #         z += z_move
 
-        #if the is still leaving the fire, keep the LEAVING_FIRE state up
-        if (state & (1 << defs.LEAVING_FIRE)):
-            if(leaving_fire_cont > 10):
-                # state &= ~(1 << defs.LEAVING_FIRE)
-                # state_publisher.publish(data = state)
-                state_publisher.publish(data = -defs.LEAVING_FIRE)
+    #     #if the is still leaving the fire, keep the LEAVING_FIRE state up
+    #     if (state & (1 << defs.LEAVING_FIRE)):
+    #         if(leaving_fire_cont > 10):
+    #             # state &= ~(1 << defs.LEAVING_FIRE)
+    #             # state_publisher.publish(data = state)
+    #             state_publisher.publish(data = -defs.LEAVING_FIRE)
+    #             fire_found = False
 
-            else:
-                leaving_fire_cont += 1
+    #         else:
+    #             leaving_fire_cont += 1
 
     #if the arm is detecting a fire, but didn't touch it yet
-    elif(not state & (1 << defs.LEAVING_FIRE)):
+    #elif(not state & (1 << defs.LEAVING_FIRE)):
+    if(not state & (1 << defs.LEAVING_FIRE)):
+        print("aqui 2")
         #if the arm just detected the fire, change it's position 
         if(not fire_found):
             fire_found = True
@@ -469,6 +473,7 @@ def hokuyo_distance_callback(data):
     global y
     global z
     global state
+    global fire_found
     global torque_value
     global state_publisher
     global hokuyo_distance
@@ -565,6 +570,7 @@ def hokuyo_distance_callback(data):
             # state |=  1 << defs.LEAVING_FIRE
             # state_publisher.publish(data = state)
             state_publisher.publish(data = defs.LEAVING_FIRE)
+            fire_found = False
         
         elif(state & (1 << defs.LEAVING_FIRE) and hokuyo_distance < 25):
             if hokuyo_distance > 15:

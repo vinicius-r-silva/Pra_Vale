@@ -35,7 +35,7 @@ arm_move = rospy.Publisher('/pra_vale/arm_move', Int32MultiArray, queue_size=10)
 arm_tilt = rospy.Publisher('/pra_vale/arm_tilt', Float32, queue_size=10)
 
 #publish robot state changes to others ROS packages
-state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
 
 
 #desired z (height) position of the arm
@@ -177,10 +177,11 @@ def ur5_callback(data):
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
     #check if it's necessary process the image
-    if(state & ((1 << defs.ARM_CHANGING_POSE) | (1 << defs.FOUND_FIRE_FRONT) | (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.NOTHING))):
+    if(state & ((1 << defs.ARM_CHANGING_POSE) | (1 << defs.FOUND_FIRE_FRONT) | (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.NOTHING) | (1 << defs.BEAM_FIND))):
         cv2.imshow("Camera",frame) #if it isn't necessary, show the image and exit
         cv2.waitKey(1)
         return
+
 
     #Calculates RGB threshold to find fire
     mask=cv2.inRange(frame,(0,175,210),(100,255,255))
@@ -249,8 +250,9 @@ def ur5_callback(data):
 
 
     if (state & 1 << defs.LEAVING_FIRE and error == _FIRE_NOT_FOUND):
-        state &= ~(1 << defs.LEAVING_FIRE)
-        state_publisher.publish(data = state)
+        # state &= ~(1 << defs.LEAVING_FIRE)
+        # state_publisher.publish(data = state)
+        state_publisher.publish(data = -defs.LEAVING_FIRE)
 
 
     #publishes to the arm node
