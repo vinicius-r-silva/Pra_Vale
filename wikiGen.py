@@ -17,7 +17,7 @@ for filename in glob.glob(os.path.join('script', '*.py')):
 			out.write("Subscriber  ")
 			pos=line.find(",")
 			
-			out.write(line[line.find("(")+2:pos-2])
+			out.write(line[line.find("(")+2:pos-1])
 			
 			out.write("->")
 			out.write(line[pos+1:line.find(",",pos+1)])
@@ -29,13 +29,14 @@ for filename in glob.glob(os.path.join('script', '*.py')):
 			out.write("Publisher  ")
 			pos=line.find(",")
 			
-			out.write(line[line.find("(")+2:pos-2])
+			out.write(line[line.find("(")+2:pos-1])
 			
 			out.write("->")
 			out.write(line[pos+1:line.find(",",pos+1)])
 			out.write(": ")
 			out.write(filename)
 			out.write("\n")
+	out.write("\n")
 
 for filename in glob.glob(os.path.join('src', '*.cpp')):
 	arq = open(filename)
@@ -58,3 +59,4 @@ for filename in glob.glob(os.path.join('src', '*.cpp')):
 			out.write(" ")
 			out.write(filename)
 			out.write("\n")
+	out.write("\n")

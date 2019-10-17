@@ -58,14 +58,24 @@
 #define _MIN_DIST_FRONT 2.5 //distancia maxima do obstaculo para virar
 #define _DIST_SEGUE_PAREDE 1.5 //distancia ideal para seguir a parede
 #define _MIN_SAFE_DIST_SPIN 0.75 //distancia minima da frente para girar
-#define _MAX_WHEEL_R_SPEED 0.52 // maxima velocidade de rotação das rodas
-#define _MIN_DIST_ESCADA 1.2 //distancia minima para mandar o robo subir
+#define _MAX_WHEEL_R_SPEED 1.0 // maxima velocidade de rotação das rodas
+#define _MIN_DIST_ESCADA 1.00 //distancia minima para mandar o robo subir
+#define _MIN_DIST_ALIGNE_FRONT_STAIR 1.1 //distancia minima para comecar a alinhar com a esteira para subir a escada
 #define _MAX_DIST_SIDE_ESCADA 0.85 //distancia maxima do robo para esteira na hora da escada
 #define _MIN_DIST_SIDE_ESCADA 0.65 //distancia minima da esteira para subir a escada
 #define _MAX_ERRO_ESCADA 0.05 //erro no angulo maximo permitido na escada
 #define _HORARIO true //sentido de rotacao do robo
 #define _ANTI_HORARIO false //sentido de rotacao do robo
 
+
+#define _NEEDS_SPEED true
+
+
+#define _KP_REC 0.7
+#define NICE_DIST_TRACK 0.80
+#define FRONT_WHEELS 0.25
+#define REAR_WHEELS 0.37
+#define PLANE 0.12
 
 //informacoes da struct
 #define _FRONT 0

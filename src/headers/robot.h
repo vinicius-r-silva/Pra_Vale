@@ -36,7 +36,7 @@ class Robot {
         bool _provavelEscada; //Determina se há uma escada por perto para mudar o comportamento do robô
         bool _climbing;
 
-        void climbStairs(); //Algoritmo para subir as escadas
+        bool climbStairs(); //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void aligneEscada(SidesInfo *sidesInfo); //alinha o robo com a esteira para subir a escada
         void downStairs(); //Algoritmo para descer das escadas

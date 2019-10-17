@@ -7,8 +7,9 @@ from std_msgs.msg import Int32
 
 
 
-#global variable
-state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) | (1 << defs.IN_STAIR)
+#Global variable of all states
+#Each byte is a state
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE)
 
 
 
