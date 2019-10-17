@@ -105,7 +105,7 @@ def set_state(data):
 
     #print the state change (debug)
     print("state changed is deprecated")
-    if(defs.DEBUGGING):
+    if(defs.PRINT_STATES):
         print_state()
 
 
@@ -120,7 +120,7 @@ def def_state(data):
 
     #print the state change (debug)
     #print("state changed: ")
-    if(defs.DEBUGGING):
+    if(defs.PRINT_STATES):
         print_state()
 
 

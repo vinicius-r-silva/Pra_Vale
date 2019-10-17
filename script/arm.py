@@ -71,6 +71,8 @@ hokuyo_distance = -1
 #torque value given from
 torque_value = 0
 
+robot_last_orientation = defs.ROBOT_CLOCKWISE
+
 #arm sizes
 probe_lenght = 71 #279
 d0 = 275 #367
@@ -123,11 +125,12 @@ def cinematicaInversa():
 
     global state
     global joint_angles
+    global state_publisher
 
     #print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
-        #print("erro: posicao fora do alcance do braco robotico")
+        print("erro: posicao fora do alcance do braco robotico")
 
         #change to the last valid position
         x = last_x
@@ -199,11 +202,11 @@ def cinematicaInversa():
 
         # print the joint angles for debuging
         # print(joint_angles)
-        #print("x: " + str(x) + ",  y: " + str(y) + ",  z: " + str(z))
+        #print("x: " + str(x) + ",  y: " + str(y) + ",  z: " + str(z))            
         return joint_angles
     
     except:
-        #print("erro: posicao fora do alcance do braco robotico")
+        print("erro: posicao fora do alcance do braco robotico")
 
         #change to the last valid position
         x = last_x
@@ -309,7 +312,6 @@ def arm_move(data):
     #if the arm is detecting a fire, but didn't touch it yet
     #elif(not state & (1 << defs.LEAVING_FIRE)):
     if(not state & (1 << defs.LEAVING_FIRE)):
-        print("aqui 2")
         #if the arm just detected the fire, change it's position 
         if(not fire_found):
             fire_found = True
@@ -322,8 +324,10 @@ def arm_move(data):
             rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
             x = _FIRE_FOUND_X_VALUE
             y = _FIRE_FOUND_Y_VALUE
-
             z = _FIRE_FOUND_Z_VALUE
+            if(state & (1 << defs.ROBOT_ANTICLOCKWISE)):
+                z -= 10
+                x += 100
         else:
             if(not state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)):
                 x += x_move
@@ -503,7 +507,7 @@ def hokuyo_distance_callback(data):
         x_move += (int)(x_dist) + _HOKUYO_DISPLACEMENT
 
 
-    #print ("\nhokuyo distance: " + str (hokuyo_distance))
+    print ("\nhokuyo distance: " + str (hokuyo_distance))
 
 
     if(not state & (1 << defs.ENABLE_VELODYME | 1 << defs.ROBOT_ROTATION) and state & (1 << defs.FOUND_FIRE_RIGHT)):
@@ -527,7 +531,7 @@ def hokuyo_distance_callback(data):
             # state |=  (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.HOKUYO_READING)
             state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
             state_publisher.publish(data = -defs.ENABLE_VELODYME)
-            state_publisher.publish(data =  defs.FOUND_FIRE_RIGHT)
+            state_publisher.publish(data =  defs.FOUND_FIRE_TOUCH)
             state_publisher.publish(data =  defs.HOKUYO_READING)
         # state_publisher.publish(data = state)
 
@@ -625,6 +629,7 @@ def state_callback(data):
     global arm_publisher
     global state_publisher
     global rosi_speed_publisher
+    global robot_last_orientation
     state = data.data
     #print ("state: " + str(state))
 
@@ -661,6 +666,20 @@ def state_callback(data):
 
     if (state & (1 << defs.CLIMB_STAIR)):
         arm_publisher.publish(joint_variable = [0,0,0,0,0,0])
+
+    if(not state & (1 << robot_last_orientation)):
+        if(robot_last_orientation == defs.ROBOT_CLOCKWISE):
+            robot_last_orientation = defs.ROBOT_ANTICLOCKWISE
+        else:
+            robot_last_orientation = defs.ROBOT_CLOCKWISE
+
+        x = _FIRE_NOT_FOUND_X_VALUE
+        y = _FIRE_NOT_FOUND_Y_VALUE
+        z = _FIRE_NOT_FOUND_Z_VALUE
+        pos = cinematicaInversa()
+        arm_publisher.publish(joint_variable = pos)
+        state_publisher.publish(data = defs.ARM_CHANGING_POSE)
+        rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
 
 
 
