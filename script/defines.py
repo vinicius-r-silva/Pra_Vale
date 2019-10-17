@@ -26,7 +26,6 @@ BEAM_FIND           = 20
 # used to calculates if a joint of the arm is in place
 MAX_JOINT_ANGLE_DIFF = 0.1  
 
-#Debugging mode
 
-DEBUGGING = 1
+DEBUGGING = 0
 PRINT_STATES = 1

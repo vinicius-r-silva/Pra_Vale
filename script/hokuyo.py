@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-
 import rospy
 import defines as defs
 from std_msgs.msg import Int32
@@ -21,6 +19,9 @@ is_following_fire = False
 
 distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32MultiArray, queue_size = 1)
 
+
+#comment
+#Muda o nome, parece um callback de Subscriber
 #make an grayscale image from the hokuyo data.reading
 def getHokuyoData(data):
     size = len(data.reading)
@@ -42,10 +43,6 @@ def getHokuyoData(data):
         #paint white the x,y pixel 
         frame[(int)(y) , (int)(x)] = 255 
         i += 3
-    
-    #draw a line in the center of the image
-    # for i in range(499):
-    #     frame[i,half_max] = 120
     return frame
 
 
@@ -55,6 +52,9 @@ def getFireInitialPos(frame):
     upper_limit = _IMG_SIZE/5
 
     #given that the robot is in the center of the image
+  
+    #comment
+    #Falou algo no comentario daqui?
     #search the center line of the until found a white pixel
     i = botton_limit
     half_frame = _IMG_SIZE/2
@@ -66,6 +66,8 @@ def getFireInitialPos(frame):
     #if no white pixel was found in the previously loop
     #search in the adjacents columns of the image
     dist = 1
+    #comment
+    #Bro, que? While repetido
     while (dist < half_frame):
         i = botton_limit
         j = half_frame + dist
@@ -88,7 +90,7 @@ def getFireInitialPos(frame):
 
 #given a previously position of the fire, find where is the given frame
 #search in a small area arround the fire position given 
-# and return the center point of the white pixels
+#and return the center point of the white pixels
 def getFireCenter(frame, fogoX, fogoY):
 
     #search limits form a small square arround the previously fire position
@@ -139,7 +141,6 @@ def hokuyo_callback(data):
         if(last_fire_coord[0] != -1):
             last_fire_coord[0] = -1
             last_fire_coord[1] = -1
-            #cv2.destroyWindow('image')
         return
 
 
@@ -163,9 +164,6 @@ def hokuyo_callback(data):
     cv2.waitKey(1)
 
     distance_publisher.publish(data = [dist_Y, dist_X])
-
-    # except Exception as e:
-    #     print(e)
 
     # cv2.imshow('image', frame)
     # cv2.waitKey(1)

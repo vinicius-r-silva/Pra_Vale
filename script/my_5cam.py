@@ -53,11 +53,11 @@ def state_callback(data):
 
 
 
-#given two array of values, find the best line that best fit the arrays
+#given two array of values, find the best line that best fits the arrays
 def leastSquare (x_list, y_list):
     x_array = np.array(y_list)
     y_array = np.array(x_list)
-            
+
     # here, create lambda functions for Line fit
     # tpl is a tuple that contains the parameters of the fit
     func=lambda tpl,x_array : tpl[0]*x_array+tpl[1]
@@ -67,14 +67,14 @@ def leastSquare (x_list, y_list):
 
     #tplInitial contains the "first guess" of the parameters 
     tplInitial1=(1.0,2.0)
-    
+
     # leastsq finds the set of parameters in the tuple tpl that minimizes
     tplFinal1,success=leastsq(ErrorFunc,tplInitial1[:],args=(x_array,y_array))
     return tplFinal1
 
 
-#detect if there is track in front of the camera
-#used when is necessary to get the camera tilt angle
+#detect if the track is in front of the camera
+#used when necessary to get the camera tilt angle
 def there_is_track(frame):
     row = _TRACK_DETECTION_ROW
     black_pixels_qtd = 0
@@ -89,10 +89,9 @@ def there_is_track(frame):
 
         col += 1
     
-    #for debug draw a blue line where the pixels where verified
+    #for debug draw a blue line where the pixels were verified
     cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
 
-    #print("black pixels: " + str(black_pixels_qtd))
     return True
 
 
@@ -135,9 +134,6 @@ def get_tilt_angle(frame):
             if R == G == B == 0 or (abs(((int)(R) - (int)(G)) + (int)((R) - (int)(B))) > 10): #check if pixel is black
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
-                # frame[x, current_col][0] = 0     #paint the pixel if it's necessary
-                # frame[x, current_col][1] = 0
-                # frame[x, current_col][2] = 255
                 pixels_found += 1
 
                 
@@ -147,18 +143,17 @@ def get_tilt_angle(frame):
         cont += 1
         current_col += step
 
-    #if wasn't found enough pixels, cancel the search
+    #if not enough pixels were found, cancel the search
     if(pixels_found < (qtd / 5)):
         return [-1,-1]
         
     #otherwise, calculates the leastSquare
     coef = leastSquare(x_list, y_list)
 
-    #print the line found    
+    #draw the line found
     cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
 
     #calculates the angle of the line made from the leastSquare function
-    #print(coef[1])
     angle = atan2(coef[0]*cols, cols)
     return [angle, coef[1]]
 
@@ -166,7 +161,7 @@ def get_tilt_angle(frame):
 
 
 #ur5Cam Callback
-#find fire in the given image and calculates the x,y coordinates of the fire
+#finds fire in the given image and calculates the x,y coordinates of the fire
 def ur5_callback(data):
     global state
     global arm_move
@@ -186,7 +181,7 @@ def ur5_callback(data):
     #Calculates RGB threshold to find fire
     mask=cv2.inRange(frame,(0,175,210),(100,255,255))
     
-    # Find contours:
+    #Find contours of mask
     contours, im = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     #Check size of object
@@ -201,30 +196,16 @@ def ur5_callback(data):
 		# Calculate image moments of the detected contour
         M = cv2.moments(fire)
 
-		# Print center:
+		# Draw center:
         x = M['m10'] / M['m00']
         cv2.line(frame, (frame.shape[1]/2,0), (frame.shape[1]/2, frame.shape[0]), (255,0,0), 1)
         cv2.line(frame, ((int)(x),0), ((int)(x), frame.shape[0]), (0,255,0), 1)
 
-        #calculates the error from how far the fire center it's from center of the frame
+        #calculates how far the fire center is from the center of the frame
         error = frame.shape[1]/2 - x
         if(abs(error) > _ERROR_UPPER_LIMIT and not state & (1 << defs.SETTING_UP_HOKUYO | 1 << defs.ROBOT_CLOCKWISE)): #if the fire it's to far, ignores
             error = _FIRE_NOT_FOUND
         else:
-            # kp = 1
-            # if(error > 100):
-            #     kp = 10
-            # elif(error > 10):
-            #     kp = 3
-            # elif(error > 3):
-            #     kp = 2
-            # else:
-            #     kp = 1
-
-            # #divides the error to a constant kp
-            # error = error/kp
-            # if(not state & (1 << defs.ROBOT_CLOCKWISE)):
-            #     error = -error
             if(error > 10):
                 error = 10
             elif(error < -10):
@@ -234,7 +215,6 @@ def ur5_callback(data):
     #check if there is a track on the camera sight
     if there_is_track(frame): #if there is a track, get the tilt angle from it
         angle, b = get_tilt_angle(frame)
-        #print((angle,b))     
     else:                     #ortherwise, just return -1
         angle = -1
         b = -1
@@ -250,8 +230,6 @@ def ur5_callback(data):
 
 
     if (state & 1 << defs.LEAVING_FIRE and error == _FIRE_NOT_FOUND):
-        # state &= ~(1 << defs.LEAVING_FIRE)
-        # state_publisher.publish(data = state)
         state_publisher.publish(data = -defs.LEAVING_FIRE)
 
 
@@ -259,8 +237,6 @@ def ur5_callback(data):
     if(error != _FIRE_NOT_FOUND):
         arm_move.publish(data = [error, 0, z])
 
-    #print(error)
-    #cv2.imshow("Threshold",mask)
     cv2.imshow("Camera",frame)
     cv2.waitKey(1)
 
@@ -278,8 +254,7 @@ def listener():
 
     rospy.Subscriber("/sensor/ur5toolCam", Image, ur5_callback)
     rospy.Subscriber("/pra_vale/estados", Int32, state_set)
-    #rospy.Subscriber("/pra_vale/findFire_enabled", Bool, findFire_enabled)
-
+    
     rospy.spin()
 
 
