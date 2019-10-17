@@ -66,18 +66,18 @@ void Visualization::createRectangles(){
 void Visualization::processImages(const sensor_msgs::PointCloud2::ConstPtr msg){
     int MAX = 255 - _ADD_GRAY_SCALE;
 
-    //Converter o publisher
+    //Converte o publisher dos dados do velodyne 
     sensor_msgs::PointCloud out_pointcloud;
     sensor_msgs::convertPointCloud2ToPointCloud(*msg, out_pointcloud);
 
     geometry_msgs::Point32 pointInput;
 
-    //Preencher as imagens de preto
+    //Preenche as imagens de preto
     *img = Mat::zeros(img->size(), img->type());
     *imgProcessed = Mat::zeros(imgProcessed->size(), imgProcessed->type());
 
     //pega as informacoes publicadas pelo velodyne
-    for(register int i = 0 ; i < out_pointcloud.points.size(); ++i){ 
+    for(register int i = 0 ; i < out_pointcloud.points.size(); i++){ 
     
         pointInput = out_pointcloud.points[i];
 
