@@ -11,13 +11,14 @@ from std_msgs.msg import Int32
 
 
 CUT_SCALE = [0.5, 0.1]
-NOTA_MAX  = 65
+NOTA_MAX  = 60
+#gMax=0
 
 
 # get an instance of RosPack with the default search paths
 rospack = rospkg.RosPack()
 # list all packages, equivalent to rospack list
-rospack.list() 
+rospack.list()
 
 state=defs.NOTHING
 
@@ -72,7 +73,7 @@ def kin_callback(data):
 	global NOTA_MAX, CUT_SCALE
 
 	#Variables
-	global scaleList, state, stair, state_publisher
+	global scaleList, state, stair, state_publisher,gMax
 
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.IN_STAIR)):
 		return
@@ -120,10 +121,11 @@ def kin_callback(data):
 		# if we have found a new maximum correlation value, then ipdate
 		# the bookkeeping variable
 		if (found is None or maxVal > found[0]) and maxVal > NOTA_MAX:
-			print(maxVal)
+			#print maxVal
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
-
+		if(maxVal>gMax):
+			gMax=maxVal
 	if(found !=None):
 		# unpack the bookkeeping varaible and compute the (x, y) coordinates
 		# of the bounding box based on the resized ratio
@@ -132,7 +134,7 @@ def kin_callback(data):
 		start = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1])     , maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]))
 		end   = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1]) + tW, maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]) + tH)
 		
-		state_publisher.publish(data = defs.FOUND_STAIR)
+		#state_publisher.publish(data = defs.FOUND_STAIR)
 
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
