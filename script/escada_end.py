@@ -22,12 +22,13 @@ rospack = rospkg.RosPack()
 # list all packages, equivalent to rospack list
 rospack.list() 
 
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=1)
+
 
 #callback function called when a node requires a state change
 def set_state(data):
 	global state
 	state = data.data
-
 
 
 
@@ -37,7 +38,7 @@ def kin_callback(data):
 	global DEBUGGING, CUT_SCALE
 
 	#Variables
-	global state
+	global state, state_publisher
 
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP)):
 		return
@@ -69,13 +70,9 @@ def kin_callback(data):
 		cv2.waitKey(10)
 
 	if(area<10):
-		state |= 1 << defs.END_STAIR
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+		state_publisher.publish(data = defs.END_STAIR)
 	else:
-		state &= ~(1 << defs.END_STAIR)
-		state_publisher = rospy.Publisher('/pra_vale/set_state', Int32, queue_size=1)
-		state_publisher.publish(data = state)
+		state_publisher.publish(data = -defs.END_STAIR)
 
 def listener():
 	rospy.init_node('findEnd', anonymous=True)

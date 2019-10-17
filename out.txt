@@ -1,58 +1,73 @@
-Publisher  /rosi/command_traction_spee-> RosiMovementArray: script/rosi_speed_handler.py
-Publisher  /rosi/command_arms_spee-> RosiMovementArray: script/rosi_speed_handler.py
-Subscriber  /pra_vale/rosi_spee-> Float32MultiArray: script/rosi_speed_handler.py
-Subscriber  /pra_vale/rosi_arm_spee-> Float32MultiArray: script/rosi_speed_handler.py
-Publisher  /pra_vale/hokuyo_distanc-> Int32MultiArray: script/hokuyo.py
-Subscriber  /sensor/hokuy-> HokuyoReading: script/hokuyo.py
-Subscriber  /pra_vale/estado-> Int32: script/hokuyo.py
-Subscriber  /sensor/im-> Imu: script/imu_handler.py
-Publisher  /pra_vale/im-> Float32MultiArray: script/imu_handler.py
-Publisher  /pra_vale/set_stat-> Int32: script/escada_end.py
-Publisher  /pra_vale/set_stat-> Int32: script/escada_end.py
-Subscriber  /sensor/kinect_rg-> Image: script/escada_end.py
-Subscriber  /pra_vale/estado-> Int32: script/escada_end.py
-Publisher  /pra_vale/arm_mov-> Int32MultiArray: script/arm_joy.py
-Publisher  /pra_vale/arm_mov-> Int32MultiArray: script/my_5cam.py
-Publisher  /pra_vale/arm_til-> Float32: script/my_5cam.py
-Subscriber  /sensor/ur5toolCa-> Image: script/my_5cam.py
-Subscriber  /pra_vale/estado-> Int32: script/my_5cam.py
-Subscriber  /pra_vale/findFire_enable-> Bool: script/my_5cam.py
-Publisher  /pra_vale/set_stat-> Int32: script/escada.py
-Publisher  /pra_vale/set_stat-> Int32: script/escada.py
-Subscriber  /sensor/kinect_rg-> Image: script/escada.py
-Subscriber  /pra_vale/estado-> Int32: script/escada.py
-Publisher  /ur5/jointsPosTargetComman-> ManipulatorJoints: script/arm.py
-Publisher  /pra_vale/set_stat-> Int32: script/arm.py
-Publisher  /pra_vale/rosi_spee-> Float32MultiArray: script/arm.py
-Subscriber  /ur5/jointsPositionCurrentStat-> ManipulatorJoints: script/arm.py
-Subscriber  /pra_vale/im-> Float32MultiArray: script/arm.py
-Subscriber  /pra_vale/arm_til-> Float32: script/arm.py
-Subscriber  /pra_vale/estado-> Int32: script/arm.py
-Subscriber  /pra_vale/arm_mov-> Int32MultiArray: script/arm.py
-Subscriber  /pra_vale/hokuyo_distanc-> Int32MultiArray: script/arm.py
-Subscriber  /ur5/forceTorqueSensorOutpu-> TwistStamped: script/arm.py
-Publisher  /rosi/command_traction_spee-> RosiMovementArray: script/rosi_joy.py
-Publisher  /rosi/command_arms_spee-> RosiMovementArray: script/rosi_joy.py
-Subscriber  /jo-> Joy: script/rosi_joy.py
-Publisher  /pra_vale/set_stat-> Int32: script/rotate_robot.py
-Publisher  /pra_vale/rosi_spee-> Float32MultiArray: script/rotate_robot.py
-Subscriber  /pra_vale/estado-> Int32: script/rotate_robot.py
-Subscriber  /pra_vale/im-> Float32MultiArray: script/rotate_robot.py
-Subscriber  /pra_vale/set_stat-> Int32: script/states_handler.py
-Publisher  /pra_vale/estado-> Int32: script/states_handler.py
-Publisher  /ur5/jointsPosTargetComman-> ManipulatorJoints: script/arm_joint_control.py
-Publisher  void Robot::setPublishers(std_msgs::Int32 enable, ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub){ src/robot.cpp
-Publisher  ros::Publisher speedPub; src/velodyne.cpp
-Publisher  ros::Publisher wheelPub; src/velodyne.cpp
-Subscriber    //ros::Subscriber sub = n.subscribe("/sensor/velodyne", 1, velodyneCallback); src/velodyne.cpp
-Subscriber    ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback); src/velodyne.cpp
-Subscriber    ros::Subscriber subImu = n.subscribe("/sensor/imu", 1, ImuCallback); src/velodyne.cpp
-Subscriber    ros::Subscriber subKinectRGB = n.subscribe("/sensor/kinect_rgb", 1, kinectCallback); src/velodyne.cpp
-Subscriber    ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback); src/velodyne.cpp
-Subscriber    ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback); src/main.cpp
-Subscriber    ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback); src/main.cpp
-Subscriber    ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback); src/main.cpp
-Publisher    ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1); src/main.cpp
-Publisher    ros::Publisher wheelPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_arm_speed",1); src/main.cpp
-Publisher    ros::Publisher statePub = n.advertise<std_msgs::Int32>("/pra_vale/set_state",1); src/main.cpp
-Publisher    rob->setPublishers(enable,speedPub, wheelPub, statePub); src/main.cpp
+
+Publisher  /rosi/command_traction_speed-> RosiMovementArray: script/rosi_speed_handler.py
+Publisher  /rosi/command_arms_speed-> RosiMovementArray: script/rosi_speed_handler.py
+Subscriber  /pra_vale/rosi_speed-> Float32MultiArray: script/rosi_speed_handler.py
+Subscriber  /pra_vale/rosi_arm_speed-> Float32MultiArray: script/rosi_speed_handler.py
+
+Publisher  /pra_vale/hokuyo_distance-> Int32MultiArray: script/hokuyo.py
+Subscriber  Muda o nom-> parece um callback de Subscriber: script/hokuyo.py
+Subscriber  /sensor/hokuyo-> HokuyoReading: script/hokuyo.py
+Subscriber  /pra_vale/estados-> Int32: script/hokuyo.py
+
+Publisher  /pra_vale/arm_move-> Int32MultiArray: script/beam_finder.py
+Publisher  /pra_vale/def_state-> Int32: script/beam_finder.py
+Subscriber  /sensor/ur5toolCam-> Image: script/beam_finder.py
+Subscriber  /pra_vale/estados-> Int32: script/beam_finder.py
+
+Subscriber  /sensor/imu-> Imu: script/imu_handler.py
+Publisher  /pra_vale/imu-> Float32MultiArray: script/imu_handler.py
+
+Publisher  /pra_vale/def_state-> Int32: script/escada_end.py
+Subscriber  /sensor/kinect_rgb-> Image: script/escada_end.py
+Subscriber  /pra_vale/estados-> Int32: script/escada_end.py
+
+Publisher  /pra_vale/arm_move-> Int32MultiArray: script/arm_joy.py
+
+Publisher  /pra_vale/arm_move-> Int32MultiArray: script/my_5cam.py
+Publisher  /pra_vale/arm_tilt-> Float32: script/my_5cam.py
+Publisher  /pra_vale/def_state-> Int32: script/my_5cam.py
+Subscriber  /sensor/ur5toolCam-> Image: script/my_5cam.py
+Subscriber  /pra_vale/estados-> Int32: script/my_5cam.py
+
+Publisher  /pra_vale/def_state-> Int32: script/escada.py
+Subscriber  /sensor/kinect_rgb-> Image: script/escada.py
+Subscriber  /pra_vale/estados-> Int32: script/escada.py
+
+Publisher  /ur5/jointsPosTargetCommand-> ManipulatorJoints: script/arm.py
+Publisher  /pra_vale/def_state-> Int32: script/arm.py
+Publisher  /pra_vale/rosi_speed-> Float32MultiArray: script/arm.py
+Subscriber  /ur5/jointsPositionCurrentState-> ManipulatorJoints: script/arm.py
+Subscriber  /pra_vale/imu-> Float32MultiArray: script/arm.py
+Subscriber  /pra_vale/arm_tilt-> Float32: script/arm.py
+Subscriber  /pra_vale/estados-> Int32: script/arm.py
+Subscriber  /pra_vale/arm_move-> Int32MultiArray: script/arm.py
+Subscriber  /pra_vale/hokuyo_distance-> Int32MultiArray: script/arm.py
+Subscriber  /ur5/forceTorqueSensorOutput-> TwistStamped: script/arm.py
+
+Publisher  /rosi/command_traction_speed-> RosiMovementArray: script/rosi_joy.py
+Publisher  /rosi/command_arms_speed-> RosiMovementArray: script/rosi_joy.py
+Subscriber  /joy-> Joy: script/rosi_joy.py
+
+Publisher  /pra_vale/set_state-> Int32: script/rotate_robot.py
+Publisher  /pra_vale/rosi_speed-> Float32MultiArray: script/rotate_robot.py
+Subscriber  /pra_vale/estados-> Int32: script/rotate_robot.py
+Subscriber  /pra_vale/imu-> Float32MultiArray: script/rotate_robot.py
+
+Subscriber  /pra_vale/set_state-> Int32: script/states_handler.py
+Subscriber  /pra_vale/def_state-> Int32: script/states_handler.py
+Publisher  /pra_vale/estados-> Int32: script/states_handler.py
+
+Publisher  /ur5/jointsPosTargetCommand-> ManipulatorJoints: script/arm_joint_control.py
+
+Publisher  void Robot::setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub){ src/robot.cpp
+
+
+Subscriber    ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback); //velodyne src/main.cpp
+Subscriber    ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback); //estados do robo src/main.cpp
+Subscriber    ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback); //angulos do robo src/main.cpp
+Publisher    ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1); //velocidade do robo src/main.cpp
+Publisher    ros::Publisher wheelPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_arm_speed",1); //velocidade da esteira do robo src/main.cpp
+Publisher    ros::Publisher statePub = n.advertise<std_msgs::Int32>("/pra_vale/def_state",15); //estados do robo src/main.cpp
+Publisher    rob->setPublishers(speedPub, wheelPub, statePub); //seta os ponteiros src/main.cpp
+
+
