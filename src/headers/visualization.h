@@ -7,8 +7,8 @@
 class Visualization {
     private:
         //Imagens
-        cv::Mat *img;
-        cv::Mat *imgProcessed;
+        cv::Mat *img;           //Imagem original
+        cv::Mat *imgProcessed;  //Imagem processada
 
         //Janelas
         std::string windowOriginal = "Original";
@@ -32,22 +32,23 @@ class Visualization {
         cv::Rect *rightRect;
 
         //Informações para os retângulos
-        SidesInfo *sidesInfo;
-        bool avoidingObs;
-        bool nothing;
+        SidesInfo *sidesInfo;   //Guarda todas as informacoes dos lados
+        bool avoidingObs;       //Muda o tamanho da janela caso tenha detectado um obstaculo
+        bool nothing;           //Muda o tamanho da janela caso nao tenha detectado nada perto do robo
 
 
     public:
-        Visualization(); //
-        void createRectangles(); //cria os retangulos onde a imagem sera processada
-        void setAvoidingObs(bool avoid); //seta se tem um obstaculo ou nao
-        void showImages(); //mostra as imagens na tela
-        void processImages(const sensor_msgs::PointCloud2::ConstPtr msg); //processa a imagem, controlando o robo
-        void printRect(); //printa os retangulos na imagem
-        void getInfo(); //compila as informacoes importantes
-        void setNothing(bool _nothing); //se nao pegou nada ao analisar a imagem
-        bool isImportant(geometry_msgs::Point32 pointInput); //decide se a informacao do veloyne e valida
-        SidesInfo* getSidesInfo(); //retorna as informacoes dos lados
+        Visualization(); //Construtor do robo
+
+        void createRectangles();                                            //cria os retangulos onde a imagem sera processada
+        void setAvoidingObs(bool avoid);                                    //seta se tem um obstaculo ou nao
+        void setNothing(bool _nothing);                                     //se nao pegou nada ao analisar a imagem
+        void showImages();                                                  //mostra as imagens na tela
+        void processImages(const sensor_msgs::PointCloud2::ConstPtr msg);   //processa a imagem, controlando o robo
+        void printRect();                                                   //printa os retangulos na imagem
+        void getInfo();                                                     //compila as informacoes importantes
+        bool isImportant(geometry_msgs::Point32 pointInput);                //decide se a informacao do veloyne e valida
+        SidesInfo* getSidesInfo();                                          //retorna as informacoes dos lados
 
 };
 

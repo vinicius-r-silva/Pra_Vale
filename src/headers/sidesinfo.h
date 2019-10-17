@@ -5,13 +5,12 @@
 
 class SidesInfo {
     public:
-        int area;
-        float medX;
-        float medY;
-        float distance;
+        int area;           //Area em pixels
+        float medX;         //Media no eixo X
+        float medY;         //Media no eixo Y
+        float distance;     //Distancia do robo as medias
 
-        void getInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY); //processa a imagem e pega a informacao dos lados
-        SidesInfo* divideInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY); 
+        void getInfo(cv::Mat *imgProcessed, int LENGHT, int X, int Y, int SizeX, int SizeY);    //processa a imagem e pega a informacao dos lados
 };
 
 #endif
