@@ -89,12 +89,6 @@ class RosiNodeClass():
 			# sleeps for a while
 			node_sleep_rate.sleep()
 
-		# infinite loop
-		#while not rospy.is_shutdown():
-			# pass
-
-		# enter in rospy spin
-		#rospy.spin()
 
 	# joystick callback function
 	def callback_Joy(self, msg):

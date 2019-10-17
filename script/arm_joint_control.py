@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-from math import pi
-from math import pow
-from math import acos
-from math import sqrt
-from math import atan2
 from getkey import getkey, keys
 from rosi_defy.msg import ManipulatorJoints
 

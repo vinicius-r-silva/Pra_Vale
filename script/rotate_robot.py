@@ -12,7 +12,7 @@ from std_msgs.msg import Float32MultiArray
 _FRONT_ANGLE = 0
 _FOLLOW_ANGLE = 1
 
-#when the robot it's not rotating, the desired angle is equal to _NO_ANGLE
+#when the robot is not rotating, the desired angle is equal to _NO_ANGLE
 _NO_ANGLE = -10
 
 #used multiple times, saves times from dividing every time
@@ -20,24 +20,31 @@ half_pi = pi/2
 
 
 #-------------------GLOBAL VARIABLES----------------#    
-actual_z_angle = 0   
+actual_z_angle = 0
 desired_z_angle = 0
 state = defs.NOTHING 
 
-#robot_on_right e robot_on_left defines wich angles the robot has to move
+#robot_on_right e robot_on_left defines wich angles the robot has to move to
 robot_on_right = [0,0]
 robot_on_left = [0,0]
 
+
+#comment
+#Pq esses sets?
 robot_on_left[_FRONT_ANGLE] = half_pi
 robot_on_left[_FOLLOW_ANGLE] = 0
 
 robot_on_right[_FRONT_ANGLE] = -half_pi
 robot_on_right[_FOLLOW_ANGLE] = half_pi
 
+#comment
+#Esse define lida com a troca de lado?
 #defines the rotation direction of the robot
 rotation_direction = defs.ROBOT_CLOCKWISE
 
-
+#comment
+#Voce nao seta o state aqui, o nome ficou confuso
+#comentar mais
 #callback function called when a node requires a state change
 def set_state(data):
     global state
@@ -71,7 +78,9 @@ def set_state(data):
 
     
 
-
+#comment
+#Faz oq?
+#Comentar mais
 def imu_callback(data):
     global state
     global actual_z_angle
@@ -107,9 +116,6 @@ def imu_callback(data):
 
 #main
 if __name__ == '__main__':
-    # global half_pi
-    # global robot_on_left
-    # global robot_on_right
 
     rospy.init_node('robot_roation', anonymous=True)
     rospy.Subscriber("/pra_vale/estados", Int32, set_state)

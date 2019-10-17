@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import rospy
 from std_msgs.msg import Float32MultiArray
 from sensor_msgs.msg import Imu
@@ -11,6 +10,8 @@ from math import pi
 
 angles = [0,0,0]
 
+#comment
+#O que a func faz?
 def imu_callback(data):
     global angles
 
