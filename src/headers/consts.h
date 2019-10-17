@@ -3,19 +3,13 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
-#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Float32MultiArray.h>
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
 
 
 //opencv:
 #include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
 //c++:
 #include <iostream>
