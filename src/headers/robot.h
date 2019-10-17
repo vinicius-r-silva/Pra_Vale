@@ -43,12 +43,14 @@ class Robot {
     public:
         Robot();//Construtor da classe
         
-        void processMap(SidesInfo *sidesInfo);                                                          //Algoritmo para processar o mapa e setar as velocidades do robô
-        void setAngles(double yAngle, double zAngle);                                                   //recebe os angulos do robo a partir do IMU
-        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);  //seta os ponteiros para publicar
-        void setEnable(std_msgs::Int32 enable);                                                         //atualiza o estado do robo
-        bool getAvoidingObs();                                                                          //retorna se tem um obstaculo ou nao
-        bool getNothing();                                                                              //retorna se tem algum objeto perto
+        void processMap(SidesInfo *sidesInfo);                                                                          //Algoritmo para processar o mapa e setar as velocidades do robô
+        void inStairMode(SidesInfo *sidesInfo);                                                                         //Esta na escada
+        void setAngles(double yAngle, double zAngle);                                                                   //recebe os angulos do robo a partir do IMU
+        void setSpeed(float tractionDirFront, float tractionDirBack, float tractionLeftFront, float tractionLeftBack);  //Recebe as velocidades e as publica
+        void setPublishers(ros::Publisher speedPub, ros::Publisher wheelPub, ros::Publisher statePub);                  //seta os ponteiros para publicar
+        void setEnable(std_msgs::Int32 enable);                                                                         //atualiza o estado do robo
+        bool getAvoidingObs();                                                                                          //retorna se tem um obstaculo ou nao
+        bool getNothing();                                                                                              //retorna se tem algum objeto perto
 
 };
 #endif
