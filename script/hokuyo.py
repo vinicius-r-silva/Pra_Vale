@@ -20,10 +20,8 @@ is_following_fire = False
 distance_publisher = rospy.Publisher('/pra_vale/hokuyo_distance', Int32MultiArray, queue_size = 1)
 
 
-#comment
-#Muda o nome, parece um callback de Subscriber
 #make an grayscale image from the hokuyo data.reading
-def getHokuyoData(data):
+def getFrame(data):
     size = len(data.reading)
     half_max = _HOKUYO_READING_MAX/2
     Kp = _IMG_SIZE/_HOKUYO_READING_MAX
@@ -53,9 +51,7 @@ def getFireInitialPos(frame):
 
     #given that the robot is in the center of the image
   
-    #comment
-    #Falou algo no comentario daqui?
-    #search the center line of the until found a white pixel
+    #search the center line of the until found a white 
     i = botton_limit
     half_frame = _IMG_SIZE/2
     while(i > upper_limit):
@@ -66,23 +62,18 @@ def getFireInitialPos(frame):
     #if no white pixel was found in the previously loop
     #search in the adjacents columns of the image
     dist = 1
-    #comment
-    #Bro, que? While repetido
     while (dist < half_frame):
         i = botton_limit
-        j = half_frame + dist
+        j_r = half_frame + dist
+        j_l = half_frame - dist
         while(i > upper_limit):
-            if(frame[i][j] == 255):
-                return i, j
-            i -= 1
+            if(frame[i][j_r] == 255):
+                return i, j_r
 
-        i = botton_limit
-        j = half_frame - dist
-        while(i > upper_limit):
-            if(frame[i][j] == 255):
-                return i, j
-            i -= 1
-        
+            if(frame[i][j_l] == 255):
+                return i, j_l
+
+            i -= 1        
         dist += 1
 
     return -1,-1
@@ -144,7 +135,7 @@ def hokuyo_callback(data):
         return
 
 
-    frame = getHokuyoData(data)
+    frame = getFrame(data)
 
     if(last_fire_coord[0] == -1):
         fogoY, fogoX = getFireInitialPos(frame)

@@ -14,7 +14,7 @@ arm_speeed_pub = rospy.Publisher('/rosi/command_arms_speed', RosiMovementArray, 
 arm_speeds = [0, 0, 0, 0]
 arm_command_list = 0
 
-
+#get a list of floats and send it as to VREP as robot wheels speed
 def traction_speed_callback(data):
     global traction_command_list
     global traction_speeed_pub
@@ -46,6 +46,7 @@ def traction_speed_callback(data):
 
 
 
+#get a list of floats and send it as to VREP as robot arms speed
 def arm_speed_callback(data):
     global arm_command_list
     global arm_speeed_pub

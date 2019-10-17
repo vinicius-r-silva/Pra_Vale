@@ -8,7 +8,7 @@ from std_msgs.msg import Int32
 
 
 #global variable
-state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE)
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) | (1 << defs.IN_STAIR)
 
 
 
@@ -99,7 +99,7 @@ def print_state():
 def set_state(data):
     global state
 
-    print state, " ",data.data
+    print (state, " ",data.data)
 
     state = data.data
 

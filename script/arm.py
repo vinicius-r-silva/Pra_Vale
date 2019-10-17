@@ -25,8 +25,6 @@ import numpy as np
 _FIRE_NOT_FOUND = 1000
 
 #consts for the initial pose for each case
-_FIRE_TOUCH_X_VALUE =  450
-_FIRE_TOUCH_Y_VALUE =  0
 _FIRE_TOUCH_Z_VALUE =  410
 _FIRE_FOUND_X_VALUE =  320
 _FIRE_FOUND_Y_VALUE =  -70

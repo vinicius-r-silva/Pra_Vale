@@ -10,8 +10,8 @@ from math import pi
 
 angles = [0,0,0]
 
-#comment
-#O que a func faz?
+#get ROSI imu orientatio data
+#change it from quarternios to euler angles
 def imu_callback(data):
     global angles
 
@@ -46,7 +46,7 @@ def imu_callback(data):
     angles[1] = y
     angles[2] = z 
 
-    #print(angles)
+    #print(angles) #debug
 
 
 
