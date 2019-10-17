@@ -130,12 +130,7 @@ void Visualization::getInfo(){
     sidesInfo[_FRONT_RIGHT].getInfo(imgProcessed, LENGHT, frontRect->x, frontRect->y, frontRect->width/2, frontRect->height);
     sidesInfo[_FRONT_MIDLE].getInfo(imgProcessed, LENGHT, (_MAX_DIST - 0.2)*_SCALE, (_MAX_DIST + 0.65)*_SCALE, 0.4*_SCALE, frontRect->height);
 
-/*
-    sidesInfo[_FRONT].distance = (sidesInfo[_FRONT_LEFT].distance+sidesInfo[_FRONT_RIGHT].distance)/2;
-    sidesInfo[_FRONT].area = (sidesInfo[_FRONT_LEFT].area+sidesInfo[_FRONT_RIGHT].area);
-    sidesInfo[_FRONT].medX = (sidesInfo[_FRONT_LEFT].medX+sidesInfo[_FRONT_RIGHT].medX)/2;
-    sidesInfo[_FRONT].medY = (sidesInfo[_FRONT_LEFT].medY+sidesInfo[_FRONT_RIGHT].medY)/2;
-*/
+
 }
 
 //decide se os pontos do velodyne sao importantes ou nao
