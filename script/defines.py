@@ -27,6 +27,5 @@ BEAM_FIND           = 20
 MAX_JOINT_ANGLE_DIFF = 0.1  
 
 
-#Debugging mode
 DEBUGGING = 0
 PRINT_STATES = 1
