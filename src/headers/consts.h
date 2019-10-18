@@ -96,7 +96,7 @@
 
 
 //Subir a  escada, angulos para cada fase de subida do robo
-#define FRONT_WHEELS    0.20 
+#define FRONT_WHEELS    0.30 
 #define REAR_WHEELS     0.255
 #define PLANE           0.11
 
