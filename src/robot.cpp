@@ -110,7 +110,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
   //achou a escada
-  if((true /*_states.data & (1 << FOUND_STAIR)*/ || _provavelEscada) && !_isInStairs){
+  if((_states.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
     _avoidingObs = false;
     aligneEscada(sidesInfo);
     return;
