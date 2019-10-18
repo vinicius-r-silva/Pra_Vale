@@ -24,7 +24,7 @@
 #define _ADD_GRAY_SCALE   10   //deixa mais definido quais tem mais pontos em z
 #define _MAX_DIST_NEG     -2   //distancia maxima negativa que sera processada
 #define _MIN_GRAY_S       100  //minimo de luminosiade para ser processado
-
+#define _FAR              2.5  //Distancia maxima antes de aumentar o alcance de processamento
 
 //Estados
 #define NOTHING              0
