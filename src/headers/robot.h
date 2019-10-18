@@ -29,7 +29,7 @@ class Robot {
         bool _isInStairs;       //Determina se o robô está na escada
         bool _rodar;            //Determina se o robô deve girar
         bool _avoidingObs;      // Determina se o robô está desviando de um obstáculo
-        bool _straitPath;       // Determina se o robô reconheceu um caminho estreito 
+        bool _narrowPath;       // Determina se o robô reconheceu um caminho estreito 
         bool _provavelEscada;   //Determina se há uma escada por perto para mudar o comportamento do robô
         bool _climbing;         //Determina se o robo esta subindo a escada ou nao
         bool _nothing;          //Confere se o velodyne nao detectou nada no alcance normal

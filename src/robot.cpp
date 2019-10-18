@@ -7,12 +7,12 @@ Robot::Robot(){
     _begin = true;
     _state = WALKING;
     _sentido = _HORARIO;
-    _isInStairs = true;
+    _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
     _nothing = true;
-    _straitPath = false;
+    _narrowPath = false;
     _climbing = false;
     _distToTrack = NICE_DIST_TRACK;
 }
@@ -116,16 +116,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
     || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)))){
 
-    _straitPath = true;
+    _narrowPath = true;
     _enable.data = STRAIT_PATH;
     statePub.publish(_enable);
     _distToTrack = NICE_DIST_TRACK - 0.25;
-    cout << "StraitPath | ";
+    cout << "NarrowPath | ";
 
   } 
 
   //confere se chegou na escada
-  if(_isInStairs && !(_state == IN_LADDER || _state == LADDER_DOWN)){
+  if(_isInStairs && _state != IN_LADDER && _state != LADDER_DOWN){
     _state = LADDER_UP;  
   }
 
@@ -158,7 +158,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data = IN_STAIR;
     statePub.publish(_enable);
 
-    erro = _zAngle *_KP_OBSTACLE;
+    erro = _zAngle *_KP_OBSTACLE; 
 
     cout << "E: NaEscada | " << "Erro: " << erro << " | ";
   }else if(_state == LADDER_DOWN){
@@ -177,12 +177,14 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _isInStairs = false;
       _enable.data = -IN_STAIR; 
       statePub.publish(_enable);
+      _enable.data = -CLIMB_STAIR;
+      statePub.publish(_enable);
     }
 
     cout << "E: DescendoEscada | ";
 
   //desvia do obstaculo na frente    
-  }else if(!_straitPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
+  }else if(!_narrowPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
     if(_sentido ==_HORARIO)
       erro = 1/(sidesInfo[_FRONT].medY);
@@ -218,8 +220,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle * _KP_OBSTACLE;
 
-    if(_straitPath && _sentido == _HORARIO && sidesInfo[_LEFT].medX > 0.5){
-      _straitPath = false;
+    if(_narrowPath && _sentido == _HORARIO && sidesInfo[_LEFT].medX > 0.5){
+      _narrowPath = false;
       _enable.data = -STRAIT_PATH;
       statePub.publish(_enable);
       _distToTrack = NICE_DIST_TRACK;
@@ -256,8 +258,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle *_KP_OBSTACLE;
 
-    if(_straitPath && _sentido ==_ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
-      _straitPath = false;
+    if(_narrowPath && _sentido ==_ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
+      _narrowPath = false;
       _enable.data = -STRAIT_PATH;
       statePub.publish(_enable);
       _distToTrack = NICE_DIST_TRACK;
@@ -278,7 +280,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
 
   //define as velocidades
-  if(_straitPath)
+  if(_narrowPath)
     erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
