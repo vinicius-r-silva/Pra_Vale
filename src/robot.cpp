@@ -7,7 +7,7 @@ Robot::Robot(){
     _begin = true;
     _state = WALKING;
     _sentido = _HORARIO;
-    _isInStairs = false;
+    _isInStairs = true;
     _provavelEscada = false;
     _rodar = false;
     _avoidingObs = false;
@@ -117,13 +117,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
-  //chegou no final da esteira
-  
-  if(_state == IN_LADDER && _states.data & (1 << END_STAIR)){
-    _state = LADDER_DOWN;
-    _enable.data = -END_STAIR;
-    statePub.publish(_enable);
-  }
   
   //caminho estreito
   if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
@@ -147,10 +140,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //sobe a escada 
   if(_state == LADDER_UP){
 
-    needSpeed = climbStairs();
-
     _enable.data = CLIMB_STAIR;
     statePub.publish(_enable);
+
+    needSpeed = climbStairs();
 
     erro = _zAngle * _KP_OBSTACLE;
 
@@ -158,6 +151,14 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){  
+
+    //chegou no final da esteira
+  
+    if(_states.data & (1 << END_STAIR)){
+      _state = LADDER_DOWN;
+      _enable.data = -END_STAIR;
+      statePub.publish(_enable);
+    }
 
     _enable.data = IN_STAIR;
     statePub.publish(_enable);
@@ -175,7 +176,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
       statePub.publish(_enable);
       downStairs();
 
-    }else if(_climbing){
+    }else if(_climbing && fabs(_yAngle) < 0.06){
       _rodar = true;
       _state = WALKING;
       _isInStairs = false;
@@ -559,7 +560,6 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 }
 
 
-
 bool Robot::climbStairs(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
@@ -596,7 +596,7 @@ bool Robot::climbStairs(){
 
     cout << " FRONT WHEELS IS ON\n";
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   
@@ -606,14 +606,14 @@ bool Robot::climbStairs(){
 
     cout << " REAR WHEELS IS ON\n";
     wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   }else{
 
     cout << " ESTABILIZING\n";
     wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/2;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
 
   }
 
@@ -625,11 +625,12 @@ bool Robot::climbStairs(){
   return needSpeed;
 }
 
+
 void Robot::downStairs(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
 
-  float wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
+  float wheelRearSpeed = _MAX_WHEEL_R_SPEED;
 
   for(int i = 0; i < 4; i++){
     msg.data.push_back((i == 0 || i == 2) ? 0.0f : wheelRearSpeed);
