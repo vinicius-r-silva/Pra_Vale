@@ -24,7 +24,7 @@
 #define _ADD_GRAY_SCALE   10   //deixa mais definido quais tem mais pontos em z
 #define _MAX_DIST_NEG     -2   //distancia maxima negativa que sera processada
 #define _MIN_GRAY_S       100  //minimo de luminosiade para ser processado
-
+#define _FAR              2.5  //Distancia maxima antes de aumentar o alcance de processamento
 
 //Estados
 #define NOTHING              0
@@ -83,7 +83,7 @@
 
 //Alinhar com a escada
 #define _MIN_DIST_ESCADA                1.00  //distancia minima para mandar o robo subir
-#define _MIN_DIST_ALIGNE_FRONT_STAIR    1.1   //distancia minima para comecar a alinhar com a esteira para subir a escada
+#define _MIN_DIST_ALIGNE_FRONT_STAIR    0.80   //distancia minima para comecar a alinhar com a esteira para subir a escada
 #define _MAX_DIST_SIDE_ESCADA           0.90  //distancia maxima do robo para esteira na hora da escada
 #define _MIN_DIST_SIDE_ESCADA           0.80  //distancia minima da esteira para subir a escada
 #define _MAX_ERRO_ESCADA                0.05  //erro no angulo maximo permitido na escada
@@ -96,7 +96,7 @@
 
 
 //Subir a  escada, angulos para cada fase de subida do robo
-#define FRONT_WHEELS    0.17
-#define REAR_WHEELS     0.24
+#define FRONT_WHEELS    0.17 
+#define REAR_WHEELS     0.25
 #define PLANE           0.11
 

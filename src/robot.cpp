@@ -42,20 +42,20 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     else if(_zAngle > M_PI && _zAngle < 2*M_PI-0.1){
       erro = -5*_V0/_KP;
-      cout << "Alinhando posiIni";
+      cout << "Alinhando posiIni | ";
     }
     else if(_zAngle < M_PI && _zAngle > 0.1){
       erro = 5*_V0/_KP;
-      cout << "Alinhando posiIni";
+      cout << "Alinhando posiIni | ";
     }
     
     else if(sidesInfo[_RIGHT].area > _MIN_AREA_REC && sidesInfo[_LEFT].area < _MIN_AREA_REC){
-      cout << "Setando para horario";
+      cout << "Setando para horario | ";
       _begin = false;
       _sentido = _HORARIO;
     
     }else if(sidesInfo[_RIGHT].area < _MIN_AREA_REC && sidesInfo[_LEFT].area > _MIN_AREA_REC){
-      cout << "Setando para anti-horario";      
+      cout << "Setando para anti-horario | ";      
       _begin = false;
       _sentido = _ANTI_HORARIO;
     }else{
@@ -63,22 +63,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
       tractionEsq = _V0;
     }
     
+    cout << "zAngle: " << _zAngle << " | ";
+
     setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
-
-
-    cout << " | zAngle: " << _zAngle << endl;
-    
 
     return;
   }
 
 
 
-  //aumenta as dimensoes do retangulo caso nao tenha achado nada
-  cout << " | DFY: " << sidesInfo[_FRONT].medY;
-  cout << " | AF: " << sidesInfo[_FRONT].area;
-
-  if(sidesInfo[_RIGHT].distance > 2 && sidesInfo[_LEFT].distance > 2 && sidesInfo[_FRONT].area < _MIN_AREA_REC){
+  if(sidesInfo[_RIGHT].distance > _FAR && sidesInfo[_LEFT].distance > _FAR && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << "Longe | ";
     _nothing = true;
   }else
@@ -126,7 +120,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data = STRAIT_PATH;
     statePub.publish(_enable);
     _distToTrack = NICE_DIST_TRACK - 0.25;
-    cout << "StraitPath ";
+    cout << "StraitPath | ";
 
   } 
 
@@ -147,8 +141,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle * _KP_OBSTACLE;
 
-    cout << "E: SubirEscada\t yAngle: " << _yAngle;
+    cout << "E: SubirEscada | yAngle: " << _yAngle << " | ";
   
+    return;
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){  
 
@@ -165,7 +160,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle *_KP_OBSTACLE;
 
-    cout << "E: NaEscada\t" << "Erro:" << erro;
+    cout << "E: NaEscada | " << "Erro: " << erro << " | ";
   }else if(_state == LADDER_DOWN){
 
     erro = _zAngle * _KP_OBSTACLE;
@@ -184,7 +179,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
       statePub.publish(_enable);
     }
 
-    cout << "E: DescendoEscada";
+    cout << "E: DescendoEscada | ";
 
   //desvia do obstaculo na frente    
   }else if(!_straitPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
@@ -196,18 +191,18 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = true;
 
-    cout << "E: DesviaFr | Erro: " << erro;
-    cout << " | AF: " << sidesInfo[_FRONT].area;
-    cout << " | DFY: " << sidesInfo[_FRONT].medY;
+    cout << "E: DesviaFr | Erro: " << erro << " | ";
+    cout << "AF: " << sidesInfo[_FRONT].area << " | ";
+    cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
   }else if(sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
-    cout << "E: RecuDir | Erro: " << erro;
-    cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DDX: " << sidesInfo[_RIGHT].medX;
+    cout << "E: RecuDir | Erro: " << erro << " | ";
+    cout << "AD: " << sidesInfo[_RIGHT].area << " | ";
+    cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
 
     _avoidingObs = false;
   //Aproxima da esteira quando ela está a direita
@@ -215,7 +210,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
 
-    cout << "E: AproxDir | erro: " << erro << " | DDX: " << sidesInfo[_RIGHT].medX;
+    cout << "E: AproxDir | erro: " << erro << " | ";
+    cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
 
   //segue a parede da direita
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
@@ -229,10 +225,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _distToTrack = NICE_DIST_TRACK;
     }
 
-    cout << "E: SegueDir | Erro: " << erro;
-    cout << " | AD: " << sidesInfo[_RIGHT].area;
-    cout << " | DDX: " << sidesInfo[_RIGHT].medX;
-    cout << " | DEX: " << sidesInfo[_LEFT].medX;
+    cout << "E: SegueDir | Erro: " << erro << " | ";
+    cout << "AD: " << sidesInfo[_RIGHT].area << " | ";
+    cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
+    cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
 
 
@@ -243,16 +239,17 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = false;
 
-    cout << "E: RecuEsq | Erro: " << erro;
-    cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DEX: " << sidesInfo[_LEFT].medX;
+    cout << "E: RecuEsq | Erro: " << erro << " | ";
+    cout << "AE: " << sidesInfo[_LEFT].area << " | ";
+    cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Aproxima da esteira quando ela está a esquerda
   }else if(sidesInfo[_LEFT].medX != 10 && _sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.10){
 
     erro = (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC;
 
-    cout << "E: AproxEsq | Erro: " << erro << " | DDX:" << sidesInfo[_LEFT].medX;
+    cout << "E: AproxEsq | Erro: " << erro << " | ";
+    cout << "DDX: " << sidesInfo[_LEFT].medX << " | ";
 
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
@@ -266,16 +263,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _distToTrack = NICE_DIST_TRACK;
     }
 
-    cout << "E: SegueEsq | Erro: " << erro;
-    cout << " | AE: " << sidesInfo[_LEFT].area;
-    cout << " | DEX: " << sidesInfo[_LEFT].medX;
+    cout << "E: SegueEsq | Erro: " << erro << " | ";
+    cout << "AE: " << sidesInfo[_LEFT].area << " | ";
+    cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
 
   //segue reto caso nao tenha nada
   }else{
     
     erro = 0.0;
-    cout << "E: NormalEt";
+    cout << "E: NormalEt" << " | ";
   
   }
   
@@ -316,13 +313,12 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
+  cout << "zAngle: " << _zAngle << " | ";
+
   if(needSpeed)
     setSpeed(tractionDir + _SPEED_BOOST, tractionDir + _SPEED_BOOST, tractionEsq + _SPEED_BOOST, tractionEsq + _SPEED_BOOST);
   else
     setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
-
-
-  cout << " | zAngle: " << _zAngle << endl;
   
 }
 
@@ -338,17 +334,18 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
   static bool frontToTrack = false;
   static bool closeToTrack = false;
 
-  cout << " | MedX: " << sidesInfo[_FRONT].medX;
+  cout << "MedX: " << sidesInfo[_FRONT].medX << " | ";
 
 
 
   if(_sentido == _ANTI_HORARIO){
-    cout << " ANTI_HORARIO";
 
     if(!frontToTrack && !closeToTrack){ //se nao estiver de frente para escada, endireita
       _provavelEscada = true; //nao depende mais da identificacao da escada
 
-      cout << " | Endireitando" << " | zAngle: " << _zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_LEFT].medX;
+      cout << "Endireitando | " << "zAngle: " << _zAngle << " | ";
+      cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
+      cout << "DX: " << sidesInfo[_LEFT].medX << " | ";
       
       if(sidesInfo[_LEFT].medX < _MAX_DIST_SIDE_ESCADA + 0.15){ //esta de lado para a esteira
         closeToTrack = true;
@@ -377,7 +374,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 
     }else if(frontToTrack && !closeToTrack){
       _provavelEscada = false; //depende do reconhecimento da escada
-      cout << "seguindo a esteira" << " | DX: " << sidesInfo[_LEFT].medX;
+      cout << "seguindo a esteira | " << "DX: " << sidesInfo[_LEFT].medX << " | ";
 
     
       if(sidesInfo[_FRONT].area > _MIN_AREA_REC && _zAngle < -0.2){
@@ -407,24 +404,24 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     
     }else if(closeToTrack){ //esta perto da esteira
       _provavelEscada = true; //nao depende mais da identificacao da escada
-      cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_LEFT].medX;
+      cout <<"Perto da esteira | " << "DX: " << sidesInfo[_LEFT].medX << " | ";
 
       if(sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){ //esta de frente com a escada
-        cout << " | Alinhando com escada"; 
+        cout << "Alinhando com escada | "; 
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
-          cout << " | escada";
+          cout << "escada | ";
           _isInStairs = true;
           _provavelEscada = true;
         }
 
         tractionDir = +_KP_ALIGNE_ESCADA*_zAngle*2.5;
         tractionEsq = -_KP_ALIGNE_ESCADA*_zAngle*2.5;
-        cout << " | MedY: " << sidesInfo[_FRONT].medY;
+        cout << "MedY: " << sidesInfo[_FRONT].medY << " | ";
       
 
       }else{
         if(sidesInfo[_LEFT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){ //se nao esiver identidicando mais nada
-          cout << "PERDEU TUDO" << endl;
+          cout << "PERDEU TUDO | " << endl;
           closeToTrack = false;
           frontToTrack = false;
           return;
@@ -433,12 +430,12 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           //se estiver muito distante
           tractionDir = _V0 + _KP_ALIGNE_ESCADA*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
           tractionEsq = _V0 - _KP_ALIGNE_ESCADA*(sidesInfo[_LEFT].medX - _MIN_DIST_SIDE_ESCADA);
-          cout << " | se endireitando";
+          cout << "se endireitando | ";
 
         }else{
           
-          cout << " | Corrigindo zAngle" << " | zAngle: " << _zAngle;
-          cout << " | MedY: " << sidesInfo[_FRONT].medY;
+          cout << "Corrigindo zAngle | " << "zAngle: " << _zAngle << " | ";
+          cout << "MedY: " << sidesInfo[_FRONT].medY << " | ";
           tractionDir = (_V0 + _KP_ALIGNE_ESCADA*_zAngle*1.5)/2;
           tractionEsq = (_V0 - _KP_ALIGNE_ESCADA*_zAngle*1.5)/2;
         }
@@ -446,11 +443,12 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     }
 
   }else{ //_sentido horario
-    cout << "HORARIO";
 
     if(!frontToTrack && !closeToTrack){
       
-      cout << " | Endireitando" << " | zAngle: " << _zAngle << " | DFY: " << sidesInfo[_FRONT].medY << " | DX: " << sidesInfo[_RIGHT].medX;
+      cout << "Endireitando | " << "zAngle: " << _zAngle << " | ";
+      cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
+      cout << "DX: " << sidesInfo[_RIGHT].medX << " | ";
       
       if(sidesInfo[_FRONT].medY < _MIN_DIST_ALIGNE_FRONT_STAIR){ //esta de frente e perto da esteira
         frontToTrack = true;
@@ -478,7 +476,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 
     }else if(frontToTrack && !closeToTrack){
       _provavelEscada = false; //depende do reconhecimento da escada
-      cout << " | seguindo a esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
+      cout << "seguindo a esteira | " << "DX: " << sidesInfo[_RIGHT].medX << " | ";
 
     
       if(sidesInfo[_FRONT].area > _MIN_AREA_REC && _zAngle > 0.2){
@@ -508,24 +506,24 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     
     }else if(closeToTrack){ //esta perto da esteira
       _provavelEscada = true; //nao depende mais da identificacao da escada
-      cout <<" | Perto da esteira" << " | DX: " << sidesInfo[_RIGHT].medX;
+      cout <<"Perto da esteira | " << "DX: " << sidesInfo[_RIGHT].medX << " | ";
 
       if(sidesInfo[_FRONT].medY < _MIN_DIST_ESCADA){ //esta de frente com a escada
-        cout << " | Alinhando com escada"; 
+        cout << "Alinhando com escada" << " | "; 
         if(_zAngle > -_MAX_ERRO_ESCADA && _zAngle < _MAX_ERRO_ESCADA){
-          cout << " | escada";
+          cout << "escada | ";
           _isInStairs = true;
           _provavelEscada = false;
         }
 
         tractionDir = +_KP_ALIGNE_ESCADA*_zAngle*2.5;
         tractionEsq = -_KP_ALIGNE_ESCADA*_zAngle*2.5;
-        cout << " | MedY: " << sidesInfo[_FRONT].medY;
+        cout << "MedY: " << sidesInfo[_FRONT].medY << " | ";
       
 
       }else{
         if(sidesInfo[_RIGHT].area < _MIN_AREA_REC/2 && sidesInfo[_FRONT].area < _MIN_AREA_REC/2){ //se nao esiver identidicando mais nada
-          cout << "PERDEU TUDO" << endl;
+          cout << "PERDEU TUDO | " << endl;
           closeToTrack = false;
           frontToTrack = false;
           return;
@@ -534,12 +532,12 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
           //se estiver muito distante
           tractionDir = _V0 - _KP_ALIGNE_ESCADA*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
           tractionEsq = _V0 + _KP_ALIGNE_ESCADA*(sidesInfo[_RIGHT].medX - _MIN_DIST_SIDE_ESCADA);
-          cout << " | se endireitando";
+          cout << "se endireitando | ";
 
         }else{
           
-          cout << " | Corrigindo zAngle" << " | zAngle: " << _zAngle;
-          cout << " | MedY: " << sidesInfo[_FRONT].medY;
+          cout << "Corrigindo zAngle | " << "zAngle: " << _zAngle << " | ";
+          cout << "MedY: " << sidesInfo[_FRONT].medY << " | ";
           tractionDir = (_V0 + _KP_ALIGNE_ESCADA*_zAngle*1.5)/2;
           tractionEsq = (_V0 - _KP_ALIGNE_ESCADA*_zAngle*1.5)/2;
         }
@@ -547,8 +545,6 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
     }
   }  
 
-
-  cout <<" | velE: " << tractionEsq << " | velD: " << tractionDir << endl;
 
   //altera o vetor das velocidades das 'joints'
 
@@ -563,19 +559,22 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 bool Robot::climbStairs(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
-  //olhando pelo lado esquerdo do robo
-  //positivo -> anti-horario
-  //negativo -> horario
   bool needSpeed = false;
   float wheelFrontSpeed;
   float wheelRearSpeed;
+  static double stairState = PLANE;
+
+
 
   if(fabs(_yAngle) < PLANE){
 
-    cout << " IT'S PLANE\n";
-    wheelRearSpeed = (_climbing) ? _MAX_WHEEL_R_SPEED : 0.0;
+    cout << "IT'S PLANE | ";
+
+    wheelRearSpeed = 0.0;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
   
+    setSpeed(_V0+0.5,_V0+0.5,_V0+0.5,_V0+0.5);
+
     if(_climbing){
       _climbing = false;
 
@@ -590,39 +589,57 @@ bool Robot::climbStairs(){
       statePub.publish(_enable);
     } 
 
-  }else if(fabs(_yAngle) < FRONT_WHEELS){
-    
+  }else if(fabs(_yAngle) < FRONT_WHEELS){//} && (stairState == PLANE || stairState == FRONT_WHEELS)){
+    cout << "FRONT WHEELS IS ON | ";
+
+    //setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);
+
+    stairState = FRONT_WHEELS;
+
     needSpeed = true;
 
-    cout << " FRONT WHEELS IS ON\n";
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    // wheelFrontSpeed = 0;
     _climbing = true;
 
   
-  }else if(fabs(_yAngle) > REAR_WHEELS){
+  }else if(fabs(_yAngle) > REAR_WHEELS){// && (stairState == FRONT_WHEELS || stairState == REAR_WHEELS)){
+    cout << "REAR WHEELS IS ON | ";
+
+    //setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);    
+
+    stairState = REAR_WHEELS;
 
     needSpeed = true;
 
-    cout << " REAR WHEELS IS ON\n";
     wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    //wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
     _climbing = true;
 
   }else{
+    cout << "ESTABILIZING |";
 
-    cout << " ESTABILIZING\n";
+    //cout << " ESTABILIZING\n";
     wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    setSpeed(_V0,_V0,_V0,_V0);
 
+    // wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
+    // wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
   }
+  
 
-  for(int i = 0; i < 4; i++){
+  for(int i = 0; i < 4; i++)
     msg.data.push_back((i == 0 || i == 2) ? wheelFrontSpeed : wheelRearSpeed);
-  }
+  
 
   wheelPub.publish(msg);
   return needSpeed;
+
 }
 
 
@@ -646,7 +663,7 @@ void Robot::rodarFunction(SidesInfo* sidesInfo){ //roda o robo depois dele sair 
     _zAngle += M_PI*2;
 
 
-  cout << "Girando" << " | Zangle: " << _zAngle;
+  cout << "Girando | " << "Zangle: " << _zAngle << " | ";
 
   if(sidesInfo[_FRONT].medY < _MIN_SAFE_DIST_SPIN) //afasta o robo
     setSpeed(-_V0 ,-_V0,-_V0, -_V0);
@@ -704,8 +721,7 @@ void Robot::setSpeed(float tractionDirFront, float tractionDirBack, float tracti
   msg.data.push_back(tractionLeftBack);
 
 
-  cout << " | VelE: " << tractionLeftFront << " | VelD: " << tractionDirFront;
-
+  cout << "VelE: " << tractionLeftFront << " | " << "VelD: " << tractionDirFront << endl;
 
   speedPub.publish(msg);
 }
@@ -731,6 +747,9 @@ bool Robot::getNothing(){
   return _nothing;
 }
 
+bool Robot::getisInStair(){
+  return _provavelEscada;
+}
 
 void Robot::setEnable(std_msgs::Int32 states){
   _states.data = states.data;
