@@ -54,14 +54,14 @@ int main(int argc, char **argv){
 
   //le o publisher do vrep
   ros::Rate loop_rate(1);
-  ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback); //velodyne
-  ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback); //estados do robo
-  ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback); //angulos do robo
+  ros::Subscriber subVelodyne = n.subscribe("/sensor/velodyne", 1, velodyneCallback);   //velodyne
+  ros::Subscriber subState = n.subscribe("/pra_vale/estados", 1, statesCallback);       //estados do robo
+  ros::Subscriber Angles = n.subscribe("/pra_vale/imu", 1, anglesCallback);             //angulos do robo
   
 
-  ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1); //velocidade do robo
+  ros::Publisher speedPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_speed",1);     //velocidade do robo
   ros::Publisher wheelPub = n.advertise<std_msgs::Float32MultiArray>("/pra_vale/rosi_arm_speed",1); //velocidade da esteira do robo
-  ros::Publisher statePub = n.advertise<std_msgs::Int32>("/pra_vale/def_state",15); //estados do robo
+  ros::Publisher statePub = n.advertise<std_msgs::Int32>("/pra_vale/def_state",15);                 //estados do robo
   
   
   rob->setPublishers(speedPub, wheelPub, statePub); //seta os ponteiros

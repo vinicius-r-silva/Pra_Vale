@@ -11,7 +11,7 @@ from std_msgs.msg import Int32
 
 
 CUT_SCALE = [0.5, 0.1]
-NOTA_MAX  = 50
+NOTA_MAX  = 60
 
 
 # get an instance of RosPack with the default search paths
