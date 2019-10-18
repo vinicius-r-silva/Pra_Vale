@@ -34,10 +34,12 @@ void Visualization::createRectangles(){
     pSizeY = (nothing) ? _MAX_DIST/2 : pSizeY;
     //float sizeFX = (avoidingObs) ? 1.2 : 1.0;
 
+    float fSizeY = (stairs) ? 0.75 : 1.5;
+
 
     //retangulo da frente
     const int FRONT_SIZE_X = 1.0*_SCALE;
-    const int FRONT_SIZE_Y = 1.5*_SCALE;
+    const int FRONT_SIZE_Y = fSizeY*_SCALE;
     const int FRONT_X = _MAX_DIST*_SCALE - FRONT_SIZE_X/2;
     const int FRONT_Y = (_MAX_DIST+0.65)*_SCALE;
 
@@ -142,6 +144,12 @@ bool Visualization::isImportant(geometry_msgs::Point32 pointInput){
 SidesInfo* Visualization::getSidesInfo(){
     Visualization::getInfo();
     return this->sidesInfo;
+}
+
+void Visualization::setParams(bool _avoid, bool _nothing, bool _stairs){
+    avoidingObs = _avoid;
+    nothing = _nothing;
+    stairs = _stairs;
 }
 
 void Visualization::setAvoidingObs(bool avoid){

@@ -35,12 +35,13 @@ class Visualization {
         SidesInfo *sidesInfo;   //Guarda todas as informacoes dos lados
         bool avoidingObs;       //Muda o tamanho da janela caso tenha detectado um obstaculo
         bool nothing;           //Muda o tamanho da janela caso nao tenha detectado nada perto do robo
-
+        bool stairs;            //Muda o tamanho da janela frontal caso esteja perto da escada
 
     public:
         Visualization(); //Construtor do robo
 
         void createRectangles();                                            //cria os retangulos onde a imagem sera processada
+        void setParams(bool avoid, bool _nothing, bool stairs);             //Seta os parametros
         void setAvoidingObs(bool avoid);                                    //seta se tem um obstaculo ou nao
         void setNothing(bool _nothing);                                     //se nao pegou nada ao analisar a imagem
         void showImages();                                                  //mostra as imagens na tela

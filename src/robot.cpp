@@ -738,6 +738,9 @@ bool Robot::getNothing(){
   return _nothing;
 }
 
+bool Robot::getisInStair(){
+  return _provavelEscada;
+}
 
 void Robot::setEnable(std_msgs::Int32 states){
   _states.data = states.data;
