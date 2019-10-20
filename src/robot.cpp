@@ -2,7 +2,7 @@
 
 using namespace std;
 
-#define _SIDESRATIO 2.0
+#define _SIDESRATIO 3.0
 
 
 Robot::Robot(){
@@ -16,7 +16,8 @@ Robot::Robot(){
     _nothing = true;
     _narrowPath = false;
     _climbing = false;
-    _distToTrack = NICE_DIST_TRACK;
+    _distToTrack = _MIN_DIST_TRACK;
+    _isInNarPath = false;
 }
 
 
@@ -77,9 +78,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if(sidesInfo[_RIGHT].distance > _FAR && sidesInfo[_LEFT].distance > _FAR && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << "Longe | ";
     _nothing = true;
-  }else
+  }else{
     _nothing = false;
-  
+  }
 
 
   //atualiza o estado do robo
@@ -119,14 +120,11 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   
-  // //caminho estreito
-  // if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && 
-  //   !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
-  //   || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)))){
+  //caminho estreito
 
   double sidesRatio = (sidesInfo[_FRONT_LEFT].area == 0 || sidesInfo[_FRONT_RIGHT].area == 0)? 0.0 : sidesInfo[_FRONT_LEFT].area/sidesInfo[_FRONT_RIGHT].area;
   
-  std::cout << "sidesRatio: " << sidesRatio << " | FRarea: " << sidesInfo[_FRONT_RIGHT].area << " | FLarea: " << sidesInfo[_FRONT_LEFT].area << " | ";
+  //std::cout << "sidesRatio: " << sidesRatio << " | FRarea: " << sidesInfo[_FRONT_RIGHT].area << " | FLarea: " << sidesInfo[_FRONT_LEFT].area << " | ";
   
   if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
     ((_sentido == _HORARIO && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
@@ -135,12 +133,52 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _narrowPath = true;
     _enable.data = NARROW_PATH;
     statePub.publish(_enable);
-    _distToTrack = NICE_DIST_TRACK - 0.25;
+    
+    if(!_isInNarPath)
+      _distToTrack = _MIN_DIST_TRACK - 0.25;
 
   } 
 
   if(_narrowPath){
     cout << "NarrowPath | ";
+
+    if(_avoidSide == _LEFT){
+      if(sidesInfo[_LEFT].medX > 0.45 && _distToTrack != 0.65){
+        _distToTrack += 0.1;
+      }
+
+      if(sidesInfo[_LEFT].medY < 0.3){
+        _isInNarPath = true;
+      }
+
+      if(_isInNarPath && (sidesInfo[_LEFT].medY == 10 || sidesInfo[_LEFT].medX > 0.5)){
+        _isInNarPath = false;
+        _narrowPath = false;
+        _enable.data = -NARROW_PATH;
+        statePub.publish(_enable);
+        _distToTrack = _MIN_DIST_TRACK;
+      }
+    }else{
+      if(sidesInfo[_RIGHT].medX > 0.45 && _distToTrack != 0.65){
+        _distToTrack += 0.1;
+      }
+
+      if(sidesInfo[_RIGHT].medY < 0.3){
+        _isInNarPath = true;
+      }
+
+      if(_isInNarPath && (sidesInfo[_RIGHT].medY == 10 || sidesInfo[_RIGHT].medX > 0.5)){
+        _isInNarPath = false;
+        _narrowPath = false;
+        _enable.data = -NARROW_PATH;
+        statePub.publish(_enable);
+        _distToTrack = _MIN_DIST_TRACK;
+      }
+    }
+
+
+
+
   }
 
   //confere se chegou na escada
@@ -224,10 +262,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = false;
   //Aproxima da esteira quando ela está a direita
-  }else if(sidesInfo[_RIGHT].medX != 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.10){
+  }else if(sidesInfo[_RIGHT].medX != 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.05){
 
     erro = (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
-
     cout << "E: AproxDir | erro: " << erro << " | ";
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
 
@@ -241,13 +278,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
-    if(_narrowPath && sidesInfo[_LEFT].medX > 0.5){
-      _narrowPath = false;
-      _enable.data = -NARROW_PATH;
-      statePub.publish(_enable);
-      _distToTrack = NICE_DIST_TRACK;
-    } 
-
   //Recupera o trajeto da esquerda
   }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
     
@@ -260,7 +290,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Aproxima da esteira quando ela está a esquerda
-  }else if(sidesInfo[_LEFT].medX != 10 && _sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.10){
+  }else if(sidesInfo[_LEFT].medX != 10 && _sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.05){
 
     erro = (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC;
 
@@ -276,13 +306,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "AE: " << sidesInfo[_LEFT].area << " | ";
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
-    if(_narrowPath && sidesInfo[_RIGHT].medX > 0.5){
-      _narrowPath = false;
-      _enable.data = -NARROW_PATH;
-      statePub.publish(_enable);
-      _distToTrack = NICE_DIST_TRACK;
-    }
-
   //segue reto caso nao tenha nada
   }else{
     
@@ -293,6 +316,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
 
   //define as velocidades
+  if(_narrowPath)
+    erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
     tractionDir = (float) (stairsDir * 3.5 + erro);

@@ -35,6 +35,7 @@ class Robot {
         bool _nothing;          //Confere se o velodyne nao detectou nada no alcance normal
         bool _begin;            //Determina se precisa analisar o caminho para descobrir o sentido ou nao
         int _avoidSide;
+        bool _isInNarPath;
         
         bool climbStairs();                         //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º

@@ -51,7 +51,7 @@
 //controle da velocidade do robo
 #define _V0                 3.0  //Velocidade do robo
 #define _KP                 5.5  //Constante para o PID
-#define _KP_OBSTACLE        1.2
+#define _KP_OBSTACLE        1.3
 #define _KP_ALIGNE_ESCADA   9.0  //Constante para o PID para alinhar a escada  
 #define _MAX_SPEED          4.2  //Velocidade maxima do robo em rad/s
 #define _KP_REC             0.7 
@@ -79,7 +79,7 @@
 //Desviar de objetos
 #define _MIN_DIST_FRONT         2.5   //distancia maxima do obstaculo para virar
 #define _MIN_SAFE_DIST_SPIN     0.75  //distancia minima da frente para girar
-#define NICE_DIST_TRACK         0.80  //Distancia ideal para seguir a esteira
+#define _MIN_DIST_TRACK         0.80  //Distancia ideal para seguir a esteira
 
 //Alinhar com a escada
 #define _MIN_DIST_ESCADA                1.00  //distancia minima para mandar o robo subir
