@@ -616,7 +616,7 @@ bool Robot::climbStairs(){
     cout << "IT'S PLANE | ";
 
     wheelRearSpeed = 0.0;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/1.3;
   
     setSpeed(_V0+0.5,_V0+0.5,_V0+0.5,_V0+0.5);
     if(_climbing) i++;
