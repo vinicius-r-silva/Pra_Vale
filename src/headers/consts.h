@@ -46,6 +46,11 @@
 #define END_STAIR        	 17
 #define IN_STAIR             18
 #define CLIMB_STAIR          19
+#define BEAM_FIND            20
+#define ROBOT_ON_THE_LEFT    21
+#define FIRE_FOUND_BY_CAM    22
+#define FORCE_VELODYME       23
+
 
 
 //controle da velocidade do robo
