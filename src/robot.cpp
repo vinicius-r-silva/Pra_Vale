@@ -6,12 +6,12 @@ using namespace std;
 
 
 Robot::Robot(){
-    _begin = false;
+    _begin = true;
     _state = WALKING;
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = true;
+    _rodar = false;
     _avoidingObs = false;
     _nothing = true;
     _narrowPath = false;
@@ -65,10 +65,15 @@ void Robot::processMap(SidesInfo *sidesInfo){
       _begin = false;
       _sentido = _ANTI_HORARIO;
     }else{
-      tractionDir = _V0;
-      tractionEsq = _V0;
+      cout << "Procurando... | ";
+      erro = 0;
+      
     }
     
+    tractionDir = _V0 + erro;
+    tractionEsq = _V0 - erro;
+
+
     cout << "zAngle: " << _zAngle << " | ";
 
     setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
