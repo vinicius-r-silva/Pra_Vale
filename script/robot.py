@@ -381,8 +381,9 @@ def state_callback(data):
         arm_publisher.publish(joint_variable = pos)
         state_publisher.publish(data = defs.ARM_CHANGING_POSE)
         state_publisher.publish(data = defs.FORCE_VELODYME)
-        rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
 
+    if((not (state & (1 << defs.ENABLE_VELODYME | 1 << defs.FORCE_VELODYME)))):
+        rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
 
 
 
