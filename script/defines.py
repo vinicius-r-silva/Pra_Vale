@@ -24,8 +24,8 @@ BEAM_FIND           = 20
 
 #const for minimum angle difference betwwen the current angle and the desired angle
 # used to calculates if a joint of the arm is in place
-MAX_JOINT_ANGLE_DIFF = 0.1  
+MAX_JOINT_ANGLE_DIFF = 0.05  
 
 
-DEBUGGING = 0
+DEBUGGING = 1
 PRINT_STATES = 1

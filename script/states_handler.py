@@ -9,16 +9,13 @@ from std_msgs.msg import Int32
 
 #Global variable of all states
 #Each byte is a state
-state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE)
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) 
 
 
 
 def print_state():
     global state
     string = ""
-
-    if(state == 1 << defs.ROBOT_CLOCKWISE or state == 1 << defs.ROBOT_ANTICLOCKWISE):
-        state |= 1 << defs.ENABLE_VELODYME
 
     #enable velodyne detection path planning
     if (state & (1 << defs.ENABLE_VELODYME)):
@@ -91,6 +88,10 @@ def print_state():
     #when you are climbing the stairs
     if (state & (1 << defs.CLIMB_STAIR)):
         string += ("  CLIMB_STAIR")
+
+    #when you are climbing the stairs
+    if (state & (1 << defs.BEAM_FIND)):
+        string += ("  BEAM_FIND")
     
     print(string)
 
@@ -113,15 +114,19 @@ def set_state(data):
 #callback function called when a node requires a state change
 def def_state(data):
     global state
+    state_changed = False
     state_to_change = abs(data.data)
-    if(data.data > 0):
+
+    if(data.data > 0 and (not state & (1 << state_to_change))):
         state |= 1 << state_to_change
-    else:
+        state_changed = True
+    elif(data.data < 0 and (state & (1 << state_to_change))):
         state &= ~(1 << state_to_change)
+        state_changed = True
 
     #print the state change (debug)
     #print("state changed: ")
-    if(defs.PRINT_STATES):
+    if(state_changed and defs.PRINT_STATES):
         print_state()
 
 
@@ -133,6 +138,7 @@ if __name__ == '__main__':
     rospy.Subscriber("/pra_vale/def_state", Int32, def_state)
     pub = rospy.Publisher('/pra_vale/estados', Int32, queue_size=1)
 
+    print("state handler launched")
     print_state() #print the intial state
     node_sleep_rate = rospy.Rate(10)
 

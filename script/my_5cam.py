@@ -44,6 +44,8 @@ desired_z = 20
 #state of the robot
 state = 1 << defs.NOTHING
 
+leaving_fire_counter = 0
+
 
 #----------------------FUNCTIONS----------------------# 
 
@@ -131,10 +133,13 @@ def get_tilt_angle(frame):
             B = frame[x, current_col][0]
             G = frame[x, current_col][1]
             R = frame[x, current_col][2]
-            if R == G == B == 0 or (abs(((int)(R) - (int)(G)) + (int)((R) - (int)(B))) > 10): #check if pixel is black
+            if R == G == B == 0 or (abs(((int)(R) - (int)(G)) + (int)((R) - (int)(B))) > 20): #check if pixel is black
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
                 pixels_found += 1
+                frame[x, current_col][0] = 0
+                frame[x, current_col][1] = 0
+                frame[x, current_col][2] = 255
 
                 
                 break
@@ -166,13 +171,14 @@ def ur5_callback(data):
     global state
     global arm_move
     global arm_tilt
+    global leaving_fire_counter
 
     #get the image
     bridge=CvBridge()
     frame = cv2.flip(cv2.cvtColor(bridge.imgmsg_to_cv2(data),cv2.COLOR_BGR2RGB),1)
 
     #check if it's necessary process the image
-    if(state & ((1 << defs.ARM_CHANGING_POSE) | (1 << defs.FOUND_FIRE_FRONT) | (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.NOTHING) | (1 << defs.BEAM_FIND))):
+    if(state & ((1 << defs.ARM_CHANGING_POSE) | (1 << defs.FOUND_FIRE_FRONT) | (1 << defs.FOUND_FIRE_TOUCH) | (1 << defs.NOTHING))):
         cv2.imshow("Camera",frame) #if it isn't necessary, show the image and exit
         cv2.waitKey(1)
         return
@@ -230,11 +236,16 @@ def ur5_callback(data):
 
 
     if (state & 1 << defs.LEAVING_FIRE and error == _FIRE_NOT_FOUND):
-        state_publisher.publish(data = -defs.LEAVING_FIRE)
+        if(leaving_fire_counter == 0):
+            leaving_fire_counter = 20
+        
+        leaving_fire_counter -= 1
+        if(leaving_fire_counter == 0):
+            state_publisher.publish(data = -defs.LEAVING_FIRE)
 
 
     #publishes to the arm node
-    if(error != _FIRE_NOT_FOUND):
+    if(error != _FIRE_NOT_FOUND and not state & (1 << defs.BEAM_FIND)):
         arm_move.publish(data = [error, 0, z])
 
     cv2.imshow("Camera",frame)

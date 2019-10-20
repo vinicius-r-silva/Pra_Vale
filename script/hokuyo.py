@@ -134,6 +134,8 @@ def hokuyo_callback(data):
             last_fire_coord[1] = -1
         return
 
+    if(state & (1 << defs.ARM_CHANGING_POSE)):
+        return
 
     frame = getFrame(data)
 

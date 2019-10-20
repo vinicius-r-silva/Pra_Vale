@@ -16,7 +16,8 @@ def listener():
     arm_publisher = rospy.Publisher('/ur5/jointsPosTargetCommand', ManipulatorJoints, queue_size=10)
     
     #initial pose
-    pos = [4.577346777463163, -0.1397862826679197, -0.9876880430729198, 1.1274743257408393, -7.718939431052956, 0]
+    #pos = [4.577346777463163, -0.1397862826679197, -0.9876880430729198, 1.1274743257408393, -7.718939431052956, 0]
+    pos = [0,0,0,0,0,0]
 
     while not rospy.is_shutdown():    
         #read a key and check if it means a increment

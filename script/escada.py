@@ -131,7 +131,7 @@ def kin_callback(data):
 		start = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1])     , maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]))
 		end   = (maxLoc[0] + int(image.shape[0]*CUT_SCALE[1]) + tW, maxLoc[1] + int(image.shape[0]*CUT_SCALE[0]) + tH)
 		
-		#state_publisher.publish(data = defs.FOUND_STAIR)
+		state_publisher.publish(data = defs.FOUND_STAIR)
 
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)

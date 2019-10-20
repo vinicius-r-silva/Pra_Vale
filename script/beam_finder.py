@@ -108,7 +108,7 @@ def beam_callback(data):
 	
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Hist",hist)
-		cv2.moveWindow("beam_Hist",1920,1200)
+		#cv2.moveWindow("beam_Hist",1920,1200)
 		cv2.waitKey(1)
 	
 	gray = cv2.cvtColor(hist, cv2.COLOR_BGR2GRAY)
@@ -145,6 +145,8 @@ def beam_callback(data):
 	if(found !=None):
 		# unpack the bookkeeping varaible and compute the (x, y) coordinates
 		# of the bounding box based on the resized ratio
+		state_publisher.publish(data = defs.BEAM_FIND)
+		
 		(chance, maxLoc) = found
 		
 		start = (maxLoc[0]     , maxLoc[1])
@@ -161,11 +163,10 @@ def beam_callback(data):
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
 		arm_move.publish(data = [error,0,0])
-		state_publisher.publish(data = defs.BEAM_FIND)
 		
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Detection",image)
-		cv2.moveWindow("beam_Detection",1920,0)
+		#cv2.moveWindow("beam_Detection",1920,0)
 		cv2.waitKey(15)
 
 
