@@ -628,7 +628,7 @@ bool Robot::climbStairs(){
     wheelRearSpeed = 0.0;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/1.3;
   
-    setSpeed(_V0+0.5,_V0+0.5,_V0+0.5,_V0+0.5);
+    setSpeed(_V0,_V0,_V0,_V0);
     if(_climbing) i++;
 
     if(i > 3){
@@ -647,7 +647,7 @@ bool Robot::climbStairs(){
       statePub.publish(_enable);
     } 
 
-  }else if(fabs(_yAngle) < FRONT_WHEELS){//} && (stairState == PLANE || stairState == FRONT_WHEELS)){
+  }else if(fabs(_yAngle) < FRONT_WHEELS && (stairState == PLANE || stairState == FRONT_WHEELS)){
     cout << "FRONT WHEELS IS ON | ";
 
     //setSpeed(_V0,_V0,_V0,_V0);
@@ -662,31 +662,30 @@ bool Robot::climbStairs(){
     _climbing = true;
 
   
-  }else if(fabs(_yAngle) > REAR_WHEELS){// && (stairState == FRONT_WHEELS || stairState == REAR_WHEELS)){
+  }else if(fabs(_yAngle) > REAR_WHEELS && (stairState == FRONT_WHEELS || stairState == REAR_WHEELS)){
     cout << "REAR WHEELS IS ON | ";
 
-    //setSpeed(_V0,_V0,_V0,_V0);
-    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);    
+    setSpeed(_V0,_V0,_V0,_V0);
+    //setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);    
 
     stairState = REAR_WHEELS;
 
     needSpeed = true;
 
     wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
-    //wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
+    //wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
     _climbing = true;
 
   }else{
     cout << "ESTABILIZING |";
 
-    //cout << " ESTABILIZING\n";
-    wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    // wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
+    // wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
     setSpeed(_V0,_V0,_V0,_V0);
 
-    // wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
-    // wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
+    wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
   }
   
 
