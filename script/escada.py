@@ -11,7 +11,7 @@ from std_msgs.msg import Int32
 
 
 CUT_SCALE = [0.5, 0.1]
-NOTA_MAX  = 60
+NOTA_MAX  = 70
 
 
 # get an instance of RosPack with the default search paths
@@ -29,6 +29,8 @@ stair = cv2.cvtColor(stair, cv2.COLOR_BGR2GRAY)
 scaleList=np.linspace(1.6, 0.5, 15).tolist()
 
 state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
+
+maxGlob = 0
 
 #callback function called when a node requires a state change
 def set_state(data):
@@ -72,7 +74,7 @@ def kin_callback(data):
 	global NOTA_MAX, CUT_SCALE
 
 	#Variables
-	global scaleList, state, stair, state_publisher
+	global scaleList, state, stair, state_publisher, maxGlob
 
 	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.IN_STAIR)):
 		return
@@ -123,6 +125,8 @@ def kin_callback(data):
 			#print maxVal
 			found = (maxVal, maxLoc)
 			(tH, tW) = template.shape[:2]
+			if(maxVal>maxGlob):
+				maxGlob=maxVal
 	if(found !=None):
 		# unpack the bookkeeping varaible and compute the (x, y) coordinates
 		# of the bounding box based on the resized ratio
@@ -138,6 +142,7 @@ def kin_callback(data):
 	else:
 		state_publisher.publish(data = (-1)*defs.FOUND_STAIR)
 	if defs.DEBUGGING:
+		#print maxGlob," - ", found[0]
 		cv2.imshow("escada_Detection",image)
 		cv2.moveWindow("escada_Detection",1920,0)
 		cv2.waitKey(1)

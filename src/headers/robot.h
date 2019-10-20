@@ -36,7 +36,8 @@ class Robot {
         bool _begin;            //Determina se precisa analisar o caminho para descobrir o sentido ou nao
         int _avoidSide;
         bool _isInNarPath;
-        
+        bool _wheelsStable;
+
         bool climbStairs();                         //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void aligneEscada(SidesInfo *sidesInfo);    //alinha o robo com a esteira para subir a escada

@@ -18,6 +18,7 @@ Robot::Robot(){
     _climbing = false;
     _distToTrack = _MIN_DIST_TRACK;
     _isInNarPath = false;
+    _wheelsStable = true;
 }
 
 
@@ -115,6 +116,11 @@ void Robot::processMap(SidesInfo *sidesInfo){
   if((_states.data & (1 << FOUND_STAIR) || _provavelEscada) && !_isInStairs){
     _avoidingObs = false;
     aligneEscada(sidesInfo);
+    return;
+  }
+
+  if(!_wheelsStable){
+    stableWheelTrack();
     return;
   }
 
@@ -236,6 +242,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
       statePub.publish(_enable);
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
+      _wheelsStable = false;
     }
 
     cout << "E: DescendoEscada | ";
@@ -252,7 +259,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
-  }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
+  }else if(!_isInNarPath && sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -279,7 +286,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Recupera o trajeto da esquerda
-  }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
+  }else if(!_isInNarPath && sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -601,7 +608,7 @@ bool Robot::climbStairs(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
   static double stairState = PLANE;
-
+  static int i = 0;
 
 
   if(fabs(_yAngle) < PLANE){
@@ -609,16 +616,19 @@ bool Robot::climbStairs(){
     cout << "IT'S PLANE | ";
 
     wheelRearSpeed = 0.0;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/1.3;
   
-    setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_V0+0.5,_V0+0.5,_V0+0.5,_V0+0.5);
+    if(_climbing) i++;
 
-    if(_climbing){
+    if(i > 3){
       _climbing = false;
 
       _state = IN_LADDER;
       wheelFrontSpeed = 0.0;
       wheelRearSpeed = 0.0;
+
+      _wheelsStable = false;
 
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
@@ -627,47 +637,46 @@ bool Robot::climbStairs(){
       statePub.publish(_enable);
     } 
 
-  }else if(fabs(_yAngle) < FRONT_WHEELS && (stairState == PLANE || stairState == FRONT_WHEELS)){
+  }else if(fabs(_yAngle) < FRONT_WHEELS){//} && (stairState == PLANE || stairState == FRONT_WHEELS)){
     cout << "FRONT WHEELS IS ON | ";
 
-    setSpeed(_V0,_V0,_V0,_V0);
-    //setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);
+    //setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);
 
     stairState = FRONT_WHEELS;
 
     needSpeed = true;
 
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
-    //wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = 0;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
     _climbing = true;
 
   
-  }else if(fabs(_yAngle) > REAR_WHEELS && (stairState == FRONT_WHEELS || stairState == REAR_WHEELS)){
+  }else if(fabs(_yAngle) > REAR_WHEELS){// && (stairState == FRONT_WHEELS || stairState == REAR_WHEELS)){
     cout << "REAR WHEELS IS ON | ";
 
-    setSpeed(_V0,_V0,_V0,_V0);
-    //setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);    
+    //setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);    
 
     stairState = REAR_WHEELS;
 
     needSpeed = true;
 
     wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
-    //wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    //wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
     _climbing = true;
 
   }else{
     cout << "ESTABILIZING |";
 
     //cout << " ESTABILIZING\n";
-    //wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
-    //wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelRearSpeed =  -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
     setSpeed(_V0,_V0,_V0,_V0);
 
-    wheelRearSpeed =  _MAX_WHEEL_R_SPEED + 0.3;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
+    // wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
+    // wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
   }
   
 
@@ -795,13 +804,42 @@ void Robot::setEnable(std_msgs::Int32 states){
 
 void Robot::stableWheelTrack(){
   std_msgs::Float32MultiArray msg;
-  
-  static float yAngle;
+  msg.data.clear();
+
+  static float yAngle = 10;
   float wheelFrontSpeed;
   float wheelRearSpeed;
   bool wheelsStable = false;
+  bool frontWheel = false;
+
+  static int i = 0;
+
+  if(yAngle == 10)
+    yAngle = _yAngle;
+
+  std::cout << "yAngle: " << yAngle << " | _yAngle: " << _yAngle << std::endl;
+  if(fabs(_yAngle) < PLANE){
+    if(frontWheel){
+      wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+      wheelRearSpeed = 0;
+      std::cout << "frontWheel\n";
+    }else{
+      wheelFrontSpeed = 0;
+      wheelRearSpeed = _MAX_WHEEL_R_SPEED;
+      if(fabs(yAngle - _yAngle) < 0.05)  i++;
+      if(i > 10)  frontWheel = true;
+      std::cout << "rearWheel\n";
+    }
+  }
 
 
 
-  msg.data.clear();
+
+  
+
+  for(int i = 0; i < 4; i++){
+    msg.data.push_back((i == 0 || i == 2) ? wheelFrontSpeed : wheelRearSpeed);
+  }
+
+  wheelPub.publish(msg);
 }

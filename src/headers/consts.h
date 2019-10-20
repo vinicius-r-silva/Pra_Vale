@@ -105,5 +105,5 @@
 // #define REAR_WHEELS     0.25
 // #define PLANE           0.11
 #define FRONT_WHEELS    0.30 
-#define REAR_WHEELS     0.255
+#define REAR_WHEELS     0.19
 #define PLANE           0.11
