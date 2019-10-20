@@ -108,7 +108,7 @@ def arm_move(data):
         y_move = temp
 
     #to debug only
-    print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
+    #print("xmove : " + str(x_move) + "  y_move: " + str(y_move))
     
     #if the arm is detecting a fire, but didn't touch it yet
     if(not state & (1 << defs.LEAVING_FIRE)):
@@ -140,7 +140,7 @@ def arm_move(data):
                 if(x_move == 0 and y_move == 0):
                     if(state & (1 << defs.IN_STAIR)):
                         arm.z = arm.z - 40
-                        
+
                     state |= (1 << defs.HOKUYO_READING | 1 << defs.ARM_CHANGING_POSE)
                     rosi_speed_publisher.publish(data = ([0,0,0,0]))
                     state_publisher.publish(data = defs.ARM_CHANGING_POSE)
@@ -330,7 +330,7 @@ def state_callback(data):
 
     #if the arm is it in
     if ((state & (1 << defs.NARROW_PATH | 1 << defs.IN_STAIR)) and not narrow_path_counter):
-        narrow_path_counter = 30
+        narrow_path_counter = 40
         arm.x = arm.NARROW_PATH_X_VALUE
         arm.y = arm.NARROW_PATH_Y_VALUE
         arm.z = arm.NARROW_PATH_Z_VALUE
@@ -341,8 +341,8 @@ def state_callback(data):
 
     elif(not state & (1 << defs.NARROW_PATH | 1 << defs.IN_STAIR) and narrow_path_counter):
         narrow_path_counter -= 1
-        print("narrow path counter = " + str(narrow_path_counter))
-        if(not narrow_path_counter):
+        #print("narrow path counter = " + str(narrow_path_counter))
+        if(narrow_path_counter == 0):
             arm.x = arm.FIRE_NOT_FOUND_X_VALUE
             arm.y = arm.FIRE_NOT_FOUND_Y_VALUE
             arm.z = arm.FIRE_NOT_FOUND_Z_VALUE
