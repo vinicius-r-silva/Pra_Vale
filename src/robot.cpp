@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#define _SIDESRATIO 2.0
+
 
 Robot::Robot(){
     _begin = true;
@@ -88,12 +90,17 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data = -ROBOT_CLOCKWISE;
     statePub.publish(_enable);
 
+    _avoidSide = (_zAngle > -M_PI_2 || _zAngle < M_PI_2) ? _RIGHT : _LEFT;
+
   }else{
     _enable.data = ROBOT_CLOCKWISE;
     statePub.publish(_enable);
 
     _enable.data = -ROBOT_ANTICLOCKWISE;
     statePub.publish(_enable);    
+
+    _avoidSide = (_zAngle > -M_PI_2 || _zAngle < M_PI_2) ? _LEFT : _RIGHT;
+
   }
 
   //roda o robo depois de descer a escada
@@ -112,17 +119,29 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   
-  //caminho estreito
-  if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
-    || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)))){
+  // //caminho estreito
+  // if(sidesInfo[_FRONT_MIDLE].area < 20 && (!_isInStairs && ((_sentido == _HORARIO && sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT && 
+  //   !(sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT))
+  //   || (_sentido == _ANTI_HORARIO && !(sidesInfo[_FRONT_LEFT].medY < _MIN_DIST_FRONT) && sidesInfo[_FRONT_RIGHT].medY < _MIN_DIST_FRONT)))){
+
+  double sidesRatio = (sidesInfo[_FRONT_LEFT].area == 0 || sidesInfo[_FRONT_RIGHT].area == 0)? 0.0 : sidesInfo[_FRONT_LEFT].area/sidesInfo[_FRONT_RIGHT].area;
+  
+  std::cout << "sidesRatio: " << sidesRatio << " | FRarea: " << sidesInfo[_FRONT_RIGHT].area << " | FLarea: " << sidesInfo[_FRONT_LEFT].area << " | ";
+  
+  if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
+    ((_sentido == _HORARIO && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
+    (_sentido == _ANTI_HORARIO && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
 
     _narrowPath = true;
-    _enable.data = STRAIT_PATH;
+    _enable.data = NARROW_PATH;
     statePub.publish(_enable);
     _distToTrack = NICE_DIST_TRACK - 0.25;
-    cout << "NarrowPath | ";
 
   } 
+
+  if(_narrowPath){
+    cout << "NarrowPath | ";
+  }
 
   //confere se chegou na escada
   if(_isInStairs && _state != IN_LADDER && _state != LADDER_DOWN){
@@ -186,10 +205,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //desvia do obstaculo na frente    
   }else if(!_narrowPath && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT){
 
-    if(_sentido ==_HORARIO)
-      erro = 1/(sidesInfo[_FRONT].medY);
-    else
-      erro = -1/(sidesInfo[_FRONT].medY);
+    erro = (_avoidSide == _LEFT) ? 1/(sidesInfo[_FRONT].medY) : -1/(sidesInfo[_FRONT].medY);
 
     _avoidingObs = true;
 
@@ -198,7 +214,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
-  }else if(sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
+  }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -220,22 +236,20 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle * _KP_OBSTACLE;
 
-    if(_narrowPath && _sentido == _HORARIO && sidesInfo[_LEFT].medX > 0.5){
-      _narrowPath = false;
-      _enable.data = -STRAIT_PATH;
-      statePub.publish(_enable);
-      _distToTrack = NICE_DIST_TRACK;
-    }
-
     cout << "E: SegueDir | Erro: " << erro << " | ";
     cout << "AD: " << sidesInfo[_RIGHT].area << " | ";
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
-
+    if(_narrowPath && sidesInfo[_LEFT].medX > 0.5){
+      _narrowPath = false;
+      _enable.data = -NARROW_PATH;
+      statePub.publish(_enable);
+      _distToTrack = NICE_DIST_TRACK;
+    } 
 
   //Recupera o trajeto da esquerda
-  }else if(sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
+  }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -258,17 +272,16 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     erro = _zAngle *_KP_OBSTACLE;
 
-    if(_narrowPath && _sentido ==_ANTI_HORARIO && sidesInfo[_RIGHT].medX > 0.5){
-      _narrowPath = false;
-      _enable.data = -STRAIT_PATH;
-      statePub.publish(_enable);
-      _distToTrack = NICE_DIST_TRACK;
-    }
-
     cout << "E: SegueEsq | Erro: " << erro << " | ";
     cout << "AE: " << sidesInfo[_LEFT].area << " | ";
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
+    if(_narrowPath && sidesInfo[_RIGHT].medX > 0.5){
+      _narrowPath = false;
+      _enable.data = -NARROW_PATH;
+      statePub.publish(_enable);
+      _distToTrack = NICE_DIST_TRACK;
+    }
 
   //segue reto caso nao tenha nada
   }else{
@@ -280,8 +293,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
 
   //define as velocidades
-  if(_narrowPath)
-    erro *= 1.2;
 
   if(_isInStairs && !(_state == IN_LADDER)){
     tractionDir = (float) (stairsDir * 3.5 + erro);
@@ -757,3 +768,15 @@ void Robot::setEnable(std_msgs::Int32 states){
   _states.data = states.data;
 }
 
+void Robot::stableWheelTrack(){
+  std_msgs::Float32MultiArray msg;
+  
+  static float yAngle;
+  float wheelFrontSpeed;
+  float wheelRearSpeed;
+  bool wheelsStable = false;
+
+
+
+  msg.data.clear();
+}

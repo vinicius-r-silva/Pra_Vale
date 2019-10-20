@@ -42,7 +42,7 @@
 #define HOKUYO_READING       13
 #define FOUND_STAIR          14
 #define LEAVING_FIRE         15
-#define STRAIT_PATH          16
+#define NARROW_PATH          16
 #define END_STAIR        	 17
 #define IN_STAIR             18
 #define CLIMB_STAIR          19
