@@ -91,7 +91,7 @@ def beam_callback(data):
 	#Variables
 	global scaleList, state, beam, arm_move, touched, error, state_publisher
 
-	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.LEAVING_FIRE)):
+	if(state & (1 << defs.HOKUYO_READING | 1 << defs.INITIAL_SETUP | 1 << defs.LEAVING_FIRE | 1 << defs.IN_STAIR | 1 << defs.FIRE_FOUND_BY_CAM)):
 		return
 
 	bridge=CvBridge()

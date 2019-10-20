@@ -38,6 +38,10 @@ robot_on_right[_FOLLOW_ANGLE] = half_pi
 #defines the rotation direction of the robot
 rotation_direction = defs.ROBOT_CLOCKWISE
 
+#publish robot state changes to others ROS packages
+state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
+
+
 #callback function called when a node requires a state change
 def get_state(data):
     global state
@@ -82,9 +86,22 @@ def imu_callback(data):
     global state
     global actual_z_angle
     global desired_z_angle
+    global state_publisher
 
     #get robot z axis orientation
     actual_z_angle = data.data[2]
+
+    if(state & (1 << defs.ROBOT_CLOCKWISE)):
+        if(actual_z_angle > -half_pi and actual_z_angle < half_pi and (not state & (1 << defs.ROBOT_ON_THE_LEFT))):
+            state_publisher.publish(data = defs.ROBOT_ON_THE_LEFT)
+        if(actual_z_angle < -half_pi or actual_z_angle > half_pi and (state & (1 << defs.ROBOT_ON_THE_LEFT))):
+            state_publisher.publish(data = -defs.ROBOT_ON_THE_LEFT)
+    else:
+        if(actual_z_angle > -half_pi and actual_z_angle < half_pi and (not state & (1 << defs.ROBOT_ON_THE_LEFT))):
+            state_publisher.publish(data = -defs.ROBOT_ON_THE_LEFT)
+        if(actual_z_angle < -half_pi or actual_z_angle > half_pi and (state & (1 << defs.ROBOT_ON_THE_LEFT))):
+            state_publisher.publish(data = defs.ROBOT_ON_THE_LEFT)
+
 
     #if the robot isn't rotating, then return
     if (desired_z_angle == _NO_ANGLE):

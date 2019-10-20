@@ -62,7 +62,7 @@ def kin_callback(data):
 	
 	area = (100.0*sum(sum(mask))/float(image.shape[0]*image.shape[1]))
 	
-	print "Porcentagem de pixels cinzas: ",area
+	#print "Porcentagem de pixels cinzas: ",area
 
 	if DEBUGGING:
 		cv2.imshow("escada_end_Hist",image)

@@ -9,7 +9,7 @@ from std_msgs.msg import Int32
 
 #Global variable of all states
 #Each byte is a state
-state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) 
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) | (1 << defs.ROBOT_ON_THE_LEFT)
 
 
 
@@ -89,9 +89,23 @@ def print_state():
     if (state & (1 << defs.CLIMB_STAIR)):
         string += ("  CLIMB_STAIR")
 
-    #when you are climbing the stairs
     if (state & (1 << defs.BEAM_FIND)):
         string += ("  BEAM_FIND")
+
+    #when the robot is on the left side of the track
+    if (state & (1 << defs.ROBOT_ON_THE_LEFT)):
+        string += ("  ROBOT_ON_THE_LEFT")
+    else:
+        string += ("  ROBOT_ON_THE_RIGHT")
+
+    #when a fire was found by the UR5 cam
+    if (state & (1 << defs.FIRE_FOUND_BY_CAM)):
+        string += ("  FIRE_FOUND_BY_CAM")
+
+    #force velodyne to execute
+    if (state & (1 << defs.FORCE_VELODYME)):
+        string += ("  FORCE_VELODYME")
+        
     
     print(string)
 

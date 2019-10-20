@@ -46,6 +46,8 @@ state = 1 << defs.NOTHING
 
 leaving_fire_counter = 0
 
+cancel_setting_up_hokuyo_conter = 0
+
 
 #----------------------FUNCTIONS----------------------# 
 
@@ -92,7 +94,8 @@ def there_is_track(frame):
         col += 1
     
     #for debug draw a blue line where the pixels were verified
-    cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
+    if(defs.DEBUGGING):
+        cv2.line(frame, (0, _TRACK_DETECTION_ROW), (frame.shape[1], _TRACK_DETECTION_ROW), (255,0,0))
 
     return True
 
@@ -137,11 +140,9 @@ def get_tilt_angle(frame):
                 x_list.append(x)                   #if it is, count it
                 y_list.append(current_col)
                 pixels_found += 1
-                frame[x, current_col][0] = 0
-                frame[x, current_col][1] = 0
-                frame[x, current_col][2] = 255
-
-                
+                # frame[x, current_col][0] = 0  #paint red the found pixel
+                # frame[x, current_col][1] = 0
+                # frame[x, current_col][2] = 255                
                 break
             x -= 1
 
@@ -156,13 +157,71 @@ def get_tilt_angle(frame):
     coef = leastSquare(x_list, y_list)
 
     #draw the line found
-    cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
+    if(defs.DEBUGGING):
+        cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
 
     #calculates the angle of the line made from the leastSquare function
     angle = atan2(coef[0]*cols, cols)
     return [angle, coef[1]]
 
 
+
+#given a frame from the track, get the tilt angle of the camera
+def get_tilt_angle_while_in_stairs(frame):
+    #consts
+    qtd = 200               #number of columns to analyse
+    rows = frame.shape[0]   #number of rows of the frame
+    cols = frame.shape[1]   #number of columns of the frame
+    step = (int)(cols/qtd)  #step wich the the column number is incresed on the main loop
+    
+    #the collumns are analysed from the top to the botton, checking where the first mettalic pixel appear
+    #the botton limit and the top limit are defined bellow
+    upper_limit  = (int)(10) 
+    botton_limit = (int)(rows/2)
+    
+    #variables used on the main loop
+    current_col = 0      
+    pixels_found = 0
+
+    #main loop
+    #check the first black pixels from the botton of the image
+    #then call the leastSquare funtion the find the best line
+    cont = 0
+    x_list = []
+    y_list = []
+    while cont < qtd:
+        x = upper_limit   #start from the top
+        while(x < botton_limit): #to the botton
+            B = frame[x, current_col][0]
+            G = frame[x, current_col][1]
+            R = frame[x, current_col][2]
+            if (R != 0 and (R == G == B)): #check if pixel is metallic
+                x_list.append(x)                   #if it is, count it
+                y_list.append(current_col)
+                pixels_found += 1
+                # frame[x, current_col][0] = 0   #paint red the found pixel
+                # frame[x, current_col][1] = 0
+                # frame[x, current_col][2] = 255                
+                break
+            x += 1
+
+        cont += 1
+        current_col += step
+
+    #if not enough pixels were found, cancel the search
+    if(pixels_found < (qtd / 5)):
+        return [-1,-1]
+        
+    #otherwise, calculates the leastSquare
+    coef = leastSquare(x_list, y_list)
+
+    #draw the line found
+    if(defs.DEBUGGING):
+        cv2.line(frame, (0, (int)(coef[1])), (cols, (int)(coef[1] + coef[0]*cols)), (0,0,255), 1)
+
+    #calculates the angle of the line made from the leastSquare function
+    angle = atan2(coef[0]*cols, cols)
+    return [angle, coef[1]]
 
 
 #ur5Cam Callback
@@ -172,6 +231,7 @@ def ur5_callback(data):
     global arm_move
     global arm_tilt
     global leaving_fire_counter
+    global cancel_setting_up_hokuyo_conter
 
     #get the image
     bridge=CvBridge()
@@ -219,7 +279,10 @@ def ur5_callback(data):
             
 
     #check if there is a track on the camera sight
-    if there_is_track(frame): #if there is a track, get the tilt angle from it
+    if(state & (1 << defs.IN_STAIR) and not (state & (1 << defs.SETTING_UP_HOKUYO | 1 << defs.HOKUYO_READING | 1 << defs.LEAVING_FIRE))):
+        angle, b = get_tilt_angle_while_in_stairs(frame)
+        
+    elif ((not state & (1 << defs.IN_STAIR)) and there_is_track(frame)): #if there is a track, get the tilt angle from it
         angle, b = get_tilt_angle(frame)
     else:                     #ortherwise, just return -1
         angle = -1
@@ -242,11 +305,25 @@ def ur5_callback(data):
         leaving_fire_counter -= 1
         if(leaving_fire_counter == 0):
             state_publisher.publish(data = -defs.LEAVING_FIRE)
+            state_publisher.publish(data = -defs.FIRE_FOUND_BY_CAM)
 
+    if(not (state & (1 << defs.BEAM_FIND))):
+        #publishes to the arm node
+        if(error != _FIRE_NOT_FOUND):
+            cancel_setting_up_hokuyo_conter = 0
+            arm_move.publish(data = [error, 0, z])
 
-    #publishes to the arm node
-    if(error != _FIRE_NOT_FOUND and not state & (1 << defs.BEAM_FIND)):
-        arm_move.publish(data = [error, 0, z])
+            if(not (state & (1 << defs.FIRE_FOUND_BY_CAM))):
+                state_publisher.publish(data = defs.FIRE_FOUND_BY_CAM)
+        
+        elif(state & (1 << defs.SETTING_UP_HOKUYO)):
+            if (cancel_setting_up_hokuyo_conter == 0):
+                cancel_setting_up_hokuyo_conter = 20
+            
+            cancel_setting_up_hokuyo_conter -= 1
+            if(cancel_setting_up_hokuyo_conter == 0):
+                state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
+
 
     cv2.imshow("Camera",frame)
     cv2.waitKey(1)
