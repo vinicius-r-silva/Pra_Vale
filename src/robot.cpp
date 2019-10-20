@@ -6,12 +6,12 @@ using namespace std;
 
 
 Robot::Robot(){
-    _begin = false;
+    _begin = true;
     _state = WALKING;
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = true;
+    _rodar = false;
     _avoidingObs = false;
     _nothing = true;
     _narrowPath = false;
