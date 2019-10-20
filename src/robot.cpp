@@ -6,12 +6,12 @@ using namespace std;
 
 
 Robot::Robot(){
-    _begin = true;
+    _begin = false;
     _state = WALKING;
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = false;
+    _rodar = true;
     _avoidingObs = false;
     _nothing = true;
     _narrowPath = false;
@@ -252,7 +252,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
-  }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
+  }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _avoidSide == _LEFT){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -262,7 +262,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     _avoidingObs = false;
   //Aproxima da esteira quando ela está a direita
-  }else if(sidesInfo[_RIGHT].medX != 10 &&  _sentido == _HORARIO && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.05){
+  }else if(sidesInfo[_RIGHT].medX != 10 &&  _avoidSide == _LEFT && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.05){
 
     erro = (_distToTrack - sidesInfo[_RIGHT].medX) * _KP_REC;
     cout << "E: AproxDir | erro: " << erro << " | ";
@@ -279,7 +279,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Recupera o trajeto da esquerda
-  }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _sentido == _ANTI_HORARIO){
+  }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _avoidSide == _RIGHT/*_sentido == _ANTI_HORARIO*/){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -290,7 +290,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Aproxima da esteira quando ela está a esquerda
-  }else if(sidesInfo[_LEFT].medX != 10 && _sentido == _ANTI_HORARIO && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.05){
+  }else if(sidesInfo[_LEFT].medX != 10 && _avoidSide == _RIGHT /*_sentido == _ANTI_HORARIO*/ && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.05){
 
     erro = (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC;
 
