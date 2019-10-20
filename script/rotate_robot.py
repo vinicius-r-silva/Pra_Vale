@@ -97,9 +97,9 @@ def imu_callback(data):
         if(actual_z_angle < -half_pi or actual_z_angle > half_pi and (state & (1 << defs.ROBOT_ON_THE_LEFT))):
             state_publisher.publish(data = -defs.ROBOT_ON_THE_LEFT)
     else:
-        if(actual_z_angle > -half_pi and actual_z_angle < half_pi and (not state & (1 << defs.ROBOT_ON_THE_LEFT))):
+        if(actual_z_angle > -half_pi and actual_z_angle < half_pi and (state & (1 << defs.ROBOT_ON_THE_LEFT))):
             state_publisher.publish(data = -defs.ROBOT_ON_THE_LEFT)
-        if(actual_z_angle < -half_pi or actual_z_angle > half_pi and (state & (1 << defs.ROBOT_ON_THE_LEFT))):
+        if(actual_z_angle < -half_pi or actual_z_angle > half_pi and (not (state & (1 << defs.ROBOT_ON_THE_LEFT)))):
             state_publisher.publish(data = defs.ROBOT_ON_THE_LEFT)
 
 

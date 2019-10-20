@@ -48,6 +48,8 @@ leaving_fire_counter = 0
 
 cancel_setting_up_hokuyo_conter = 0
 
+found_fire_counter = 0
+
 
 #----------------------FUNCTIONS----------------------# 
 
@@ -230,6 +232,7 @@ def ur5_callback(data):
     global state
     global arm_move
     global arm_tilt
+    global found_fire_counter
     global leaving_fire_counter
     global cancel_setting_up_hokuyo_conter
 
@@ -297,6 +300,15 @@ def ur5_callback(data):
     if((state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH)) and b != -1):
         z = (b - desired_z)/5
 
+    
+
+    if (state & 1 << defs.FIRE_FOUND_BY_CAM and error == _FIRE_NOT_FOUND):
+        if(found_fire_counter == 0):
+            found_fire_counter = 20
+        
+        found_fire_counter -= 1
+        if(found_fire_counter == 0):
+            state_publisher.publish(data = -defs.FIRE_FOUND_BY_CAM)
 
     if (state & 1 << defs.LEAVING_FIRE and error == _FIRE_NOT_FOUND):
         if(leaving_fire_counter == 0):
@@ -305,7 +317,6 @@ def ur5_callback(data):
         leaving_fire_counter -= 1
         if(leaving_fire_counter == 0):
             state_publisher.publish(data = -defs.LEAVING_FIRE)
-            state_publisher.publish(data = -defs.FIRE_FOUND_BY_CAM)
 
     if(not (state & (1 << defs.BEAM_FIND))):
         #publishes to the arm node

@@ -154,12 +154,10 @@ def cinematicaInversa(state):
         #configure tilt
         if(state & (1 << defs.ROBOT_ON_THE_LEFT)):
             if((state & (1 << defs.ROBOT_ANTICLOCKWISE)) and tilt_z < _pi/2):
-                tilt_z += 2*_pi
-                print("############################################ passou aqui 1")
+                tilt_z += 2*_pi 
         else:
             if((state & (1 << defs.ROBOT_CLOCKWISE)) and tilt_z < _pi/2):
                 tilt_z += 2*_pi
-                print("############################################ passou aqui 2")
 
         joint_angles[0] += tilt_z
         joint_angles[1] += tilt_x
@@ -173,7 +171,7 @@ def cinematicaInversa(state):
         _last_z = z
         return joint_angles
     
-    except Exception as error: #(for debug, uncomment this part of code)
+    except: #Exception as error: #(for debug, uncomment this part of code)
         #print(error)
         print("erro: posicao (" , str([x,y,z]), ") fora do alcance do braco robotico")
         
