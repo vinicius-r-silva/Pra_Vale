@@ -18,9 +18,11 @@ import defines as defs
 #-----------------------CONSTS----------------------#   
 #consts for the initial pose for each case
 FIRE_TOUCH_Z_VALUE =  410
+FIRE_TOUCH_Z_VALUE_IN_STAIRS =  770
+
 FIRE_FOUND_X_VALUE =  320
 FIRE_FOUND_Y_VALUE =  -70
-FIRE_FOUND_Z_VALUE =  820
+FIRE_FOUND_Z_VALUE =  840
 NARROW_PATH_X_VALUE =  400
 NARROW_PATH_Y_VALUE =  80
 NARROW_PATH_Z_VALUE =  900
@@ -86,7 +88,7 @@ def cinematicaInversa(state):
     #print("x: " + str(x) + "  y: " + str(y) + "  z: " + str(z))
 
     if(x < 0):
-        print("erro: posicao (" , str([x,y,z]), ") fora do alcance do braco robotico")
+        print("erro: posicao (" + str([x,y,z]) + ") fora do alcance do braco robotico")
 
         #return last valid position
         x = _last_x
@@ -150,6 +152,15 @@ def cinematicaInversa(state):
         #     joint_angles[4] += 2*_pi
 
         #configure tilt
+        if(state & (1 << defs.ROBOT_ON_THE_LEFT)):
+            if((state & (1 << defs.ROBOT_ANTICLOCKWISE)) and tilt_z < _pi/2):
+                tilt_z += 2*_pi
+                print("############################################ passou aqui 1")
+        else:
+            if((state & (1 << defs.ROBOT_CLOCKWISE)) and tilt_z < _pi/2):
+                tilt_z += 2*_pi
+                print("############################################ passou aqui 2")
+
         joint_angles[0] += tilt_z
         joint_angles[1] += tilt_x
         joint_angles[5] = tilt_y
@@ -162,7 +173,7 @@ def cinematicaInversa(state):
         _last_z = z
         return joint_angles
     
-    except: #Exception as error: (for debug, uncomment this part of code)
+    except Exception as error: #(for debug, uncomment this part of code)
         #print(error)
         print("erro: posicao (" , str([x,y,z]), ") fora do alcance do braco robotico")
         

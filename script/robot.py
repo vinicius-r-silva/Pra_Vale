@@ -139,19 +139,20 @@ def arm_move(data):
             if(state & (1 << defs.SETTING_UP_HOKUYO)):
                 if(x_move == 0 and y_move == 0):
                     if(state & (1 << defs.IN_STAIR)):
-                        arm.z = arm.z - 40
+                        arm.z = arm.z - 60
+                        arm.x = arm.x + 40
 
                     state |= (1 << defs.HOKUYO_READING | 1 << defs.ARM_CHANGING_POSE)
                     rosi_speed_publisher.publish(data = ([0,0,0,0]))
                     state_publisher.publish(data = defs.ARM_CHANGING_POSE)
                     state_publisher.publish(data = defs.HOKUYO_READING)
 
-                elif(x_move < 0 or y_move > 0):
+                elif((x_move < 0 and x_move > -10) or (y_move > 0 and y_move < 10)):
                     state_publisher.publish(data = -defs.ENABLE_VELODYME)
                     state_publisher.publish(data =  defs.SETTING_UP_HOKUYO)
                     rosi_speed_publisher.publish(data = ([-0.2,-0.2,-0.2,-0.2]))
 
-                elif(x_move < 10 and y_move > -10):
+                elif(abs(x_move) < 10 and abs(y_move) < 10):
                     state_publisher.publish(data = -defs.ENABLE_VELODYME)
                     state_publisher.publish(data =  defs.SETTING_UP_HOKUYO)
                     if(state & (1 << defs.IN_STAIR)):
@@ -211,7 +212,6 @@ def hokuyo_distance_callback(data):
 
     #print ("\nhokuyo distance: " + str (hokuyo_distance))
 
-
     if(not state & (1 << defs.ENABLE_VELODYME | 1 << defs.ROBOT_ROTATION) and state & (1 << defs.FOUND_FIRE_RIGHT)):
         state_publisher.publish(data = -defs.FOUND_FIRE_RIGHT)
         state_publisher.publish(data =  defs.FOUND_FIRE_FRONT)
@@ -221,13 +221,15 @@ def hokuyo_distance_callback(data):
         if(hokuyo_distance > _TOUCH_FIRE_FRONT_DISTANCE):
             state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
             state_publisher.publish(data =  defs.ENABLE_VELODYME)
-            state_publisher.publish(data =  defs.FOUND_FIRE_RIGHT)
-            state_publisher.publish(data =  defs.HOKUYO_READING)
+            state_publisher.publish(data = -defs.FOUND_FIRE_RIGHT)
+            state_publisher.publish(data = -defs.HOKUYO_READING)
         else:
             state_publisher.publish(data = -defs.SETTING_UP_HOKUYO)
             state_publisher.publish(data = -defs.ENABLE_VELODYME)
             state_publisher.publish(data =  defs.FOUND_FIRE_TOUCH)
             state_publisher.publish(data =  defs.HOKUYO_READING)
+            arm.camera_tilt = 0
+            arm.tilt_y = 0
 
     elif (state & (1 << defs.FOUND_FIRE_FRONT) and hokuyo_distance > _TOUCH_FIRE_FRONT_DISTANCE):
         rosi_speed_publisher.publish(data = [2,2,2,2])
@@ -255,10 +257,14 @@ def hokuyo_distance_callback(data):
         
         elif (torque_value < 0.13 and not state & (1 << defs.LEAVING_FIRE)):
             y_move -= 4
-            if (arm.z > arm.FIRE_TOUCH_Z_VALUE):
-                arm.z -= 2
-                if(state & (1 << defs.BEAM_FIND)):
+            if(state & (1 << defs.IN_STAIR)):
+                if(arm.z > arm.FIRE_TOUCH_Z_VALUE_IN_STAIRS):
                     arm.z -= 2
+            else:
+                if(arm.z > arm.FIRE_TOUCH_Z_VALUE):
+                    arm.z -= 2
+                    if(state & (1 << defs.BEAM_FIND)):
+                        arm.z -= 2
             
             rosi_speed_publisher.publish(data = [0,0,0,0])
 
@@ -374,8 +380,10 @@ def state_callback(data):
         pos = arm.cinematicaInversa(state)
         arm_publisher.publish(joint_variable = pos)
         state_publisher.publish(data = defs.ARM_CHANGING_POSE)
-        rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
+        state_publisher.publish(data = defs.FORCE_VELODYME)
 
+    if((not (state & (1 << defs.ENABLE_VELODYME | 1 << defs.FORCE_VELODYME)))):
+        rosi_speed_publisher.publish(data = [0,0,0,0,0,0])
 
 
 
@@ -422,9 +430,11 @@ def arm_current_position(data):
                 arm_changing_pose_counter -= 1
                 if(arm_changing_pose_counter == 0):
                     state_publisher.publish(data = -defs.ARM_CHANGING_POSE)
+                    state_publisher.publish(data = -defs.FORCE_VELODYME)
 
             else:
                 state_publisher.publish(data = -defs.ARM_CHANGING_POSE)
+                state_publisher.publish(data = -defs.FORCE_VELODYME)
 
 
 #callback from the IMU sensor, make the ur5 arm follow the track automatically
@@ -458,11 +468,12 @@ def arm_imu(data):
     else:
         arm.tilt_y = arm.camera_tilt
 
-        if arm.tilt_y > temp_y + arm.IMU_TILT_ERROR:
-            arm.tilt_y = temp_y + arm.IMU_TILT_ERROR
+        if(not (state & (1 << defs.IN_STAIR))):
+            if arm.tilt_y > temp_y + arm.IMU_TILT_ERROR:
+                arm.tilt_y = temp_y + arm.IMU_TILT_ERROR
 
-        elif arm.tilt_y < temp_y - arm.IMU_TILT_ERROR:
-            arm.tilt_y = temp_y - arm.IMU_TILT_ERROR
+            elif arm.tilt_y < temp_y - arm.IMU_TILT_ERROR:
+                arm.tilt_y = temp_y - arm.IMU_TILT_ERROR
     
         
     pos = arm.cinematicaInversa(state)
@@ -479,14 +490,16 @@ def arm_tilt(data):
     if((state & (1 << defs.ARM_CHANGING_POSE | 1 << defs.CLIMB_STAIR))): #or (state & 1 << defs.ROBOT_ROTATION)):
         return
 
-    if(data.data == -1 or state & (1 << defs.FOUND_FIRE_FRONT) or state & (1 << defs.FOUND_FIRE_TOUCH)):
+    if((not state & (1 << defs.IN_STAIR)) and (data.data == -1 or state & (1 << defs.FOUND_FIRE_FRONT | 1 << defs.FOUND_FIRE_TOUCH))):
         arm.get_tilt_y_from_imu = True
     else:
         if(arm.get_tilt_y_from_imu == True):
             arm.get_tilt_y_from_imu = False
             arm.camera_tilt = 0.0
         
-        arm.camera_tilt += data.data #- 0.1
+        if(data.data != -1):
+            arm.camera_tilt += data.data #- 0.1
+            #print(arm.camera_tilt) #degub
 
 
 #main

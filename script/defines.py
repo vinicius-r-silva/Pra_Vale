@@ -20,6 +20,9 @@ END_STAIR           = 17
 IN_STAIR            = 18
 CLIMB_STAIR         = 19
 BEAM_FIND           = 20
+ROBOT_ON_THE_LEFT   = 21
+FIRE_FOUND_BY_CAM   = 22
+FORCE_VELODYME      = 23
 
 
 #const for minimum angle difference betwwen the current angle and the desired angle

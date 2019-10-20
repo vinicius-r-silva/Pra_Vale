@@ -10,7 +10,7 @@ std_msgs::Int32 enable;
 
 void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
   //confere se o velodyne pode ser ativado
-  if(!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE))
+  if((!(enable.data & (1 << FORCE_VELODYME))) && (!(enable.data & (1 << ENABLE_VELODYME)) || enable.data & (1 << ARM_CHANGING_POSE)))
     return;
 
 
