@@ -6,12 +6,12 @@ using namespace std;
 
 
 Robot::Robot(){
-    _begin = true;
+    _begin = false;
     _state = WALKING;
     _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
-    _rodar = false;
+    _rodar = true;
     _avoidingObs = false;
     _nothing = true;
     _narrowPath = false;
@@ -135,8 +135,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //std::cout << "sidesRatio: " << sidesRatio << " | FRarea: " << sidesInfo[_FRONT_RIGHT].area << " | FLarea: " << sidesInfo[_FRONT_LEFT].area << " | ";
   
   if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
-    ((_sentido == _HORARIO && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
-    (_sentido == _ANTI_HORARIO && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
+    ((_avoidSide == _LEFT && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
+    (_avoidSide == _RIGHT && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
 
     _narrowPath = true;
     _enable.data = NARROW_PATH;
@@ -244,7 +244,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
       statePub.publish(_enable);
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
-      _wheelsStable = false;
+      //_wheelsStable = false;
     }
 
     cout << "E: DescendoEscada | ";
@@ -261,7 +261,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
-  }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _avoidSide == _LEFT){
+  }else if(!_isInNarPath && sidesInfo[_RIGHT].medY < -0.15 && _avoidSide == _LEFT){
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -293,7 +293,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Recupera o trajeto da esquerda
-  }else if(!_narrowPath && sidesInfo[_LEFT].medY < -0.15 && _avoidSide == _RIGHT/*_sentido == _ANTI_HORARIO*/){
+  }else if(!_isInNarPath && sidesInfo[_LEFT].medY < -0.15 && _avoidSide == _RIGHT/*_sentido == _ANTI_HORARIO*/){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -334,7 +334,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   //define as velocidades
   if(_narrowPath)
-    erro *= 1.2;
+    erro *= 1.3;
 
   if(_isInStairs && !(_state == IN_LADDER)){
     tractionDir = (float) (stairsDir * 3.5 + erro);
@@ -638,7 +638,7 @@ bool Robot::climbStairs(){
       wheelFrontSpeed = 0.0;
       wheelRearSpeed = 0.0;
 
-      _wheelsStable = false;
+      //_wheelsStable = false;
 
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
