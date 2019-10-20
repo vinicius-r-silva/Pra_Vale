@@ -35,6 +35,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
   cout.precision(4);
   
 
+  cout << "AvoidSide: " << _avoidSide << " | ";
+
   //corrige o angulo inicial do robo
   if(_begin){
     if(_zAngle < 0)
@@ -259,11 +261,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DFY: " << sidesInfo[_FRONT].medY << " | ";
 
   //Recupera o trajeto da direita
-<<<<<<< HEAD
   }else if(!_narrowPath && sidesInfo[_RIGHT].medY < -0.15 && _avoidSide == _LEFT){
-=======
-  }else if(!_isInNarPath && sidesInfo[_RIGHT].medY < -0.15 && _sentido == _HORARIO){
->>>>>>> 0d2f769cfe36c06152c0226846b485a98526c824
     
     erro = -1/(sidesInfo[_RIGHT].medX);
 
@@ -282,8 +280,13 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //segue a parede da direita
   }else if(sidesInfo[_RIGHT].area > _MIN_AREA){
 
-    erro = _zAngle * _KP_OBSTACLE;
 
+    if(_avoidSide == _RIGHT)
+      erro = (_zAngle - M_PI) * _KP_OBSTACLE;
+    else
+      erro = _zAngle * _KP_OBSTACLE;
+
+    
     cout << "E: SegueDir | Erro: " << erro << " | ";
     cout << "AD: " << sidesInfo[_RIGHT].area << " | ";
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
@@ -311,7 +314,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
   //segue a parede da esquerda
   }else if(sidesInfo[_LEFT].area > _MIN_AREA){
 
-    erro = _zAngle *_KP_OBSTACLE;
+    if(_avoidSide == _RIGHT)
+      erro = (_zAngle - M_PI) *_KP_OBSTACLE;
+    else
+      erro = _zAngle *_KP_OBSTACLE;
 
     cout << "E: SegueEsq | Erro: " << erro << " | ";
     cout << "AE: " << sidesInfo[_LEFT].area << " | ";
