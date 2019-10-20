@@ -155,6 +155,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
         _distToTrack += 0.1;
       }
 
+      if(sidesInfo[_LEFT].medX < 0.4 && _distToTrack > 0.6)
+        _distToTrack -= 0.1;
+
       if(sidesInfo[_LEFT].medY < 0.3){
         _isInNarPath = true;
       }
@@ -170,6 +173,9 @@ void Robot::processMap(SidesInfo *sidesInfo){
       if(sidesInfo[_RIGHT].medX > 0.45 && _distToTrack != 0.65){
         _distToTrack += 0.1;
       }
+
+      if(sidesInfo[_RIGHT].medX < 0.4 && _distToTrack > 0.6)
+        _distToTrack -= 0.1;
 
       if(sidesInfo[_RIGHT].medY < 0.3){
         _isInNarPath = true;
