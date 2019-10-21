@@ -853,7 +853,7 @@ void Robot::stableWheelTrack(){
 
     cout << "dif: " << _yAngle - yAngle << " ";
 
-    if(_yAngle - yAngle > -0.002)
+    if(_yAngle - yAngle > -0.0018)
       _wheelsStable = true;
   }
 
