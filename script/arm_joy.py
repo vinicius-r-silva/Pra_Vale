@@ -60,8 +60,9 @@ def listener():
         arm.z = z
 
         print([x,y,z])
-        pos = arm.cinematicaInversa(state)
-        arm_publisher.publish(joint_variable = pos)
+        pos, sucess = arm.cinematicaInversa(state)
+        if(sucess):
+            arm_publisher.publish(joint_variable = pos)
 
         node_sleep_rate.sleep()
 

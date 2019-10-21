@@ -37,7 +37,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   cout << "AvoidSide: " << _avoidSide << " | ";
 
-  //corrige o angulo inicial do robo
+  //corrige o angulo inicial do robo e define o sentido do mesmo
   if(_begin){
     if(_zAngle < 0)
       _zAngle += M_PI*2;
@@ -82,7 +82,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
-
+  //Confere se precisa aumentar a area de analise
   if(sidesInfo[_RIGHT].distance > _FAR && sidesInfo[_LEFT].distance > _FAR && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << "Longe | ";
     _nothing = true;
@@ -220,7 +220,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data = CLIMB_STAIR;
     statePub.publish(_enable);
 
-    needSpeed = climbStairs();
+    climbStairs();
 
     cout << "E: SubirEscada | yAngle: " << _yAngle << " | ";
 
@@ -239,8 +239,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
     statePub.publish(_enable);
 
     erro = _zAngle *_KP_OBSTACLE; 
-
     cout << "E: NaEscada | " << "Erro: " << erro << " | ";
+
   }else if(_state == LADDER_DOWN){
 
     erro = _zAngle * _KP_OBSTACLE;
@@ -285,6 +285,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
 
     _avoidingObs = false;
+
   //Aproxima da esteira quando ela está a direita
   }else if(sidesInfo[_RIGHT].medX != 10 &&  _avoidSide == _LEFT && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.05){
 
@@ -385,10 +386,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   cout << "zAngle: " << _zAngle << " | ";
 
-  if(needSpeed)
-    setSpeed(tractionDir + _SPEED_BOOST, tractionDir + _SPEED_BOOST, tractionEsq + _SPEED_BOOST, tractionEsq + _SPEED_BOOST);
-  else
-    setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
+  setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
   
 }
 
@@ -626,7 +624,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 }
 
 
-bool Robot::climbStairs(){
+void Robot::climbStairs(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
   bool needSpeed = false;
@@ -653,7 +651,7 @@ bool Robot::climbStairs(){
       wheelFrontSpeed = 0.0;
       wheelRearSpeed = 0.0;
 
-      //_wheelsStable = false;
+      _wheelsStable = false;
 
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
@@ -674,7 +672,7 @@ bool Robot::climbStairs(){
 
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
     //wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/6;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
 
     _climbing = true;
 
@@ -702,7 +700,7 @@ bool Robot::climbStairs(){
     setSpeed(_V0,_V0,_V0,_V0);
 
     wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = 0;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/6;
   }
   
 
@@ -711,7 +709,7 @@ bool Robot::climbStairs(){
   
 
   wheelPub.publish(msg);
-  return needSpeed;
+  return;
 
 }
 
@@ -836,6 +834,31 @@ void Robot::stableWheelTrack(){
   float wheelRearSpeed;
 
   static bool frontWheels = true;
+  static float yAngle = _yAngle;
+  
+  if(frontWheels){
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
+    wheelRearSpeed = 0;
+
+    cout << "dif: " << yAngle - _yAngle << " ";
+
+    if(yAngle - _yAngle > 0.005){
+      frontWheels = false;
+      yAngle = _yAngle;
+    }
+  
+  }else{
+    wheelFrontSpeed = 0;
+    wheelRearSpeed = -_MAX_WHEEL_R_SPEED/3;
+
+    cout << "dif: " << _yAngle - yAngle << " ";
+
+    if(_yAngle - yAngle > 0.005)
+      _wheelsStable = true;
+  }
+
+
+  /*  
   static int i = 0;
 
   if(frontWheels){
@@ -869,7 +892,7 @@ void Robot::stableWheelTrack(){
     }
 
   }
-  
+  */
 
   for(int i = 0; i < 4; i++){
     msg.data.push_back((i == 0 || i == 2) ? wheelFrontSpeed : wheelRearSpeed);
