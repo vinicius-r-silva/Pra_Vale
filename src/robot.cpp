@@ -128,6 +128,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   if(!_wheelsStable){
     stableWheelTrack();
+    setSpeed(0, 0, 0, 0);
     return;
   }
 
@@ -253,7 +254,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
       statePub.publish(_enable);
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
-      //_wheelsStable = false;
     }
 
     cout << "E: DescendoEscada | ";
@@ -824,35 +824,15 @@ void Robot::stableWheelTrack(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
 
-  static float yAngle = 10;
   float wheelFrontSpeed;
   float wheelRearSpeed;
-  bool wheelsStable = false;
-  bool frontWheel = false;
 
-  static int i = 0;
-
-  if(yAngle == 10)
-    yAngle = _yAngle;
-
-  std::cout << "yAngle: " << yAngle << " | _yAngle: " << _yAngle << std::endl;
-  if(fabs(_yAngle) < PLANE){
-    if(frontWheel){
-      wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
-      wheelRearSpeed = 0;
-      std::cout << "frontWheel\n";
-    }else{
-      wheelFrontSpeed = 0;
-      wheelRearSpeed = _MAX_WHEEL_R_SPEED;
-      if(fabs(yAngle - _yAngle) < 0.05)  i++;
-      if(i > 10)  frontWheel = true;
-      std::cout << "rearWheel\n";
-    }
+  if(fabs(_yAngle) > 0.03){
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
+    wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
+  }else{
+    _wheelsStable = true;
   }
-
-
-
-
   
 
   for(int i = 0; i < 4; i++){
