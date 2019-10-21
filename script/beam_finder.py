@@ -36,6 +36,8 @@ state_publisher = rospy.Publisher('/pra_vale/def_state', Int32, queue_size=15)
 
 touched=0
 
+beam_finder_counter = 40
+
 #callback function called when a node requires a state change
 def close(data):
 	global state,touched
@@ -86,7 +88,7 @@ def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 
 def beam_callback(data):
 	#Constants
-	global NOTA_MAX, CUT_SCALE
+	global NOTA_MAX, CUT_SCALE, beam_finder_counter, state
 
 	#Variables
 	global scaleList, state, beam, arm_move, touched, error, state_publisher
@@ -163,6 +165,16 @@ def beam_callback(data):
 		# draw a bounding box around the detected result and display the image
 		cv2.rectangle(image, start, end, (0, 0, 255), 2)
 		arm_move.publish(data = [error,0,0])
+
+		beam_finder_counter = 40
+
+	elif(state & (1 << defs.BEAM_FIND)):
+		if(beam_finder_counter <= 0):
+			state_publisher.publish(data = -defs.BEAM_FIND)
+
+		beam_finder_counter -= 1
+
+		
 		
 	if defs.DEBUGGING:
 		cv2.imshow("beam_Detection",image)
