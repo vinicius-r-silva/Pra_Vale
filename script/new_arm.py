@@ -151,17 +151,23 @@ def cinematicaInversa(state):
         # elif(joint_angles[4] < -2*_pi):
         #     joint_angles[4] += 2*_pi
 
-        #configure tilt
-        if(state & (1 << defs.ROBOT_ON_THE_LEFT)):
-            if((state & (1 << defs.ROBOT_ANTICLOCKWISE)) and tilt_z < _pi/2):
-                tilt_z += 2*_pi 
-        else:
-            if((state & (1 << defs.ROBOT_CLOCKWISE)) and tilt_z < _pi/2):
-                tilt_z += 2*_pi
 
         joint_angles[0] += tilt_z
         joint_angles[1] += tilt_x
         joint_angles[5] = tilt_y
+
+        #configure tilt
+        if((state & (1 << defs.ROBOT_ON_THE_LEFT)) and (state & (1 << defs.ROBOT_ANTICLOCKWISE))):
+            if(joint_angles[0] < 0):
+                joint_angles[0] += 2*_pi 
+            
+            joint_angles[0] -= _pi
+            # print("################## 1 : joint: " + str(joint_angles[0]) + ",    tilt: " + str(tilt_z))
+            
+        elif((not (state & (1 << defs.ROBOT_ON_THE_LEFT))) and (state & (1 << defs.ROBOT_CLOCKWISE))):
+            joint_angles[0] += _pi
+            # print("################## 2 : joint: " + str(joint_angles[0]) + ",    tilt: " + str(tilt_z))
+
 
         # print the joint angles and the x,y,z position of the arm (debuging)
         #print(joint_angles)
