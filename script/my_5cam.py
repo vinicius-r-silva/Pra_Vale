@@ -277,6 +277,8 @@ def ur5_callback(data):
         else:
             if(error > 10):
                 error = 10
+            elif(error < -30):
+                error = -30
             elif(error < -10):
                 error = -10
             
