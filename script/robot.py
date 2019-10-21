@@ -173,6 +173,11 @@ def arm_move(data):
                     else:
                         rosi_speed_publisher.publish(data = ([0.2,0.2,0.2,0.2]))
 
+                elif(x_move == -10 or y_move == 10):
+                    state_publisher.publish(data = -defs.ENABLE_VELODYME)
+                    state_publisher.publish(data =  defs.SETTING_UP_HOKUYO)
+                    rosi_speed_publisher.publish(data = ([-0.7,-0.7,-0.7,-0.7]))
+
             elif(arm.x < 300 and (state & (1 << defs.FOUND_FIRE_RIGHT))):
                 arm.z = arm.FIRE_FOUND_Z_VALUE
                 rosi_speed_publisher.publish(data = [0,0,0,0])
