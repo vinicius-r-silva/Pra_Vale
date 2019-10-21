@@ -35,15 +35,15 @@ class Robot {
         bool _climbing;         //Determina se o robo esta subindo a escada ou nao
         bool _nothing;          //Confere se o velodyne nao detectou nada no alcance normal
         bool _begin;            //Determina se precisa analisar o caminho para descobrir o sentido ou nao
-        bool _isInNarPath;      
+        bool _isInNarPath;      //Determina quando o robo está no caminho estreito
         bool _wheelsStable;     //Endireita as esteiras do robo
         
-        bool climbStairs();                         //Algoritmo para subir as escadas
+        void climbStairs();                         //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º
         void aligneEscada(SidesInfo *sidesInfo);    //alinha o robo com a esteira para subir a escada
         void downStairs();                          //Algoritmo para descer das escadas
-        void setSpeed(float tractionDirFront, float tractionDirBack, float tractionLeftFront, float tractionLeftBack);  //Recebe as velocidades e as public
-        void stableWheelTrack();
+        void setSpeed(float tractionDirFront, float tractionDirBack, float tractionLeftFront, float tractionLeftBack);  //Recebe as velocidades e as publica
+        void stableWheelTrack();                    //Algoritmo para arrumar as esteiras das rodas
 
     public:
         Robot();//Construtor da classe
@@ -54,7 +54,7 @@ class Robot {
         void setEnable(std_msgs::Int32 enable);                                                         //atualiza o estado do robo
         bool getAvoidingObs();                                                                          //retorna se tem um obstaculo ou nao
         bool getNothing();                                                                              //retorna se tem algum objeto perto
-        bool getisInStair();                                                                              //retorna se o robo esta na escada
+        bool getisInStair();                                                                            //retorna se o robo esta na escada
 
 };
 #endif

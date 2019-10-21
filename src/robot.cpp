@@ -8,7 +8,7 @@ using namespace std;
 Robot::Robot(){
     _begin = true;
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -82,7 +82,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
-
+  //Confere se precisa aumentar a area de analise
   if(sidesInfo[_RIGHT].distance > _FAR && sidesInfo[_LEFT].distance > _FAR && sidesInfo[_FRONT].area < _MIN_AREA_REC){
     cout << "Longe | ";
     _nothing = true;
@@ -91,7 +91,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
-  //atualiza o sentido do robo
+  //Atualiza o estado do robo e determina o lado para qual ele deve desviar
   if(_sentido == _ANTI_HORARIO){
     _enable.data = ROBOT_ANTICLOCKWISE;
     statePub.publish(_enable);
@@ -126,7 +126,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     return;
   }
 
-  //Corrije os angulos da esteira
+  //Determina se as esteiras das rodas devem ser arrumadas
   if(!_wheelsStable){
     stableWheelTrack();
     setSpeed(0, 0, 0, 0);
@@ -135,8 +135,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
 
   
-  //caminho estreito
-
+  //Caminho Estreito
   double sidesRatio = (sidesInfo[_FRONT_LEFT].area == 0 || sidesInfo[_FRONT_RIGHT].area == 0)? 0.0 : sidesInfo[_FRONT_LEFT].area/sidesInfo[_FRONT_RIGHT].area;
   
   if(_avoidSide == _RIGHT && sidesRatio == 0)
@@ -155,6 +154,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   } 
 
+  //Condições para avaliar o caminho estreito
   if(_narrowPath){
     cout << "NarrowPath | ";
 
@@ -216,7 +216,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     _enable.data = CLIMB_STAIR;
     statePub.publish(_enable);
 
-    needSpeed = climbStairs();
+    climbStairs();
 
     cout << "E: SubirEscada | yAngle: " << _yAngle << " | ";
 
@@ -225,7 +225,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }else if(_state == IN_LADDER){  
 
     //chegou no final da esteira
-  
     if(_states.data & (1 << END_STAIR)){
       _state = LADDER_DOWN;
       _enable.data = -END_STAIR;
@@ -236,12 +235,13 @@ void Robot::processMap(SidesInfo *sidesInfo){
     statePub.publish(_enable);
 
     erro = _zAngle *_KP_OBSTACLE; 
-
     cout << "E: NaEscada | " << "Erro: " << erro << " | ";
+
   }else if(_state == LADDER_DOWN){
 
     erro = _zAngle * _KP_OBSTACLE;
 
+    //Verifica quando finaliza de descer a escada
     if(fabs(_yAngle) > PLANE){
       _climbing = true;
       _enable.data = CLIMB_STAIR; 
@@ -281,6 +281,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DDX: " << sidesInfo[_RIGHT].medX << " | ";
 
     _avoidingObs = false;
+
   //Aproxima da esteira quando ela está a direita
   }else if(sidesInfo[_RIGHT].medX != 10 &&  _avoidSide == _LEFT && abs(sidesInfo[_RIGHT].medX - _distToTrack) > 0.05){
 
@@ -381,10 +382,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   cout << "zAngle: " << _zAngle << " | ";
 
-  if(needSpeed)
-    setSpeed(tractionDir + _SPEED_BOOST, tractionDir + _SPEED_BOOST, tractionEsq + _SPEED_BOOST, tractionEsq + _SPEED_BOOST);
-  else
-    setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
+  setSpeed(tractionDir, tractionDir, tractionEsq, tractionEsq);
   
 }
 
@@ -622,7 +620,7 @@ void Robot::aligneEscada(SidesInfo *sidesInfo){
 }
 
 
-bool Robot::climbStairs(){
+void Robot::climbStairs(){
   std_msgs::Float32MultiArray msg;
   msg.data.clear();
   bool needSpeed = false;
@@ -707,7 +705,7 @@ bool Robot::climbStairs(){
   
 
   wheelPub.publish(msg);
-  return needSpeed;
+  return;
 
 }
 
