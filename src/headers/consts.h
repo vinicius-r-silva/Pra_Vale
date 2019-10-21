@@ -55,11 +55,11 @@
 
 //controle da velocidade do robo
 #define _V0                 3.0  //Velocidade do robo
-#define _KP                 5.5  //Constante para o PID
-#define _KP_OBSTACLE        1.3
+#define _KP                 5.5  //Constante para o PID 
+#define _KP_OBSTACLE        1.3  //Constante para o PID para desviar de obstaculos
 #define _KP_ALIGNE_ESCADA   9.0  //Constante para o PID para alinhar a escada  
 #define _MAX_SPEED          4.2  //Velocidade maxima do robo em rad/s
-#define _KP_REC             0.7 
+#define _KP_REC             0.7  //Constate para o PID para recuperar o trajeto
 #define _MAX_WHEEL_R_SPEED  0.7  //Maxima velocidade de rotação das rodas
 #define _SPEED_BOOST        1.2  //Aumento na velocidade das rodas dianteiras
 
@@ -88,7 +88,7 @@
 
 //Alinhar com a escada
 #define _MIN_DIST_ESCADA                1.00  //distancia minima para mandar o robo subir
-#define _MIN_DIST_ALIGNE_FRONT_STAIR    0.80   //distancia minima para comecar a alinhar com a esteira para subir a escada
+#define _MIN_DIST_ALIGNE_FRONT_STAIR    0.80  //distancia minima para comecar a alinhar com a esteira para subir a escada
 #define _MAX_DIST_SIDE_ESCADA           0.90  //distancia maxima do robo para esteira na hora da escada
 #define _MIN_DIST_SIDE_ESCADA           0.80  //distancia minima da esteira para subir a escada
 #define _MAX_ERRO_ESCADA                0.05  //erro no angulo maximo permitido na escada
@@ -104,6 +104,6 @@
 // #define FRONT_WHEELS    0.17 
 // #define REAR_WHEELS     0.25
 // #define PLANE           0.11
-#define FRONT_WHEELS    0.30 
+#define FRONT_WHEELS    0.30
 #define REAR_WHEELS     0.19
 #define PLANE           0.11

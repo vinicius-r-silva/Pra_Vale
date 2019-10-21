@@ -25,18 +25,18 @@ class Robot {
         double _yAngle;         //Recebe o ângulo y do robô determinado pelo IMU
         double _zAngle;         //Recebe o ângulo z do robô determinado pelo IMU
         float _distToTrack;     //Recebe a distância que o robô deve ficar da esteira conforme a posição dele
-        int _avoidSide;
+        int _avoidSide;         //Define como o robo esta em cada lado
         bool _sentido;          //Recebe se o robô segue a esteira no sentido horário ou anti-horário
         bool _isInStairs;       //Determina se o robô está na escada
         bool _rodar;            //Determina se o robô deve girar
-        bool _avoidingObs;      // Determina se o robô está desviando de um obstáculo
-        bool _narrowPath;       // Determina se o robô reconheceu um caminho estreito 
+        bool _avoidingObs;      //Determina se o robô está desviando de um obstáculo
+        bool _narrowPath;       //Determina se o robô reconheceu um caminho estreito 
         bool _provavelEscada;   //Determina se há uma escada por perto para mudar o comportamento do robô
         bool _climbing;         //Determina se o robo esta subindo a escada ou nao
         bool _nothing;          //Confere se o velodyne nao detectou nada no alcance normal
         bool _begin;            //Determina se precisa analisar o caminho para descobrir o sentido ou nao
-        bool _isInNarPath;
-        bool _wheelsStable;
+        bool _isInNarPath;      
+        bool _wheelsStable;     //Endireita as esteiras do robo
         
         bool climbStairs();                         //Algoritmo para subir as escadas
         void rodarFunction(SidesInfo *sidesInfo);   //Algoritmo para girar o robô em 180º

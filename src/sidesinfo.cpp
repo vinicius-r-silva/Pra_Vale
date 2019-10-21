@@ -23,11 +23,11 @@ void SidesInfo::getInfo(cv::Mat *img, int LENGHT, int X, int Y, int SizeX, int S
   }
 
 
-  medX = (area < _MIN_AREA_REC) ? 10 : (sumX/(area*_SCALE)  - _MAX_DIST);
+  medX = (area < _MIN_AREA_REC) ? 10 : (sumX/(area*_SCALE)  - _MAX_DIST); //media no eixo X dos pontos
   if(medX < 0) medX = -medX;
 
-  medY = (area < _MIN_AREA_REC) ? 10 : (sumY/(area*_SCALE)  - _MAX_DIST);
+  medY = (area < _MIN_AREA_REC) ? 10 : (sumY/(area*_SCALE)  - _MAX_DIST); //media no eixo Y dos pontos
   
-  distance = (medX == 10 || medY == 10) ? 10 : (float) sqrt(pow(medX, 2) + pow(medY, 2));
+  distance = (medX == 10 || medY == 10) ? 10 : (float) sqrt(pow(medX, 2) + pow(medY, 2)); //distancia absoluta do robo as medias
   
 }

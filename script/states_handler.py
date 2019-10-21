@@ -9,7 +9,7 @@ from std_msgs.msg import Int32
 
 #Global variable of all states
 #Each byte is a state
-state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) | (1 << defs.ROBOT_ON_THE_LEFT)
+state =  (1 << defs.INITIAL_SETUP) | (1 << defs.ARM_CHANGING_POSE) | (1 << defs.ROBOT_CLOCKWISE) | (1 << defs.ROBOT_ON_THE_LEFT) 
 
 
 
