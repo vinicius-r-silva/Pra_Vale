@@ -8,7 +8,7 @@ using namespace std;
 Robot::Robot(){
     _begin = true;
     _state = WALKING;
-    _sentido = _ANTI_HORARIO;
+    _sentido = _HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -831,11 +831,39 @@ void Robot::stableWheelTrack(){
   float wheelFrontSpeed;
   float wheelRearSpeed;
 
-  if(fabs(_yAngle) > 0.03){
+  static bool frontWheels = true;
+  static int i = 0;
+
+  if(frontWheels){
     wheelFrontSpeed = _MAX_WHEEL_R_SPEED;
-    wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelRearSpeed = 0.0;
+
+    if(i == 0 && fabs(_yAngle) > 0.05){
+      i = 5;
+    }
+
+    if(i != 0){
+      wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+      i--;
+      if(i == 0)
+        frontWheels = false;
+    }
+
   }else{
-    _wheelsStable = true;
+    wheelFrontSpeed = 0.0;
+    wheelRearSpeed = -_MAX_WHEEL_R_SPEED;
+
+    if(i == 0 && fabs(_yAngle) > 0.05){
+      i = 5;
+    }
+
+    if(i != 0){
+      wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+      i--;
+      if(i == 0)
+        _wheelsStable = true;
+    }
+
   }
   
 
