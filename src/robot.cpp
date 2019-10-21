@@ -137,8 +137,6 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   double sidesRatio = (sidesInfo[_FRONT_LEFT].area == 0 || sidesInfo[_FRONT_RIGHT].area == 0)? 0.0 : sidesInfo[_FRONT_LEFT].area/sidesInfo[_FRONT_RIGHT].area;
   
-  //std::cout << "sidesRatio: " << sidesRatio << " | FRarea: " << sidesInfo[_FRONT_RIGHT].area << " | FLarea: " << sidesInfo[_FRONT_LEFT].area << " | ";
-  
   if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
     ((_avoidSide == _LEFT && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
     (_avoidSide == _RIGHT && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
