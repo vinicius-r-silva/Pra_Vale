@@ -14,13 +14,13 @@ void velodyneCallback(const  sensor_msgs::PointCloud2::ConstPtr msg){
     return;
 
 
-  vis->createRectangles(); 
-  vis->processImages(msg);
-  vis->printRect();
+  vis->createRectangles(); //Cria os retangulos para melhor visualizacao
+  vis->processImages(msg); 
+  vis->printRect(); //Printa os retangulos na imagem
  
 
-  vis->setParams(rob->getAvoidingObs(), rob->getNothing(), rob->getisInStair()); 
-  rob->processMap(vis->getSidesInfo());
+  vis->setParams(rob->getAvoidingObs(), rob->getNothing(), rob->getisInStair());  //seta os parametros de Visualization 
+  rob->processMap(vis->getSidesInfo()); //processa a imagem e decide as velocidades do robo
 
 }
 
