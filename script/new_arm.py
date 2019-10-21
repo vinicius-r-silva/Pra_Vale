@@ -94,7 +94,7 @@ def cinematicaInversa(state):
         x = _last_x
         y = _last_y
         z = _last_z
-        return joint_angles
+        return joint_angles, False
 
 
     #a error is given when the desired position is invalid
@@ -175,7 +175,7 @@ def cinematicaInversa(state):
         _last_x = x
         _last_y = y
         _last_z = z
-        return joint_angles
+        return joint_angles, True
     
     except: #Exception as error: #(for debug, uncomment this part of code)
         #print(error)
@@ -185,4 +185,4 @@ def cinematicaInversa(state):
         x = _last_x
         y = _last_y
         z = _last_z
-        return joint_angles
+        return joint_angles, False
