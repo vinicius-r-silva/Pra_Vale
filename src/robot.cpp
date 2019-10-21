@@ -37,7 +37,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   cout << "AvoidSide: " << _avoidSide << " | ";
 
-  //corrige o angulo inicial do robo
+  //corrige o angulo inicial do robo e define o sentido do mesmo
   if(_begin){
     if(_zAngle < 0)
       _zAngle += M_PI*2;
@@ -91,7 +91,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
   }
 
 
-  //atualiza o estado do robo
+  //atualiza o sentido do robo
   if(_sentido == _ANTI_HORARIO){
     _enable.data = ROBOT_ANTICLOCKWISE;
     statePub.publish(_enable);
@@ -126,6 +126,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     return;
   }
 
+  //Corrije os angulos da esteira
   if(!_wheelsStable){
     stableWheelTrack();
     setSpeed(0, 0, 0, 0);
