@@ -668,7 +668,7 @@ void Robot::climbStairs(){
 
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
     //wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/6;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
 
     _climbing = true;
 
