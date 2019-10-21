@@ -641,7 +641,7 @@ void Robot::climbStairs(){
     wheelRearSpeed = 0.0;
     wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/1.3;
   
-    setSpeed(_V0,_V0,_V0,_V0);
+    setSpeed(_V0 + 0.5,_V0  + 0.5,_V0  + 0.5, _V0  + 0.5);
     if(_climbing) i++;
 
     if(i > 3){
@@ -853,7 +853,7 @@ void Robot::stableWheelTrack(){
 
     cout << "dif: " << _yAngle - yAngle << " ";
 
-    if(_yAngle - yAngle > -0.0021)
+    if(_yAngle - yAngle > -0.002)
       _wheelsStable = true;
   }
 
