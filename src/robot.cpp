@@ -140,8 +140,12 @@ void Robot::processMap(SidesInfo *sidesInfo){
   
   if(_avoidSide == _RIGHT && sidesRatio == 0)
     sidesRatio = 1000000;
+
+  std::cout << "FLarea: " << sidesInfo[_FRONT_LEFT].area << " | FRarea:" << sidesInfo[_FRONT_RIGHT].area << " | ";
+  std::cout << "sidesRatio: " << sidesRatio << " | sidesRatio(-1):" << 1/sidesRatio << " | ";
   
-  if(!_isInStairs && fabs(_zAngle)  < 0.3 && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
+  if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
+    (fabs(_zAngle) < 0.3 || (M_PI - 0.3 < _zAngle && _zAngle < M_PI + 0.3)) &&
     ((_avoidSide == _LEFT && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
     (_avoidSide == _RIGHT && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
 
@@ -647,7 +651,7 @@ void Robot::climbStairs(){
       wheelFrontSpeed = 0.0;
       wheelRearSpeed = 0.0;
 
-      //_wheelsStable = false;
+      _wheelsStable = false;
 
       _enable.data = -CLIMB_STAIR;
       statePub.publish(_enable);
@@ -696,7 +700,7 @@ void Robot::climbStairs(){
     setSpeed(_V0,_V0,_V0,_V0);
 
     wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = 0;
+    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/6;
   }
   
 
@@ -830,6 +834,31 @@ void Robot::stableWheelTrack(){
   float wheelRearSpeed;
 
   static bool frontWheels = true;
+  static float yAngle = _yAngle;
+  
+  if(frontWheels){
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/3;
+    wheelRearSpeed = 0;
+
+    cout << "dif: " << yAngle - _yAngle << " ";
+
+    if(yAngle - _yAngle > 0.005){
+      frontWheels = false;
+      yAngle = _yAngle;
+    }
+  
+  }else{
+    wheelFrontSpeed = 0;
+    wheelRearSpeed = -_MAX_WHEEL_R_SPEED/3;
+
+    cout << "dif: " << _yAngle - yAngle << " ";
+
+    if(_yAngle - yAngle > -0.0021)
+      _wheelsStable = true;
+  }
+
+
+  /*  
   static int i = 0;
 
   if(frontWheels){
@@ -863,7 +892,7 @@ void Robot::stableWheelTrack(){
     }
 
   }
-  
+  */
 
   for(int i = 0; i < 4; i++){
     msg.data.push_back((i == 0 || i == 2) ? wheelFrontSpeed : wheelRearSpeed);
