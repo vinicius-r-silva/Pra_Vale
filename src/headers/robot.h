@@ -35,7 +35,7 @@ class Robot {
         bool _climbing;         //Determina se o robo esta subindo a escada ou nao
         bool _nothing;          //Confere se o velodyne nao detectou nada no alcance normal
         bool _begin;            //Determina se precisa analisar o caminho para descobrir o sentido ou nao
-        bool _isInNarPath;      
+        bool _isInNarPath;      //Determina quando o robo está no caminho estreito
         bool _wheelsStable;     //Endireita as esteiras do robo
         
         bool climbStairs();                         //Algoritmo para subir as escadas
@@ -43,7 +43,7 @@ class Robot {
         void aligneEscada(SidesInfo *sidesInfo);    //alinha o robo com a esteira para subir a escada
         void downStairs();                          //Algoritmo para descer das escadas
         void setSpeed(float tractionDirFront, float tractionDirBack, float tractionLeftFront, float tractionLeftBack);  //Recebe as velocidades e as public
-        void stableWheelTrack();
+        void stableWheelTrack();                    //Algoritmo para arrumar as esteiras das rodas
 
     public:
         Robot();//Construtor da classe
