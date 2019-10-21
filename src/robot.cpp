@@ -655,8 +655,8 @@ bool Robot::climbStairs(){
   }else if(fabs(_yAngle) < FRONT_WHEELS && (stairState == PLANE || stairState == FRONT_WHEELS)){
     cout << "FRONT WHEELS IS ON | ";
 
-    //setSpeed(_V0,_V0,_V0,_V0);
-    setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);
+    setSpeed(_V0,_V0,_V0,_V0);
+    //setSpeed(_MAX_SPEED, _MAX_SPEED, _MAX_SPEED, _MAX_SPEED);
 
     stairState = FRONT_WHEELS;
 
