@@ -68,7 +68,7 @@
 //deteccao de objetos
 #define _MIN_AREA       25
 #define _MIN_AREA_REC   10 //area minima para utilizar o metodo de recuDir ou recuEsq
-
+#define _MIN_AREA_BEGIN 20 //area minima para definir o sentido do robo
 
 //informacoes da struct
 #define _FRONT          0

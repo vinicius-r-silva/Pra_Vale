@@ -8,7 +8,7 @@ using namespace std;
 Robot::Robot(){
     _begin = true;
     _state = WALKING;
-    _sentido = _HORARIO;
+    _sentido = _ANTI_HORARIO;
     _isInStairs = false;
     _provavelEscada = false;
     _rodar = false;
@@ -138,7 +138,10 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
   double sidesRatio = (sidesInfo[_FRONT_LEFT].area == 0 || sidesInfo[_FRONT_RIGHT].area == 0)? 0.0 : sidesInfo[_FRONT_LEFT].area/sidesInfo[_FRONT_RIGHT].area;
   
-  if(!_isInStairs && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
+  if(_avoidSide == _RIGHT && sidesRatio == 0)
+    sidesRatio = 1000000;
+  
+  if(!_isInStairs && fabs(_zAngle)  < 0.3 && sidesInfo[_FRONT].medY < _MIN_DIST_FRONT &&
     ((_avoidSide == _LEFT && (sidesInfo[_FRONT_RIGHT].area == 0 || sidesRatio > _SIDESRATIO)) ||
     (_avoidSide == _RIGHT && (sidesInfo[_FRONT_LEFT].area == 0 || 1/sidesRatio > _SIDESRATIO)))) {
 
@@ -214,10 +217,8 @@ void Robot::processMap(SidesInfo *sidesInfo){
 
     needSpeed = climbStairs();
 
-    erro = _zAngle * _KP_OBSTACLE;
-
     cout << "E: SubirEscada | yAngle: " << _yAngle << " | ";
-  
+
     return;
   //está na escada ou descendo dela
   }else if(_state == IN_LADDER){  
@@ -302,7 +303,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Recupera o trajeto da esquerda
-  }else if(!_isInNarPath && sidesInfo[_LEFT].medY < -0.15 && _avoidSide == _RIGHT/*_sentido == _ANTI_HORARIO*/){
+  }else if(!_isInNarPath && sidesInfo[_LEFT].medY < -0.15 && _avoidSide == _RIGHT){
     
     erro = 1/(sidesInfo[_LEFT].medX);
 
@@ -313,7 +314,7 @@ void Robot::processMap(SidesInfo *sidesInfo){
     cout << "DEX: " << sidesInfo[_LEFT].medX << " | ";
 
   //Aproxima da esteira quando ela está a esquerda
-  }else if(sidesInfo[_LEFT].medX != 10 && _avoidSide == _RIGHT /*_sentido == _ANTI_HORARIO*/ && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.05){
+  }else if(sidesInfo[_LEFT].medX != 10 && _avoidSide == _RIGHT && abs(sidesInfo[_LEFT].medX - _distToTrack) > 0.05){
 
     erro = (_distToTrack - sidesInfo[_LEFT].medX) * -_KP_REC;
 
@@ -667,7 +668,9 @@ bool Robot::climbStairs(){
     needSpeed = true;
 
     wheelRearSpeed = _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    //wheelFrontSpeed = -_MAX_WHEEL_R_SPEED;
+    wheelFrontSpeed = _MAX_WHEEL_R_SPEED/6;
+
     _climbing = true;
 
   
@@ -694,7 +697,7 @@ bool Robot::climbStairs(){
     setSpeed(_V0,_V0,_V0,_V0);
 
     wheelRearSpeed =  _MAX_WHEEL_R_SPEED;
-    wheelFrontSpeed = -_MAX_WHEEL_R_SPEED/5;
+    wheelFrontSpeed = 0;
   }
   
 
